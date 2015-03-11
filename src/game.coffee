@@ -3,7 +3,7 @@ module.exports = ->
 # http://www.smartphrase.com/cgi-bin/randomphrase.cgi?spanish&humorous&normal&16&11&12&15&1&4
 # quote api: http://iheartquotes.com/api
 
-  secretMessage = "In town a night and a day."
+  secretMessage = "I'll be in town for a night and a day."
 
   decoderStates =
     HIDDEN: 0
@@ -119,7 +119,7 @@ module.exports = ->
     key = e.keyCode
     if e.keyCode is 27 #esc
       # give up; show the secret message
-     render decodeMessage R.map R.always(decoderStates.SOLVED), decoder
+     render decodeMessage(R.map R.always(decoderStates.SOLVED), decoder), "You gave up!"
     char = String.fromCharCode(key).toLowerCase()
     # ignore non-letter inputs
     if isLetter char
@@ -129,11 +129,11 @@ module.exports = ->
       console.log 'comboStream:', comboToString comboStream
       decoder = getAllMatches comboGroups, comboStream, decoder
       console.log 'decoder:', decoder
-      render decodeMessage decoder
+      render decodeMessage(decoder), comboToString(comboStream) or char
 
       totalUnsolved = R.length R.filter(R.not(R.eq(decoderStates.SOLVED))) decoder
       if totalUnsolved is 0
-        alert "You win!"
+        render decodeMessage(decoder), "You win!"
 
 
 
@@ -143,10 +143,12 @@ module.exports = ->
     if document.readyState is "complete"
       # start up sequence
       decoder = R.map getDecodeState, secretMessage
-      $display = document.getElementById("secret-message")
-      render = (message) ->
-        $display.innerText = message
+      $secretMessage = document.getElementById("secret-message")
+      $feedback = document.getElementById("feedback")
+      render = (secretMessage, feedback) ->
+        $secretMessage.innerText = secretMessage
+        $feedback.innerText = feedback
 
-      render decodeMessage decoder
+      render decodeMessage(decoder), "Type letter combos to reveal the hidden message."
       document.addEventListener "keydown", onKeyDown
 

@@ -145,7 +145,7 @@
 require.register("src/game", function(exports, require, module) {
 module.exports = function() {
   var comboGroups, comboStream, comboToString, decodeChar, decodeMessage, decoder, decoderStates, getAllMatches, getDecodeState, getValidComboStream, isLetter, isLetterOrSpace, isSpace, onKeyDown, render, resetDecoder, secretMessage, sentanceToWords, setIndex, setIndexes, setIndexesToRevealed, setIndexesToSolved, shouldReveal, updateDecoder;
-  secretMessage = "In town a night and a day.";
+  secretMessage = "I'll be in town for a night and a day.";
   decoderStates = {
     HIDDEN: 0,
     REVEALED: 1,
@@ -270,7 +270,7 @@ module.exports = function() {
     var char, key, potentialCombo, totalUnsolved;
     key = e.keyCode;
     if (e.keyCode === 27) {
-      render(decodeMessage(R.map(R.always(decoderStates.SOLVED), decoder)));
+      render(decodeMessage(R.map(R.always(decoderStates.SOLVED), decoder)), "You gave up!");
     }
     char = String.fromCharCode(key).toLowerCase();
     if (isLetter(char)) {
@@ -284,22 +284,24 @@ module.exports = function() {
       console.log('comboStream:', comboToString(comboStream));
       decoder = getAllMatches(comboGroups, comboStream, decoder);
       console.log('decoder:', decoder);
-      render(decodeMessage(decoder));
+      render(decodeMessage(decoder), comboToString(comboStream) || char);
       totalUnsolved = R.length(R.filter(R.not(R.eq(decoderStates.SOLVED)))(decoder));
       if (totalUnsolved === 0) {
-        return alert("You win!");
+        return render(decodeMessage(decoder), "You win!");
       }
     }
   };
   return document.onreadystatechange = function() {
-    var $display;
+    var $feedback, $secretMessage;
     if (document.readyState === "complete") {
       decoder = R.map(getDecodeState, secretMessage);
-      $display = document.getElementById("secret-message");
-      render = function(message) {
-        return $display.innerText = message;
+      $secretMessage = document.getElementById("secret-message");
+      $feedback = document.getElementById("feedback");
+      render = function(secretMessage, feedback) {
+        $secretMessage.innerText = secretMessage;
+        return $feedback.innerText = feedback;
       };
-      render(decodeMessage(decoder));
+      render(decodeMessage(decoder), "Type letter combos to reveal the hidden message.");
       return document.addEventListener("keydown", onKeyDown);
     }
   };

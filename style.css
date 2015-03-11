@@ -12,3 +12,10 @@ html {
   top: 20%;
   text-align: center;
 }
+#feedback {
+  font: 20px courier;
+  position: relative;
+  text-align: center;
+  top: 40%;
+  color: #ddd;
+}
