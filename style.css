@@ -1,0 +1,14 @@
+body,
+html {
+  height: 100%;
+}
+#secret-message {
+  font: 40px courier;
+  letter-spacing: 5px;
+  line-height: 1.5em;
+  width: 80%;
+  position: relative;
+  margin: auto;
+  top: 20%;
+  text-align: center;
+}
