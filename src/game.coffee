@@ -3,7 +3,7 @@ module.exports = ->
 # http://www.smartphrase.com/cgi-bin/randomphrase.cgi?spanish&humorous&normal&16&11&12&15&1&4
 # quote api: http://iheartquotes.com/api
 
-  secretMessage = "I'll be in town for a night and a day."
+  secretMessage = "It's a small world, but I wouldn't want to have to paint it."
 
   decoderStates =
     HIDDEN: 0

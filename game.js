@@ -145,7 +145,7 @@
 require.register("src/game", function(exports, require, module) {
 module.exports = function() {
   var comboGroups, comboStream, comboToString, decodeChar, decodeMessage, decoder, decoderStates, getAllMatches, getDecodeState, getValidComboStream, isLetter, isLetterOrSpace, isSpace, onKeyDown, render, resetDecoder, secretMessage, sentanceToWords, setIndex, setIndexes, setIndexesToRevealed, setIndexesToSolved, shouldReveal, updateDecoder;
-  secretMessage = "I'll be in town for a night and a day.";
+  secretMessage = "It's a small world, but I wouldn't want to have to paint it.";
   decoderStates = {
     HIDDEN: 0,
     REVEALED: 1,
