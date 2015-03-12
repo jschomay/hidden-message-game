@@ -3,7 +3,7 @@ module.exports = ->
 # http://www.smartphrase.com/cgi-bin/randomphrase.cgi?spanish&humorous&normal&16&11&12&15&1&4
 # quote api: http://iheartquotes.com/api
 
-  secretMessage = "It's a small world, but I wouldn't want to have to paint it."
+  secretMessage = "There's no such thing as a free lunch."
 
   decoderStates =
     HIDDEN: 0
@@ -19,6 +19,8 @@ module.exports = ->
     /[a-z\s]/i.test char
   isSpace = (char) ->
     /[\s]/i.test char
+
+  score = R.filter(isLetter, secretMessage).length * 5
 
   getDecodeState = (char) ->
     if not isLetter char
@@ -117,23 +119,24 @@ module.exports = ->
 # main "loop"
   onKeyDown =  (e) ->
     key = e.keyCode
-    if e.keyCode is 27 #esc
+    if e.keyCode is 191 #?
       # give up; show the secret message
-     render decodeMessage(R.map R.always(decoderStates.SOLVED), decoder), "You gave up!"
+     render decodeMessage(R.map R.always(decoderStates.SOLVED), decoder), "You gave up!", 0
     char = String.fromCharCode(key).toLowerCase()
     # ignore non-letter inputs
     if isLetter char
+      score = Math.max(0, score - 1)
       decoder = resetDecoder decoder
       potentialCombo = R.concat comboStream, [{char:char}]
       comboStream = getValidComboStream potentialCombo, comboGroups
       console.log 'comboStream:', comboToString comboStream
       decoder = getAllMatches comboGroups, comboStream, decoder
       console.log 'decoder:', decoder
-      render decodeMessage(decoder), comboToString(comboStream) or char
+      render decodeMessage(decoder), (comboToString(comboStream) or char), score
 
       totalUnsolved = R.length R.filter(R.not(R.eq(decoderStates.SOLVED))) decoder
       if totalUnsolved is 0
-        render decodeMessage(decoder), "You win!"
+        render decodeMessage(decoder), "You win!", score
 
 
 
@@ -145,10 +148,12 @@ module.exports = ->
       decoder = R.map getDecodeState, secretMessage
       $secretMessage = document.getElementById("secret-message")
       $feedback = document.getElementById("feedback")
-      render = (secretMessage, feedback) ->
+      $score = document.getElementById("score")
+      render = (secretMessage, feedback, score) ->
         $secretMessage.innerText = secretMessage
         $feedback.innerText = feedback
+        $score.innerText = score
 
-      render decodeMessage(decoder), "Type letter combos to reveal the hidden message."
+      render decodeMessage(decoder), "Type letter combos to reveal the hidden message.", score
       document.addEventListener "keydown", onKeyDown
 

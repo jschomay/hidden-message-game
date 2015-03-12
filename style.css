@@ -2,6 +2,9 @@ body,
 html {
   height: 100%;
 }
+body {
+  background-image: url(assets/paper-texture.jpg);
+}
 #secret-message {
   font: 40px courier;
   letter-spacing: 5px;
@@ -17,5 +20,12 @@ html {
   position: relative;
   text-align: center;
   top: 40%;
+  color: #ccc;
+}
+#score {
+  font: 70px Helvetica;
+  position: absolute;
+  bottom: 30px;
+  right: 60px;
   color: #ddd;
 }

@@ -144,8 +144,8 @@
 
 require.register("src/game", function(exports, require, module) {
 module.exports = function() {
-  var comboGroups, comboStream, comboToString, decodeChar, decodeMessage, decoder, decoderStates, getAllMatches, getDecodeState, getValidComboStream, isLetter, isLetterOrSpace, isSpace, onKeyDown, render, resetDecoder, secretMessage, sentanceToWords, setIndex, setIndexes, setIndexesToRevealed, setIndexesToSolved, shouldReveal, updateDecoder;
-  secretMessage = "It's a small world, but I wouldn't want to have to paint it.";
+  var comboGroups, comboStream, comboToString, decodeChar, decodeMessage, decoder, decoderStates, getAllMatches, getDecodeState, getValidComboStream, isLetter, isLetterOrSpace, isSpace, onKeyDown, render, resetDecoder, score, secretMessage, sentanceToWords, setIndex, setIndexes, setIndexesToRevealed, setIndexesToSolved, shouldReveal, updateDecoder;
+  secretMessage = "There's no such thing as a free lunch.";
   decoderStates = {
     HIDDEN: 0,
     REVEALED: 1,
@@ -163,6 +163,7 @@ module.exports = function() {
   isSpace = function(char) {
     return /[\s]/i.test(char);
   };
+  score = R.filter(isLetter, secretMessage).length * 5;
   getDecodeState = function(char) {
     if (!isLetter(char)) {
       return decoderStates.SOLVED;
@@ -269,11 +270,12 @@ module.exports = function() {
   onKeyDown = function(e) {
     var char, key, potentialCombo, totalUnsolved;
     key = e.keyCode;
-    if (e.keyCode === 27) {
-      render(decodeMessage(R.map(R.always(decoderStates.SOLVED), decoder)), "You gave up!");
+    if (e.keyCode === 191) {
+      render(decodeMessage(R.map(R.always(decoderStates.SOLVED), decoder)), "You gave up!", 0);
     }
     char = String.fromCharCode(key).toLowerCase();
     if (isLetter(char)) {
+      score = Math.max(0, score - 1);
       decoder = resetDecoder(decoder);
       potentialCombo = R.concat(comboStream, [
         {
@@ -284,24 +286,26 @@ module.exports = function() {
       console.log('comboStream:', comboToString(comboStream));
       decoder = getAllMatches(comboGroups, comboStream, decoder);
       console.log('decoder:', decoder);
-      render(decodeMessage(decoder), comboToString(comboStream) || char);
+      render(decodeMessage(decoder), comboToString(comboStream) || char, score);
       totalUnsolved = R.length(R.filter(R.not(R.eq(decoderStates.SOLVED)))(decoder));
       if (totalUnsolved === 0) {
-        return render(decodeMessage(decoder), "You win!");
+        return render(decodeMessage(decoder), "You win!", score);
       }
     }
   };
   return document.onreadystatechange = function() {
-    var $feedback, $secretMessage;
+    var $feedback, $score, $secretMessage;
     if (document.readyState === "complete") {
       decoder = R.map(getDecodeState, secretMessage);
       $secretMessage = document.getElementById("secret-message");
       $feedback = document.getElementById("feedback");
-      render = function(secretMessage, feedback) {
+      $score = document.getElementById("score");
+      render = function(secretMessage, feedback, score) {
         $secretMessage.innerText = secretMessage;
-        return $feedback.innerText = feedback;
+        $feedback.innerText = feedback;
+        return $score.innerText = score;
       };
-      render(decodeMessage(decoder), "Type letter combos to reveal the hidden message.");
+      render(decodeMessage(decoder), "Type letter combos to reveal the hidden message.", score);
       return document.addEventListener("keydown", onKeyDown);
     }
   };
