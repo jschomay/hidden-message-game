@@ -21,6 +21,7 @@ module.exports = ->
     /[\s]/i.test char
 
   score = R.filter(isLetter, secretMessage).length * 5
+  moves = 0
 
   getDecodeState = (char) ->
     if not isLetter char
@@ -125,6 +126,7 @@ module.exports = ->
     char = String.fromCharCode(key).toLowerCase()
     # ignore non-letter inputs
     if isLetter char
+      moves++
       score = Math.max(0, score - 1)
       decoder = resetDecoder decoder
       potentialCombo = R.concat comboStream, [{char:char}]
@@ -136,7 +138,7 @@ module.exports = ->
 
       totalUnsolved = R.length R.filter(R.not(R.eq(decoderStates.SOLVED))) decoder
       if totalUnsolved is 0
-        render decodeMessage(decoder), "You win!", score
+        render decodeMessage(decoder), "SOLVED in #{moves} moves!", score
 
 
 

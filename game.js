@@ -144,7 +144,7 @@
 
 require.register("src/game", function(exports, require, module) {
 module.exports = function() {
-  var comboGroups, comboStream, comboToString, decodeChar, decodeMessage, decoder, decoderStates, getAllMatches, getDecodeState, getValidComboStream, isLetter, isLetterOrSpace, isSpace, onKeyDown, render, resetDecoder, score, secretMessage, sentanceToWords, setIndex, setIndexes, setIndexesToRevealed, setIndexesToSolved, shouldReveal, updateDecoder;
+  var comboGroups, comboStream, comboToString, decodeChar, decodeMessage, decoder, decoderStates, getAllMatches, getDecodeState, getValidComboStream, isLetter, isLetterOrSpace, isSpace, moves, onKeyDown, render, resetDecoder, score, secretMessage, sentanceToWords, setIndex, setIndexes, setIndexesToRevealed, setIndexesToSolved, shouldReveal, updateDecoder;
   secretMessage = "There's no such thing as a free lunch.";
   decoderStates = {
     HIDDEN: 0,
@@ -164,6 +164,7 @@ module.exports = function() {
     return /[\s]/i.test(char);
   };
   score = R.filter(isLetter, secretMessage).length * 5;
+  moves = 0;
   getDecodeState = function(char) {
     if (!isLetter(char)) {
       return decoderStates.SOLVED;
@@ -275,6 +276,7 @@ module.exports = function() {
     }
     char = String.fromCharCode(key).toLowerCase();
     if (isLetter(char)) {
+      moves++;
       score = Math.max(0, score - 1);
       decoder = resetDecoder(decoder);
       potentialCombo = R.concat(comboStream, [
@@ -289,7 +291,7 @@ module.exports = function() {
       render(decodeMessage(decoder), comboToString(comboStream) || char, score);
       totalUnsolved = R.length(R.filter(R.not(R.eq(decoderStates.SOLVED)))(decoder));
       if (totalUnsolved === 0) {
-        return render(decodeMessage(decoder), "You win!", score);
+        return render(decodeMessage(decoder), "SOLVED in " + moves + " moves!", score);
       }
     }
   };
