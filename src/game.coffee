@@ -114,13 +114,15 @@ module.exports = ->
 
 
   # main "loop"
-  onKeyDown =  (render, e) ->
+  onKeyDown =  ($, render, e) ->
     key = e.keyCode
 
     # give up?
     if e.keyCode is 191 # "?"
       # give up; show the secret message
-     render secretMessage, "You gave up!", 0
+     $(document).off 'keydown'
+     $(document).on 'keydown', -> initializeGame($,render)
+     render secretMessage, "You gave up!<br>Press any key to play again.", 0
 
     char = String.fromCharCode(key).toLowerCase()
     # ignore non-letter inputs
@@ -141,17 +143,18 @@ module.exports = ->
       # won?
       totalUnsolved = R.length R.filter(R.not(R.eq(decodeKeyStates.SOLVED))) decodeKey
       if totalUnsolved is 0
-        render decode(secretMessage, decodeKey), "SOLVED in #{moves} moves!", score
+        $(document).off 'keydown'
+        $(document).on 'keydown', -> initializeGame($,render)
+        render decode(secretMessage, decodeKey), "SOLVED in #{moves} moves!<br>Press any key to play again.", score
 
 
-  initializeGame = (render) ->
-
-    messages = ["There's no such thing as a free lunch.", "Here, there, and everywhere."]
+  initializeGame = ($, render) ->
+    $(document).off('keydown')
 
     # set initial game state
+    secretMessage = "Here, there, and everywhere."
 
     # static
-    secretMessage = messages.pop() or "No more messages left."
     comboGroups = sentanceToWords secretMessage
 
     # dynamic
@@ -162,19 +165,20 @@ module.exports = ->
 
     # start game
     render decode(secretMessage, decodeKey), "Type letter combos to reveal the hidden message.", score
-    document.addEventListener "keydown", R.partial onKeyDown, render
+    $(document).on "keydown", R.partial onKeyDown, $, render
 
 
 
 # kick off
-  document.onreadystatechange = ->
-    if document.readyState is "complete"
-      $secretMessage = document.getElementById("secret-message")
-      $feedback = document.getElementById("feedback")
-      $score = document.getElementById("score")
-      render = (secretMessage, feedback, score) ->
-        $secretMessage.innerText = secretMessage
-        $feedback.innerText = feedback
-        $score.innerText = score
+  Zepto ($) ->
+    $secretMessage = $("#secret-message")
+    $feedback = $("#feedback")
+    $score = $("#score")
+    render = (secretMessage, feedback, score) ->
+      $secretMessage.text secretMessage
+      $feedback.html feedback
+      $score.text score
 
-      initializeGame render
+
+
+    initializeGame $, render

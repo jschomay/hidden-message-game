@@ -265,11 +265,15 @@ module.exports = function() {
       return getValidComboStream(comboStream.slice(1), comboGroups);
     }
   };
-  onKeyDown = function(render, e) {
+  onKeyDown = function($, render, e) {
     var char, key, potentialCombo, totalUnsolved;
     key = e.keyCode;
     if (e.keyCode === 191) {
-      render(secretMessage, "You gave up!", 0);
+      $(document).off('keydown');
+      $(document).on('keydown', function() {
+        return initializeGame($, render);
+      });
+      render(secretMessage, "You gave up!<br>Press any key to play again.", 0);
     }
     char = String.fromCharCode(key).toLowerCase();
     if (isLetter(char)) {
@@ -288,36 +292,37 @@ module.exports = function() {
       render(decode(secretMessage, decodeKey), comboToString(comboStream) || char, score);
       totalUnsolved = R.length(R.filter(R.not(R.eq(decodeKeyStates.SOLVED)))(decodeKey));
       if (totalUnsolved === 0) {
-        return render(decode(secretMessage, decodeKey), "SOLVED in " + moves + " moves!", score);
+        $(document).off('keydown');
+        $(document).on('keydown', function() {
+          return initializeGame($, render);
+        });
+        return render(decode(secretMessage, decodeKey), "SOLVED in " + moves + " moves!<br>Press any key to play again.", score);
       }
     }
   };
-  initializeGame = function(render) {
-    var messages;
-    messages = ["There's no such thing as a free lunch.", "Here, there, and everywhere."];
-    secretMessage = messages.pop() || "No more messages left.";
+  initializeGame = function($, render) {
+    $(document).off('keydown');
+    secretMessage = "Here, there, and everywhere.";
     comboGroups = sentanceToWords(secretMessage);
     decodeKey = R.map(hideLetters, secretMessage);
     comboStream = [];
     score = R.filter(isLetter, secretMessage).length * 5;
     moves = 0;
     render(decode(secretMessage, decodeKey), "Type letter combos to reveal the hidden message.", score);
-    return document.addEventListener("keydown", R.partial(onKeyDown, render));
+    return $(document).on("keydown", R.partial(onKeyDown, $, render));
   };
-  return document.onreadystatechange = function() {
+  return Zepto(function($) {
     var $feedback, $score, $secretMessage, render;
-    if (document.readyState === "complete") {
-      $secretMessage = document.getElementById("secret-message");
-      $feedback = document.getElementById("feedback");
-      $score = document.getElementById("score");
-      render = function(secretMessage, feedback, score) {
-        $secretMessage.innerText = secretMessage;
-        $feedback.innerText = feedback;
-        return $score.innerText = score;
-      };
-      return initializeGame(render);
-    }
-  };
+    $secretMessage = $("#secret-message");
+    $feedback = $("#feedback");
+    $score = $("#score");
+    render = function(secretMessage, feedback, score) {
+      $secretMessage.text(secretMessage);
+      $feedback.html(feedback);
+      return $score.text(score);
+    };
+    return initializeGame($, render);
+  });
 };
 });
 
