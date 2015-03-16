@@ -11,6 +11,7 @@ body {
   font: 40px courier;
   letter-spacing: 5px;
   line-height: 1.5em;
+  white-space: pre-wrap;
   width: 80%;
   position: relative;
   margin: auto;
@@ -25,9 +26,17 @@ body {
   color: #ccc;
 }
 #score {
-  font: 70px Helvetica;
+  font: 60px Helvetica;
   position: absolute;
   bottom: 30px;
   right: 60px;
+  color: #ddd;
+}
+#give-up {
+  display: none;
+  font: 14px Helvetica;
+  position: absolute;
+  bottom: 30px;
+  left: 60px;
   color: #ddd;
 }

@@ -122,6 +122,7 @@ module.exports = ->
       # give up; show the secret message
      $(document).off 'keydown'
      $(document).on 'keydown', -> initializeGame($,render)
+     $("#give-up").hide()
      render secretMessage, "You gave up!<br>Press any key to play again.", 0
 
     char = String.fromCharCode(key).toLowerCase()
@@ -145,27 +146,41 @@ module.exports = ->
       if totalUnsolved is 0
         $(document).off 'keydown'
         $(document).on 'keydown', -> initializeGame($,render)
+        $("#give-up").hide()
         render decode(secretMessage, decodeKey), "SOLVED in #{moves} moves!<br>Press any key to play again.", score
 
 
   initializeGame = ($, render) ->
     $(document).off('keydown')
 
-    # set initial game state
-    secretMessage = "Here, there, and everywhere."
+    render "", "LOADING...", ""
 
-    # static
-    comboGroups = sentanceToWords secretMessage
+    $.get 'https://jsonp.nodejitsu.com/?url=http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson', (response) ->
 
-    # dynamic
-    decodeKey = R.map hideLetters, secretMessage
-    comboStream = []
-    score = R.filter(isLetter, secretMessage).length * 5
-    moves = 0
+      parse = (str = "") ->
+        str = str.trim()
+        str = str.replace(/\t/g, "")
+        str
 
-    # start game
-    render decode(secretMessage, decodeKey), "Type letter combos to reveal the hidden message.", score
-    $(document).on "keydown", R.partial onKeyDown, $, render
+      quote = parse response.quote.split(/[\n\r]?\s\s--/)[0]
+      source = parse response.quote.split(/[\n\r]?\s\s--/)[1]
+
+      # set initial game state
+      secretMessage = quote
+
+      # static
+      comboGroups = sentanceToWords secretMessage
+
+      # dynamic
+      decodeKey = R.map hideLetters, secretMessage
+      comboStream = []
+      score = R.filter(isLetter, secretMessage).length * 5
+      moves = 0
+
+      # start game
+      render decode(secretMessage, decodeKey), "Type letter combos to reveal the hidden message.", score
+      $("#give-up").show()
+      $(document).on "keydown", R.partial onKeyDown, $, render
 
 
 
@@ -178,7 +193,5 @@ module.exports = ->
       $secretMessage.text secretMessage
       $feedback.html feedback
       $score.text score
-
-
 
     initializeGame $, render

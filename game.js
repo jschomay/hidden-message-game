@@ -273,6 +273,7 @@ module.exports = function() {
       $(document).on('keydown', function() {
         return initializeGame($, render);
       });
+      $("#give-up").hide();
       render(secretMessage, "You gave up!<br>Press any key to play again.", 0);
     }
     char = String.fromCharCode(key).toLowerCase();
@@ -296,20 +297,36 @@ module.exports = function() {
         $(document).on('keydown', function() {
           return initializeGame($, render);
         });
+        $("#give-up").hide();
         return render(decode(secretMessage, decodeKey), "SOLVED in " + moves + " moves!<br>Press any key to play again.", score);
       }
     }
   };
   initializeGame = function($, render) {
     $(document).off('keydown');
-    secretMessage = "Here, there, and everywhere.";
-    comboGroups = sentanceToWords(secretMessage);
-    decodeKey = R.map(hideLetters, secretMessage);
-    comboStream = [];
-    score = R.filter(isLetter, secretMessage).length * 5;
-    moves = 0;
-    render(decode(secretMessage, decodeKey), "Type letter combos to reveal the hidden message.", score);
-    return $(document).on("keydown", R.partial(onKeyDown, $, render));
+    render("", "LOADING...", "");
+    return $.get('https://jsonp.nodejitsu.com/?url=http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson', function(response) {
+      var parse, quote, source;
+      parse = function(str) {
+        if (str == null) {
+          str = "";
+        }
+        str = str.trim();
+        str = str.replace(/\t/g, "");
+        return str;
+      };
+      quote = parse(response.quote.split(/[\n\r]?\s\s--/)[0]);
+      source = parse(response.quote.split(/[\n\r]?\s\s--/)[1]);
+      secretMessage = quote;
+      comboGroups = sentanceToWords(secretMessage);
+      decodeKey = R.map(hideLetters, secretMessage);
+      comboStream = [];
+      score = R.filter(isLetter, secretMessage).length * 5;
+      moves = 0;
+      render(decode(secretMessage, decodeKey), "Type letter combos to reveal the hidden message.", score);
+      $("#give-up").show();
+      return $(document).on("keydown", R.partial(onKeyDown, $, render));
+    });
   };
   return Zepto(function($) {
     var $feedback, $score, $secretMessage, render;
