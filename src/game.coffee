@@ -112,6 +112,8 @@ module.exports = ->
 
   # main "loop"
   onKeyDown =  ($, render, e) ->
+    e.preventDefault()
+
     key = e.keyCode
 
     # give up?

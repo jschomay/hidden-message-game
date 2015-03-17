@@ -267,6 +267,7 @@ module.exports = function() {
   };
   onKeyDown = function($, render, e) {
     var char, key, potentialCombo, totalUnsolved;
+    e.preventDefault();
     key = e.keyCode;
     if (e.keyCode === 191) {
       $(document).off('keydown');
