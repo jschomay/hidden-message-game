@@ -1,7 +1,4 @@
 module.exports = ->
-# Find some good random phrases here:
-# http://www.smartphrase.com/cgi-bin/randomphrase.cgi?spanish&humorous&normal&16&11&12&15&1&4
-# quote api: http://iheartquotes.com/api
 
   decodeKeyStates =
     HIDDEN: 0
@@ -155,18 +152,20 @@ module.exports = ->
 
     render "", "LOADING...", ""
 
-    $.get 'https://jsonp.nodejitsu.com/?url=http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson', (response) ->
+    $.get "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D'http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys", (response) ->
 
       parse = (str = "") ->
         str = str.trim()
         str = str.replace(/\t/g, "")
         str
 
-      quote = parse response.quote.split(/[\n\r]?\s\s--/)[0]
-      source = parse response.quote.split(/[\n\r]?\s\s--/)[1]
+      quote = JSON.parse(response.query.results.body).quote
+
+      message = quote.split(/[\n\r]?\s\s--/)[0]
+      source = quote.split(/[\n\r]?\s\s--/)[1]
 
       # set initial game state
-      secretMessage = quote
+      secretMessage = message
 
       # static
       comboGroups = sentanceToWords secretMessage
