@@ -1,5 +1,7 @@
 module.exports = ->
 
+  quoteApiUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D'http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys"
+
   decodeKeyStates =
     HIDDEN: 0
     REVEALED: 1
@@ -110,52 +112,154 @@ module.exports = ->
       getValidComboStream comboStream.slice(1), comboGroups
 
 
-  # main "loop"
-  onKeyDown =  ($, render, e) ->
-    e.preventDefault()
-
-    key = e.keyCode
-
-    # give up?
-    if e.keyCode is 191 # "?"
-      # give up; show the secret message
-     $(document).off 'keydown'
-     $(document).on 'keydown', -> initializeGame($,render)
-     $("#give-up").hide()
-     render secretMessage, "You gave up!<br>Press any key to play again.", 0
-
-    char = String.fromCharCode(key).toLowerCase()
-    # ignore non-letter inputs
-    if isLetter char
-      # update state
-      moves++
-      score = Math.max(0, score - 1)
-      potentialCombo = R.concat comboStream, [{char:char}]
-      comboStream = getValidComboStream potentialCombo, comboGroups
-      decodeKey = resetAllUnsolved decodeKey
-      decodeKey = getAllMatches comboGroups, comboStream, decodeKey
-
-      # display
-      console.log 'comboStream:', comboToString comboStream
-      console.log 'decodeKey:', decodeKey
-      render decode(secretMessage, decodeKey), (comboToString(comboStream) or char), score
-
-      # won?
-      totalUnsolved = R.length R.filter(R.not(R.eq(decodeKeyStates.SOLVED))) decodeKey
-      if totalUnsolved is 0
-        $(document).off 'keydown'
-        $(document).on 'keydown', -> initializeGame($,render)
-        $("#give-up").hide()
-        render decode(secretMessage, decodeKey), "SOLVED in #{moves} moves!<br>Press any key to play again.", score
 
 
-  initializeGame = ($, render) ->
-    $(document).off('keydown')
 
-    render "", "LOADING...", ""
 
-    $.get "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D'http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys", (response) ->
 
+
+  # MAIN LOOP
+  frame = (seed, trigger, eventData) ->
+    newScope = seed.state.process eventData, seed.scope, trigger
+    newState = seed.state.nextState trigger, newScope
+    newState.render newScope
+    {state: newState, scope: newScope}
+
+  # TODO use FRP lib to fold over events to make frame a pure function
+  # frameEventsStream.fold initialSeed, frame
+  # for now we have a facilitator that stores the state in the closure
+  updateFrame = (tpye, data) ->
+    {state, scope} = frame {state: currentState, scope: store}, type, data
+    currentState = state
+    store = scope
+
+
+  # GAME STATES
+  states =
+    loading:
+      process: (eventData, scope, trigger) ->
+        if trigger isnt "quoteLoaded" then return scope
+
+        secretMessage = eventData
+        scope.secretMessage = secretMessage
+        scope
+
+      nextState: (trigger, scope) ->
+        if trigger is "quoteLoaded"
+          states.readyToPlay
+        else
+          states.loading
+
+      render: (scope) ->
+        render {
+          secretMessage: ""
+          feedback: "LOADING"
+          score: ""
+          showGameActions: false
+        }
+
+    readyToPlay:
+      process: (eventData, scope) ->
+        # initialize game data with secret message
+        scope.comboGroups = sentanceToWords scope.secretMessage
+        scope.decodeKey = R.map hideLetters, scope.secretMessage
+        scope.comboStream = []
+        scope.score = R.filter(isLetter, scope.secretMessage).length * 5
+        scope.moves = 0
+        scope
+
+      nextState: (trigger, scope) ->
+        states.updateProgress
+
+      render: (scope) ->
+        render {
+          secretMessage: decode(secretMessage, decodeKey)
+          feedback: "Type letter combos to reveal the hidden message."
+          score: scope.score
+          showGameActions: true
+        }
+
+    updateProgress:
+      process: (eventData, scope) ->
+        char = String.fromCharCode(eventData.keyCode).toLowerCase()
+        # ignore non-letter inputs
+        if isLetter char
+          potentialCombo = R.concat scope.comboStream, [{char:char}]
+          existingSolved = resetAllUnsolved scope.decodeKey
+          # update state
+          scope.moves += 1
+          scope.score = Math.max(0, scope.score - 1)
+          scope.comboStream = getValidComboStream potentialCombo, scope.comboGroups
+          scope.decodeKey = getAllMatches scope.comboGroups, scope.comboStream, existingSolved
+          scope.lastInput = char
+          scope
+
+      nextState: (trigger, scope) ->
+        # give up?
+        if eventData.keyCode is 191 # "?"
+          return states.gaveUp
+
+        # won?
+        totalUnsolved = R.length R.filter(R.not(R.eq(decodeKeyStates.SOLVED))) scope.decodeKey
+        if totalUnsolved is 0
+          return states.solved
+
+        # keep playing
+        return states.updateProgress
+
+      render: (scope) ->
+        render {
+          secretMessage: decode(scope.secretMessage, scope.decodeKey)
+          feedback: (comboToString(scope.comboStream) or scope.lastInput)
+          score: scope.score
+          showGameActions: true
+        }
+
+    gaveUp:
+      process: (eventData, scope) ->
+        # reset everything
+        scope.secretMessage = undefined
+        scope.comboGroups = undefined
+        scope.decodeKey = undefined
+        scope.comboStream = undefined
+        scope.score = undefined
+        scope.moves = undefined
+
+      nextState: (trigger, scope) ->
+        states.loading
+
+      render: (scope) ->
+        render {
+          secretMessage: secretMessage
+          feedback: "You gave up!<br>Press any key to play again."
+          score: 0
+          showGameActions: false
+        }
+
+    solved:
+      process: (eventData, scope) ->
+        # reset everything
+        scope.secretMessage = undefined
+        scope.comboGroups = undefined
+        scope.decodeKey = undefined
+        scope.comboStream = undefined
+        scope.score = undefined
+        scope.moves = undefined
+
+      nextState: (trigger, scope) ->
+        states.loading
+
+      render: (scope) ->
+        render {
+          secretMessage: decode(scope.secretMessage, scope.decodeKey)
+          feedback:  "SOLVED in #{scope.moves} moves!<br>Press any key to play again."
+          score: scope.score
+          showGameActions: false
+        }
+
+
+  fetchQuote = ->
+    $.get quoteApiUrl, (response) ->
       parse = (str = "") ->
         str = str.trim()
         str = str.replace(/\t/g, "")
@@ -166,33 +270,29 @@ module.exports = ->
       message = quote.split(/[\n\r]?\s\s--/)[0]
       source = quote.split(/[\n\r]?\s\s--/)[1]
 
-      # set initial game state
-      secretMessage = message
-
-      # static
-      comboGroups = sentanceToWords secretMessage
-
-      # dynamic
-      decodeKey = R.map hideLetters, secretMessage
-      comboStream = []
-      score = R.filter(isLetter, secretMessage).length * 5
-      moves = 0
-
-      # start game
-      render decode(secretMessage, decodeKey), "Type letter combos to reveal the hidden message.", score
-      $("#give-up").show()
-      $(document).on "keydown", R.partial onKeyDown, $, render
+      updateFrame "quoteLoaded", message
 
 
-
-# kick off
+  # kick off
   Zepto ($) ->
     $secretMessage = $("#secret-message")
     $feedback = $("#feedback")
     $score = $("#score")
-    render = (secretMessage, feedback, score) ->
+    render = (data) ->
+      {secretMessage, feedback, score, showGameActions} = data
+
       $secretMessage.text secretMessage
       $feedback.html feedback
       $score.text score
 
-    initializeGame $, render
+      if showGameActions
+        $("#give-up").show()
+      else
+        $("#give-up").hide()
+
+    onKeyDown = (e) ->
+      e.preventDefault()
+      updateFrame "keyPressed", e.keyCode
+
+    $(document).on "keydown", onKeyDown
+    fetchQuote()

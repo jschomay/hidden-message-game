@@ -144,7 +144,8 @@
 
 require.register("src/game", function(exports, require, module) {
 module.exports = function() {
-  var comboGroups, comboStream, comboToString, decode, decodeChar, decodeKey, decodeKeyStates, getAllMatches, getValidComboStream, hideLetters, initializeGame, isLetter, isLetterOrSpace, isSpace, moves, onKeyDown, resetAllUnsolved, score, secretMessage, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, shouldReveal, updatedecodeKey;
+  var comboGroups, comboStream, comboToString, decode, decodeChar, decodeKey, decodeKeyStates, fetchQuote, frame, getAllMatches, getValidComboStream, hideLetters, isLetter, isLetterOrSpace, isSpace, moves, quoteApiUrl, resetAllUnsolved, score, secretMessage, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, shouldReveal, states, updateFrame, updatedecodeKey;
+  quoteApiUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D'http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
   decodeKeyStates = {
     HIDDEN: 0,
     REVEALED: 1,
@@ -265,48 +266,156 @@ module.exports = function() {
       return getValidComboStream(comboStream.slice(1), comboGroups);
     }
   };
-  onKeyDown = function($, render, e) {
-    var char, key, potentialCombo, totalUnsolved;
-    e.preventDefault();
-    key = e.keyCode;
-    if (e.keyCode === 191) {
-      $(document).off('keydown');
-      $(document).on('keydown', function() {
-        return initializeGame($, render);
-      });
-      $("#give-up").hide();
-      render(secretMessage, "You gave up!<br>Press any key to play again.", 0);
-    }
-    char = String.fromCharCode(key).toLowerCase();
-    if (isLetter(char)) {
-      moves++;
-      score = Math.max(0, score - 1);
-      potentialCombo = R.concat(comboStream, [
-        {
-          char: char
+  frame = function(seed, trigger, eventData) {
+    var newScope, newState;
+    newScope = seed.state.process(eventData, seed.scope, trigger);
+    newState = seed.state.nextState(trigger, newScope);
+    newState.render(newScope);
+    return {
+      state: newState,
+      scope: newScope
+    };
+  };
+  updateFrame = function(tpye, data) {
+    var currentState, scope, state, store, _ref;
+    _ref = frame({
+      state: currentState,
+      scope: store
+    }, type, data), state = _ref.state, scope = _ref.scope;
+    currentState = state;
+    return store = scope;
+  };
+  states = {
+    loading: {
+      process: function(eventData, scope, trigger) {
+        if (trigger !== "quoteLoaded") {
+          return scope;
         }
-      ]);
-      comboStream = getValidComboStream(potentialCombo, comboGroups);
-      decodeKey = resetAllUnsolved(decodeKey);
-      decodeKey = getAllMatches(comboGroups, comboStream, decodeKey);
-      console.log('comboStream:', comboToString(comboStream));
-      console.log('decodeKey:', decodeKey);
-      render(decode(secretMessage, decodeKey), comboToString(comboStream) || char, score);
-      totalUnsolved = R.length(R.filter(R.not(R.eq(decodeKeyStates.SOLVED)))(decodeKey));
-      if (totalUnsolved === 0) {
-        $(document).off('keydown');
-        $(document).on('keydown', function() {
-          return initializeGame($, render);
+        secretMessage = eventData;
+        scope.secretMessage = secretMessage;
+        return scope;
+      },
+      nextState: function(trigger, scope) {
+        if (trigger === "quoteLoaded") {
+          return states.readyToPlay;
+        } else {
+          return states.loading;
+        }
+      },
+      render: function(scope) {
+        return render({
+          secretMessage: "",
+          feedback: "LOADING",
+          score: "",
+          showGameActions: false
         });
-        $("#give-up").hide();
-        return render(decode(secretMessage, decodeKey), "SOLVED in " + moves + " moves!<br>Press any key to play again.", score);
+      }
+    },
+    readyToPlay: {
+      process: function(eventData, scope) {
+        scope.comboGroups = sentanceToWords(scope.secretMessage);
+        scope.decodeKey = R.map(hideLetters, scope.secretMessage);
+        scope.comboStream = [];
+        scope.score = R.filter(isLetter, scope.secretMessage).length * 5;
+        scope.moves = 0;
+        return scope;
+      },
+      nextState: function(trigger, scope) {
+        return states.updateProgress;
+      },
+      render: function(scope) {
+        return render({
+          secretMessage: decode(secretMessage, decodeKey),
+          feedback: "Type letter combos to reveal the hidden message.",
+          score: scope.score,
+          showGameActions: true
+        });
+      }
+    },
+    updateProgress: {
+      process: function(eventData, scope) {
+        var char, existingSolved, potentialCombo;
+        char = String.fromCharCode(eventData.keyCode).toLowerCase();
+        if (isLetter(char)) {
+          potentialCombo = R.concat(scope.comboStream, [
+            {
+              char: char
+            }
+          ]);
+          existingSolved = resetAllUnsolved(scope.decodeKey);
+          scope.moves += 1;
+          scope.score = Math.max(0, scope.score - 1);
+          scope.comboStream = getValidComboStream(potentialCombo, scope.comboGroups);
+          scope.decodeKey = getAllMatches(scope.comboGroups, scope.comboStream, existingSolved);
+          scope.lastInput = char;
+          return scope;
+        }
+      },
+      nextState: function(trigger, scope) {
+        var totalUnsolved;
+        if (eventData.keyCode === 191) {
+          return states.gaveUp;
+        }
+        totalUnsolved = R.length(R.filter(R.not(R.eq(decodeKeyStates.SOLVED)))(scope.decodeKey));
+        if (totalUnsolved === 0) {
+          return states.solved;
+        }
+        return states.updateProgress;
+      },
+      render: function(scope) {
+        return render({
+          secretMessage: decode(scope.secretMessage, scope.decodeKey),
+          feedback: comboToString(scope.comboStream) || scope.lastInput,
+          score: scope.score,
+          showGameActions: true
+        });
+      }
+    },
+    gaveUp: {
+      process: function(eventData, scope) {
+        scope.secretMessage = void 0;
+        scope.comboGroups = void 0;
+        scope.decodeKey = void 0;
+        scope.comboStream = void 0;
+        scope.score = void 0;
+        return scope.moves = void 0;
+      },
+      nextState: function(trigger, scope) {
+        return states.loading;
+      },
+      render: function(scope) {
+        return render({
+          secretMessage: secretMessage,
+          feedback: "You gave up!<br>Press any key to play again.",
+          score: 0,
+          showGameActions: false
+        });
+      }
+    },
+    solved: {
+      process: function(eventData, scope) {
+        scope.secretMessage = void 0;
+        scope.comboGroups = void 0;
+        scope.decodeKey = void 0;
+        scope.comboStream = void 0;
+        scope.score = void 0;
+        return scope.moves = void 0;
+      },
+      nextState: function(trigger, scope) {
+        return states.loading;
+      },
+      render: function(scope) {
+        return render({
+          secretMessage: decode(scope.secretMessage, scope.decodeKey),
+          feedback: "SOLVED in " + scope.moves + " moves!<br>Press any key to play again.",
+          score: scope.score,
+          showGameActions: false
+        });
       }
     }
   };
-  initializeGame = function($, render) {
-    $(document).off('keydown');
-    render("", "LOADING...", "");
-    return $.get("https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D'http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys", function(response) {
+  fetchQuote = function() {
+    return $.get(quoteApiUrl, function(response) {
       var message, parse, quote, source;
       parse = function(str) {
         if (str == null) {
@@ -319,28 +428,32 @@ module.exports = function() {
       quote = JSON.parse(response.query.results.body).quote;
       message = quote.split(/[\n\r]?\s\s--/)[0];
       source = quote.split(/[\n\r]?\s\s--/)[1];
-      secretMessage = message;
-      comboGroups = sentanceToWords(secretMessage);
-      decodeKey = R.map(hideLetters, secretMessage);
-      comboStream = [];
-      score = R.filter(isLetter, secretMessage).length * 5;
-      moves = 0;
-      render(decode(secretMessage, decodeKey), "Type letter combos to reveal the hidden message.", score);
-      $("#give-up").show();
-      return $(document).on("keydown", R.partial(onKeyDown, $, render));
+      return updateFrame("quoteLoaded", message);
     });
   };
   return Zepto(function($) {
-    var $feedback, $score, $secretMessage, render;
+    var $feedback, $score, $secretMessage, onKeyDown, render;
     $secretMessage = $("#secret-message");
     $feedback = $("#feedback");
     $score = $("#score");
-    render = function(secretMessage, feedback, score) {
+    render = function(data) {
+      var feedback, showGameActions;
+      secretMessage = data.secretMessage, feedback = data.feedback, score = data.score, showGameActions = data.showGameActions;
       $secretMessage.text(secretMessage);
       $feedback.html(feedback);
-      return $score.text(score);
+      $score.text(score);
+      if (showGameActions) {
+        return $("#give-up").show();
+      } else {
+        return $("#give-up").hide();
+      }
     };
-    return initializeGame($, render);
+    onKeyDown = function(e) {
+      e.preventDefault();
+      return updateFrame("keyPressed", e.keyCode);
+    };
+    $(document).on("keydown", onKeyDown);
+    return fetchQuote();
   });
 };
 });
