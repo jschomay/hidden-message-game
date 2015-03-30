@@ -7,13 +7,6 @@ module.exports = ->
     REVEALED: 1
     SOLVED: 2
 
-  secretMessage = undefined
-  comboGroups = undefined
-  decodeKey = undefined
-  comboStream = undefined
-  score = undefined
-  moves = undefined
-
   isLetter = (char) ->
     /[a-z]/i.test char
   isLetterOrSpace = (char) ->
@@ -116,24 +109,6 @@ module.exports = ->
 
 
 
-
-
-  # MAIN LOOP
-  frame = (seed, trigger, eventData) ->
-    newScope = seed.state.process eventData, seed.scope, trigger
-    newState = seed.state.nextState trigger, newScope
-    newState.render newScope
-    {state: newState, scope: newScope}
-
-  # TODO use FRP lib to fold over events to make frame a pure function
-  # frameEventsStream.fold initialSeed, frame
-  # for now we have a facilitator that stores the state in the closure
-  updateFrame = (tpye, data) ->
-    {state, scope} = frame {state: currentState, scope: store}, type, data
-    currentState = state
-    store = scope
-
-
   # GAME STATES
   states =
     loading:
@@ -141,47 +116,31 @@ module.exports = ->
         if trigger isnt "quoteLoaded" then return scope
 
         secretMessage = eventData
+        # initialize game data with secret message
         scope.secretMessage = secretMessage
+        scope.comboGroups = sentanceToWords secretMessage
+        scope.decodeKey = R.map hideLetters, secretMessage
+        scope.comboStream = []
+        scope.score = R.filter(isLetter, secretMessage).length * 5
+        scope.moves = 0
+        scope.lastInput = null
         scope
 
       nextState: (trigger, scope) ->
         if trigger is "quoteLoaded"
-          states.readyToPlay
+          states.updateProgress
         else
           states.loading
 
-      render: (scope) ->
-        render {
-          secretMessage: ""
-          feedback: "LOADING"
-          score: ""
-          showGameActions: false
-        }
-
-    readyToPlay:
-      process: (eventData, scope) ->
-        # initialize game data with secret message
-        scope.comboGroups = sentanceToWords scope.secretMessage
-        scope.decodeKey = R.map hideLetters, scope.secretMessage
-        scope.comboStream = []
-        scope.score = R.filter(isLetter, scope.secretMessage).length * 5
-        scope.moves = 0
-        scope
-
-      nextState: (trigger, scope) ->
-        states.updateProgress
-
-      render: (scope) ->
-        render {
-          secretMessage: decode(secretMessage, decodeKey)
-          feedback: "Type letter combos to reveal the hidden message."
-          score: scope.score
-          showGameActions: true
-        }
+      getRenderData: (scope) ->
+        secretMessage: ""
+        feedback: "LOADING"
+        score: ""
+        showGameActions: false
 
     updateProgress:
       process: (eventData, scope) ->
-        char = String.fromCharCode(eventData.keyCode).toLowerCase()
+        char = eventData
         # ignore non-letter inputs
         if isLetter char
           potentialCombo = R.concat scope.comboStream, [{char:char}]
@@ -193,10 +152,12 @@ module.exports = ->
           scope.decodeKey = getAllMatches scope.comboGroups, scope.comboStream, existingSolved
           scope.lastInput = char
           scope
+        else
+          scope
 
       nextState: (trigger, scope) ->
         # give up?
-        if eventData.keyCode is 191 # "?"
+        if trigger is "gaveUp"
           return states.gaveUp
 
         # won?
@@ -207,16 +168,15 @@ module.exports = ->
         # keep playing
         return states.updateProgress
 
-      render: (scope) ->
-        render {
-          secretMessage: decode(scope.secretMessage, scope.decodeKey)
-          feedback: (comboToString(scope.comboStream) or scope.lastInput)
-          score: scope.score
-          showGameActions: true
-        }
+      getRenderData: (scope) ->
+        secretMessage: decode(scope.secretMessage, scope.decodeKey)
+        feedback: comboToString(scope.comboStream) or scope.lastInput  or "Type letter combos to reveal the hidden message."
+        score: scope.score
+        showGameActions: true
 
     gaveUp:
       process: (eventData, scope) ->
+        fetchQuote()
         # reset everything
         scope.secretMessage = undefined
         scope.comboGroups = undefined
@@ -224,20 +184,21 @@ module.exports = ->
         scope.comboStream = undefined
         scope.score = undefined
         scope.moves = undefined
+        scope.lastInput = undefined
+        scope
 
       nextState: (trigger, scope) ->
         states.loading
 
-      render: (scope) ->
-        render {
-          secretMessage: secretMessage
-          feedback: "You gave up!<br>Press any key to play again."
-          score: 0
-          showGameActions: false
-        }
+      getRenderData: (scope) ->
+        secretMessage: scope.secretMessage
+        feedback: "You gave up!<br>Press any key to play again."
+        score: 0
+        showGameActions: false
 
     solved:
       process: (eventData, scope) ->
+        fetchQuote()
         # reset everything
         scope.secretMessage = undefined
         scope.comboGroups = undefined
@@ -245,21 +206,56 @@ module.exports = ->
         scope.comboStream = undefined
         scope.score = undefined
         scope.moves = undefined
+        scope.lastInput = undefined
+        scope
 
       nextState: (trigger, scope) ->
         states.loading
 
-      render: (scope) ->
-        render {
-          secretMessage: decode(scope.secretMessage, scope.decodeKey)
-          feedback:  "SOLVED in #{scope.moves} moves!<br>Press any key to play again."
-          score: scope.score
-          showGameActions: false
-        }
+      getRenderData: (scope) ->
+        secretMessage: decode(scope.secretMessage, scope.decodeKey)
+        feedback:  "SOLVED in #{scope.moves} moves!<br>Press any key to play again."
+        score: scope.score
+        showGameActions: false
 
+
+
+
+
+  # MAIN LOOP
+  # Called on each game event through updateFrame.
+  # Runs the current game state through a state machine.
+  #
+  # The active state handles the triggering event, then states
+  # are transitioned depending on the outcome, and the resulting
+  # active state renders the data.
+  frame = (seed, trigger, eventData) ->
+    newScope = seed.state.process eventData, seed.scope, trigger
+    newState = seed.state.nextState trigger, newScope
+    render newState.getRenderData newScope
+    {state: newState, scope: newScope}
+
+
+
+  # This is a wrapper that holds state so that the rest of the
+  # code can be completely pure.
+  # In an FRP style, this could be done by folding over events instead
+  # It is called by all game events.
+  updateFrame = (type, data) ->
+    {state, scope} = frame {state: @currentState, scope: @store}, type, data
+    @currentState = state
+    @store = scope
+
+  updateFrame.currentState = states.loading
+  updateFrame.store = {}
+  updateFrame = updateFrame.bind updateFrame
+
+
+
+  # bindng game event streams
 
   fetchQuote = ->
-    $.get quoteApiUrl, (response) ->
+    Zepto.get quoteApiUrl, (response) ->
       parse = (str = "") ->
         str = str.trim()
         str = str.replace(/\t/g, "")
@@ -272,27 +268,36 @@ module.exports = ->
 
       updateFrame "quoteLoaded", message
 
+  onKeyDown = (e) ->
+    e.preventDefault()
+    if e.keyCode is 191 # "?"
+      updateFrame "gaveUp", null
+    else
+      char = String.fromCharCode(e.keyCode).toLowerCase()
+      updateFrame "keyPressed", char
 
-  # kick off
+
+  # drawing
+
+  render = (data) ->
+    $secretMessage = Zepto("#secret-message")
+    $feedback = Zepto("#feedback")
+    $score = Zepto("#score")
+    {secretMessage, feedback, score, showGameActions} = data
+
+    $secretMessage.text secretMessage
+    $feedback.html feedback
+    $score.text score
+
+    if showGameActions
+      Zepto("#give-up").show()
+    else
+      Zepto("#give-up").hide()
+
+
+
+  # kick off when document is pready
   Zepto ($) ->
-    $secretMessage = $("#secret-message")
-    $feedback = $("#feedback")
-    $score = $("#score")
-    render = (data) ->
-      {secretMessage, feedback, score, showGameActions} = data
-
-      $secretMessage.text secretMessage
-      $feedback.html feedback
-      $score.text score
-
-      if showGameActions
-        $("#give-up").show()
-      else
-        $("#give-up").hide()
-
-    onKeyDown = (e) ->
-      e.preventDefault()
-      updateFrame "keyPressed", e.keyCode
-
     $(document).on "keydown", onKeyDown
     fetchQuote()
+    updateFrame "startGame", null

@@ -11,4 +11,4 @@ exports.config =
       joinTo: 'css/game.css'
     templates:
       joinTo: 'js/game.js'
-  sourceMaps: true
+  sourceMaps: false
