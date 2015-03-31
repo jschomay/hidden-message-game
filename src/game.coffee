@@ -112,25 +112,23 @@ module.exports = ->
   # GAME STATES
   states =
     loading:
-      process: (eventData, scope, trigger) ->
-        if trigger isnt "quoteLoaded" then return scope
+      onEnter: ->
+        fetchQuote()
 
-        secretMessage = eventData
-        # initialize game data with secret message
-        scope.secretMessage = secretMessage
-        scope.comboGroups = sentanceToWords secretMessage
-        scope.decodeKey = R.map hideLetters, secretMessage
-        scope.comboStream = []
-        scope.score = R.filter(isLetter, secretMessage).length * 5
-        scope.moves = 0
-        scope.lastInput = null
-        scope
-
-      nextState: (trigger, scope) ->
+      onEvent: (eventData, scope, trigger) ->
         if trigger is "quoteLoaded"
-          states.updateProgress
+          secretMessage = eventData
+          # initialize game data with secret message
+          scope.secretMessage = secretMessage
+          scope.comboGroups = sentanceToWords secretMessage
+          scope.decodeKey = R.map hideLetters, secretMessage
+          scope.comboStream = []
+          scope.score = R.filter(isLetter, secretMessage).length * 5
+          scope.moves = 0
+          scope.lastInput = null
+          return ["play", scope]
         else
-          states.loading
+          ["loading", scope]
 
       getRenderData: (scope) ->
         secretMessage: ""
@@ -138,35 +136,32 @@ module.exports = ->
         score: ""
         showGameActions: false
 
-    updateProgress:
-      process: (eventData, scope) ->
-        char = eventData
+    play:
+      onEnter: ->
+      onEvent: (eventData, scope) ->
+        if eventData.keyCode is 191 # "?"
+          return ["gaveUp", scope]
+
+        char = String.fromCharCode(eventData.keyCode).toLowerCase()
+
         # ignore non-letter inputs
         if isLetter char
           potentialCombo = R.concat scope.comboStream, [{char:char}]
           existingSolved = resetAllUnsolved scope.decodeKey
+
           # update state
           scope.moves += 1
           scope.score = Math.max(0, scope.score - 1)
           scope.comboStream = getValidComboStream potentialCombo, scope.comboGroups
           scope.decodeKey = getAllMatches scope.comboGroups, scope.comboStream, existingSolved
           scope.lastInput = char
-          scope
-        else
-          scope
-
-      nextState: (trigger, scope) ->
-        # give up?
-        if trigger is "gaveUp"
-          return states.gaveUp
 
         # won?
         totalUnsolved = R.length R.filter(R.not(R.eq(decodeKeyStates.SOLVED))) scope.decodeKey
         if totalUnsolved is 0
-          return states.solved
+          return ["solved", scope]
 
-        # keep playing
-        return states.updateProgress
+        ["play", scope]
 
       getRenderData: (scope) ->
         secretMessage: decode(scope.secretMessage, scope.decodeKey)
@@ -175,8 +170,8 @@ module.exports = ->
         showGameActions: true
 
     gaveUp:
-      process: (eventData, scope) ->
-        fetchQuote()
+      onEnter: ->
+      onEvent: (eventData, scope) ->
         # reset everything
         scope.secretMessage = undefined
         scope.comboGroups = undefined
@@ -185,10 +180,8 @@ module.exports = ->
         scope.score = undefined
         scope.moves = undefined
         scope.lastInput = undefined
-        scope
 
-      nextState: (trigger, scope) ->
-        states.loading
+        return ["loading", scope]
 
       getRenderData: (scope) ->
         secretMessage: scope.secretMessage
@@ -197,8 +190,8 @@ module.exports = ->
         showGameActions: false
 
     solved:
-      process: (eventData, scope) ->
-        fetchQuote()
+      onEnter: ->
+      onEvent: (eventData, scope) ->
         # reset everything
         scope.secretMessage = undefined
         scope.comboGroups = undefined
@@ -207,10 +200,8 @@ module.exports = ->
         scope.score = undefined
         scope.moves = undefined
         scope.lastInput = undefined
-        scope
 
-      nextState: (trigger, scope) ->
-        states.loading
+        return ["loading", scope]
 
       getRenderData: (scope) ->
         secretMessage: decode(scope.secretMessage, scope.decodeKey)
@@ -230,10 +221,14 @@ module.exports = ->
   # are transitioned depending on the outcome, and the resulting
   # active state renders the data.
   frame = (seed, trigger, eventData) ->
-    newScope = seed.state.process eventData, seed.scope, trigger
-    newState = seed.state.nextState trigger, newScope
-    render newState.getRenderData newScope
-    {state: newState, scope: newScope}
+    [newState, newScope] = seed.state.onEvent eventData, seed.scope, trigger
+
+    if states[newState] isnt seed.state
+      states[newState].onEnter()
+
+    render states[newState].getRenderData newScope
+
+    {state: states[newState], scope: newScope}
 
 
 
@@ -270,11 +265,7 @@ module.exports = ->
 
   onKeyDown = (e) ->
     e.preventDefault()
-    if e.keyCode is 191 # "?"
-      updateFrame "gaveUp", null
-    else
-      char = String.fromCharCode(e.keyCode).toLowerCase()
-      updateFrame "keyPressed", char
+    updateFrame "keyPress", e
 
 
   # drawing

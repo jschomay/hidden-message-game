@@ -262,26 +262,23 @@ module.exports = function() {
   };
   states = {
     loading: {
-      process: function(eventData, scope, trigger) {
-        var secretMessage;
-        if (trigger !== "quoteLoaded") {
-          return scope;
-        }
-        secretMessage = eventData;
-        scope.secretMessage = secretMessage;
-        scope.comboGroups = sentanceToWords(secretMessage);
-        scope.decodeKey = R.map(hideLetters, secretMessage);
-        scope.comboStream = [];
-        scope.score = R.filter(isLetter, secretMessage).length * 5;
-        scope.moves = 0;
-        scope.lastInput = null;
-        return scope;
+      onEnter: function() {
+        return fetchQuote();
       },
-      nextState: function(trigger, scope) {
+      onEvent: function(eventData, scope, trigger) {
+        var secretMessage;
         if (trigger === "quoteLoaded") {
-          return states.updateProgress;
+          secretMessage = eventData;
+          scope.secretMessage = secretMessage;
+          scope.comboGroups = sentanceToWords(secretMessage);
+          scope.decodeKey = R.map(hideLetters, secretMessage);
+          scope.comboStream = [];
+          scope.score = R.filter(isLetter, secretMessage).length * 5;
+          scope.moves = 0;
+          scope.lastInput = null;
+          return ["play", scope];
         } else {
-          return states.loading;
+          return ["loading", scope];
         }
       },
       getRenderData: function(scope) {
@@ -293,10 +290,14 @@ module.exports = function() {
         };
       }
     },
-    updateProgress: {
-      process: function(eventData, scope) {
-        var char, existingSolved, potentialCombo;
-        char = eventData;
+    play: {
+      onEnter: function() {},
+      onEvent: function(eventData, scope) {
+        var char, existingSolved, potentialCombo, totalUnsolved;
+        if (eventData.keyCode === 191) {
+          return ["gaveUp", scope];
+        }
+        char = String.fromCharCode(eventData.keyCode).toLowerCase();
         if (isLetter(char)) {
           potentialCombo = R.concat(scope.comboStream, [
             {
@@ -309,21 +310,12 @@ module.exports = function() {
           scope.comboStream = getValidComboStream(potentialCombo, scope.comboGroups);
           scope.decodeKey = getAllMatches(scope.comboGroups, scope.comboStream, existingSolved);
           scope.lastInput = char;
-          return scope;
-        } else {
-          return scope;
-        }
-      },
-      nextState: function(trigger, scope) {
-        var totalUnsolved;
-        if (trigger === "gaveUp") {
-          return states.gaveUp;
         }
         totalUnsolved = R.length(R.filter(R.not(R.eq(decodeKeyStates.SOLVED)))(scope.decodeKey));
         if (totalUnsolved === 0) {
-          return states.solved;
+          return ["solved", scope];
         }
-        return states.updateProgress;
+        return ["play", scope];
       },
       getRenderData: function(scope) {
         return {
@@ -335,8 +327,8 @@ module.exports = function() {
       }
     },
     gaveUp: {
-      process: function(eventData, scope) {
-        fetchQuote();
+      onEnter: function() {},
+      onEvent: function(eventData, scope) {
         scope.secretMessage = void 0;
         scope.comboGroups = void 0;
         scope.decodeKey = void 0;
@@ -344,10 +336,7 @@ module.exports = function() {
         scope.score = void 0;
         scope.moves = void 0;
         scope.lastInput = void 0;
-        return scope;
-      },
-      nextState: function(trigger, scope) {
-        return states.loading;
+        return ["loading", scope];
       },
       getRenderData: function(scope) {
         return {
@@ -359,8 +348,8 @@ module.exports = function() {
       }
     },
     solved: {
-      process: function(eventData, scope) {
-        fetchQuote();
+      onEnter: function() {},
+      onEvent: function(eventData, scope) {
         scope.secretMessage = void 0;
         scope.comboGroups = void 0;
         scope.decodeKey = void 0;
@@ -368,10 +357,7 @@ module.exports = function() {
         scope.score = void 0;
         scope.moves = void 0;
         scope.lastInput = void 0;
-        return scope;
-      },
-      nextState: function(trigger, scope) {
-        return states.loading;
+        return ["loading", scope];
       },
       getRenderData: function(scope) {
         return {
@@ -384,12 +370,14 @@ module.exports = function() {
     }
   };
   frame = function(seed, trigger, eventData) {
-    var newScope, newState;
-    newScope = seed.state.process(eventData, seed.scope, trigger);
-    newState = seed.state.nextState(trigger, newScope);
-    render(newState.getRenderData(newScope));
+    var newScope, newState, _ref;
+    _ref = seed.state.onEvent(eventData, seed.scope, trigger), newState = _ref[0], newScope = _ref[1];
+    if (states[newState] !== seed.state) {
+      states[newState].onEnter();
+    }
+    render(states[newState].getRenderData(newScope));
     return {
-      state: newState,
+      state: states[newState],
       scope: newScope
     };
   };
@@ -423,14 +411,8 @@ module.exports = function() {
     });
   };
   onKeyDown = function(e) {
-    var char;
     e.preventDefault();
-    if (e.keyCode === 191) {
-      return updateFrame("gaveUp", null);
-    } else {
-      char = String.fromCharCode(e.keyCode).toLowerCase();
-      return updateFrame("keyPressed", char);
-    }
+    return updateFrame("keyPress", e);
   };
   render = function(data) {
     var $feedback, $score, $secretMessage, feedback, score, secretMessage, showGameActions;
