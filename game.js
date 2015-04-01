@@ -311,9 +311,11 @@ module.exports = function() {
         return ["play", scope];
       },
       getRenderData: function(scope) {
+        var comboString;
+        comboString = scope.comboString.length ? scope.comboString : null;
         return {
           secretMessage: decode(scope.secretMessage, scope.decodeKey),
-          feedback: scope.comboString || scope.lastInput || "Type letter combos to reveal the hidden message.",
+          feedback: comboString || scope.lastInput || "Type letter combos to reveal the hidden message.",
           score: scope.score,
           showGameActions: true
         };

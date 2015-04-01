@@ -162,8 +162,9 @@ module.exports = ->
         ["play", scope]
 
       getRenderData: (scope) ->
+        comboString = if scope.comboString.length then scope.comboString else null
         secretMessage: decode(scope.secretMessage, scope.decodeKey)
-        feedback: scope.comboString or scope.lastInput  or "Type letter combos to reveal the hidden message."
+        feedback: comboString or scope.lastInput  or "Type letter combos to reveal the hidden message."
         score: scope.score
         showGameActions: true
 
