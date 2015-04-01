@@ -236,28 +236,25 @@ module.exports = function() {
       return decodeKey;
     }
   };
-  getAllMatches = function(comboGroups, comboStream, decodeKey) {
-    var comboString;
-    if (comboStream.length < 1) {
+  getAllMatches = function(comboGroups, comboString, decodeKey) {
+    if (comboString.length < 1) {
       return decodeKey;
     }
-    comboString = comboToString(comboStream);
     decodeKey = R.reduce(R.partial(updatedecodeKey, comboString), decodeKey, comboGroups);
-    return getAllMatches(comboGroups, comboStream.slice(1), decodeKey);
+    return getAllMatches(comboGroups, comboString.slice(1), decodeKey);
   };
-  getValidComboStream = function(comboStream, comboGroups) {
-    var comboString, isValidCombo, joinAndMatch, pattern;
-    if (comboStream.length < 1) {
+  getValidComboStream = function(comboString, comboGroups) {
+    var isValidCombo, joinAndMatch, pattern;
+    if (comboString.length < 1) {
       return [];
     }
-    comboString = comboToString(comboStream);
     pattern = new RegExp("^" + comboString, "i");
     joinAndMatch = R.compose(R.match(pattern), comboToString);
     isValidCombo = R.any(joinAndMatch, comboGroups);
     if (isValidCombo) {
-      return comboStream;
+      return comboString;
     } else {
-      return getValidComboStream(comboStream.slice(1), comboGroups);
+      return getValidComboStream(comboString.slice(1), comboGroups);
     }
   };
   states = {
@@ -272,7 +269,7 @@ module.exports = function() {
           scope.secretMessage = secretMessage;
           scope.comboGroups = sentanceToWords(secretMessage);
           scope.decodeKey = R.map(hideLetters, secretMessage);
-          scope.comboStream = [];
+          scope.comboString = "";
           scope.score = R.filter(isLetter, secretMessage).length * 5;
           scope.moves = 0;
           scope.lastInput = null;
@@ -299,16 +296,12 @@ module.exports = function() {
         }
         char = String.fromCharCode(eventData.keyCode).toLowerCase();
         if (isLetter(char)) {
-          potentialCombo = R.concat(scope.comboStream, [
-            {
-              char: char
-            }
-          ]);
+          potentialCombo = scope.comboString + char;
           existingSolved = resetAllUnsolved(scope.decodeKey);
           scope.moves += 1;
           scope.score = Math.max(0, scope.score - 1);
-          scope.comboStream = getValidComboStream(potentialCombo, scope.comboGroups);
-          scope.decodeKey = getAllMatches(scope.comboGroups, scope.comboStream, existingSolved);
+          scope.comboString = getValidComboStream(potentialCombo, scope.comboGroups);
+          scope.decodeKey = getAllMatches(scope.comboGroups, scope.comboString, existingSolved);
           scope.lastInput = char;
         }
         totalUnsolved = R.length(R.filter(R.not(R.eq(decodeKeyStates.SOLVED)))(scope.decodeKey));
@@ -320,7 +313,7 @@ module.exports = function() {
       getRenderData: function(scope) {
         return {
           secretMessage: decode(scope.secretMessage, scope.decodeKey),
-          feedback: comboToString(scope.comboStream) || scope.lastInput || "Type letter combos to reveal the hidden message.",
+          feedback: scope.comboString || scope.lastInput || "Type letter combos to reveal the hidden message.",
           score: scope.score,
           showGameActions: true
         };
@@ -332,7 +325,7 @@ module.exports = function() {
         scope.secretMessage = void 0;
         scope.comboGroups = void 0;
         scope.decodeKey = void 0;
-        scope.comboStream = void 0;
+        scope.comboString = void 0;
         scope.score = void 0;
         scope.moves = void 0;
         scope.lastInput = void 0;
@@ -353,7 +346,7 @@ module.exports = function() {
         scope.secretMessage = void 0;
         scope.comboGroups = void 0;
         scope.decodeKey = void 0;
-        scope.comboStream = void 0;
+        scope.comboString = void 0;
         scope.score = void 0;
         scope.moves = void 0;
         scope.lastInput = void 0;

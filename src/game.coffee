@@ -80,29 +80,27 @@ module.exports = ->
       return decodeKey
 
 
-  getAllMatches = (comboGroups, comboStream, decodeKey) ->
-    if comboStream.length < 1
+  getAllMatches = (comboGroups, comboString, decodeKey) ->
+    if comboString.length < 1
       return decodeKey
-    comboString = comboToString comboStream
     decodeKey = R.reduce R.partial(updatedecodeKey, comboString), decodeKey, comboGroups
-    return getAllMatches comboGroups, comboStream.slice(1), decodeKey
+    return getAllMatches comboGroups, comboString.slice(1), decodeKey
 
 
-  getValidComboStream = (comboStream, comboGroups) ->
-    if comboStream.length < 1
+  getValidComboStream = (comboString, comboGroups) ->
+    if comboString.length < 1
       # no valid combo
       return []
 
-    comboString = comboToString comboStream
     pattern = new RegExp "^" + comboString, "i"
     joinAndMatch = R.compose(R.match(pattern), comboToString)
     isValidCombo = R.any joinAndMatch, comboGroups
 
     if isValidCombo
-      return comboStream
+      return comboString
     else
       # recurse with shorter and shorter combo streams
-      getValidComboStream comboStream.slice(1), comboGroups
+      getValidComboStream comboString.slice(1), comboGroups
 
 
 
@@ -122,7 +120,7 @@ module.exports = ->
           scope.secretMessage = secretMessage
           scope.comboGroups = sentanceToWords secretMessage
           scope.decodeKey = R.map hideLetters, secretMessage
-          scope.comboStream = []
+          scope.comboString = ""
           scope.score = R.filter(isLetter, secretMessage).length * 5
           scope.moves = 0
           scope.lastInput = null
@@ -146,14 +144,14 @@ module.exports = ->
 
         # ignore non-letter inputs
         if isLetter char
-          potentialCombo = R.concat scope.comboStream, [{char:char}]
+          potentialCombo = scope.comboString + char
           existingSolved = resetAllUnsolved scope.decodeKey
 
           # update state
           scope.moves += 1
           scope.score = Math.max(0, scope.score - 1)
-          scope.comboStream = getValidComboStream potentialCombo, scope.comboGroups
-          scope.decodeKey = getAllMatches scope.comboGroups, scope.comboStream, existingSolved
+          scope.comboString = getValidComboStream potentialCombo, scope.comboGroups
+          scope.decodeKey = getAllMatches scope.comboGroups, scope.comboString, existingSolved
           scope.lastInput = char
 
         # won?
@@ -165,7 +163,7 @@ module.exports = ->
 
       getRenderData: (scope) ->
         secretMessage: decode(scope.secretMessage, scope.decodeKey)
-        feedback: comboToString(scope.comboStream) or scope.lastInput  or "Type letter combos to reveal the hidden message."
+        feedback: scope.comboString or scope.lastInput  or "Type letter combos to reveal the hidden message."
         score: scope.score
         showGameActions: true
 
@@ -176,7 +174,7 @@ module.exports = ->
         scope.secretMessage = undefined
         scope.comboGroups = undefined
         scope.decodeKey = undefined
-        scope.comboStream = undefined
+        scope.comboString = undefined
         scope.score = undefined
         scope.moves = undefined
         scope.lastInput = undefined
@@ -196,7 +194,7 @@ module.exports = ->
         scope.secretMessage = undefined
         scope.comboGroups = undefined
         scope.decodeKey = undefined
-        scope.comboStream = undefined
+        scope.comboString = undefined
         scope.score = undefined
         scope.moves = undefined
         scope.lastInput = undefined
