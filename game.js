@@ -290,7 +290,7 @@ module.exports = function() {
     play: {
       onEnter: function() {},
       onEvent: function(eventData, scope) {
-        var char, existingSolved, potentialCombo, totalUnsolved;
+        var char, existingSolved, isUnsolved, potentialCombo, totalUnsolved;
         if (eventData.keyCode === 191) {
           return ["gaveUp", scope];
         }
@@ -304,7 +304,8 @@ module.exports = function() {
           scope.decodeKey = getAllMatches(scope.comboGroups, scope.comboString, existingSolved);
           scope.lastInput = char;
         }
-        totalUnsolved = R.length(R.filter(R.not(R.eq(decodeKeyStates.SOLVED)))(scope.decodeKey));
+        isUnsolved = R.compose(R.not, R.eq(decodeKeyStates.SOLVED));
+        totalUnsolved = R.length(R.filter(isUnsolved)(scope.decodeKey));
         if (totalUnsolved === 0) {
           return ["solved", scope];
         }

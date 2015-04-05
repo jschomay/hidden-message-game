@@ -155,7 +155,8 @@ module.exports = ->
           scope.lastInput = char
 
         # won?
-        totalUnsolved = R.length R.filter(R.not(R.eq(decodeKeyStates.SOLVED))) scope.decodeKey
+        isUnsolved = R.compose(R.not, (R.eq decodeKeyStates.SOLVED))
+        totalUnsolved = R.length(R.filter(isUnsolved) scope.decodeKey)
         if totalUnsolved is 0
           return ["solved", scope]
 
