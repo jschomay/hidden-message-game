@@ -144,7 +144,7 @@
 
 require.register("src/game", function(exports, require, module) {
 module.exports = function() {
-  var comboToString, decode, decodeChar, decodeKeyStates, fetchQuote, frame, getAllMatches, getValidComboStream, hideLetters, isLetter, isLetterOrSpace, isSpace, onGiveUp, onKeyDown, quoteApiUrl, render, resetAllUnsolved, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, shouldReveal, states, updateFrame, updatedecodeKey;
+  var comboToString, decode, decodeChar, decodeKeyStates, fetchQuote, frame, getAllMatches, getRandomElement, getRandomElements, getValidComboStream, hideLetters, isLetter, isLetterOrSpace, isSpace, isUnsolved, onGiveUp, onHint, onKeyDown, quoteApiUrl, render, resetAllUnsolved, saveIndexes, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, shouldReveal, states, updateFrame, updatedecodeKey;
   quoteApiUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D'http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
   decodeKeyStates = {
     HIDDEN: 0,
@@ -160,6 +160,40 @@ module.exports = function() {
   isSpace = function(char) {
     return /[\s]/i.test(char);
   };
+  saveIndexes = R.mapIndexed(function(value, index) {
+    return {
+      index: index,
+      status: value
+    };
+  });
+  getRandomElement = function(arr) {
+    var newArray, randomElement, randomI;
+    randomI = Math.floor(Math.random() * arr.length);
+    randomElement = arr[randomI];
+    newArray = R.remove(randomI, 1, arr);
+    return [randomElement, newArray];
+  };
+  getRandomElements = function(arr, num) {
+    var recur;
+    if (num == null) {
+      num = 1;
+    }
+    if (typeof num !== "number") {
+      console.error("expected a number, got", num);
+      num = 1;
+    }
+    recur = function(arr, acc) {
+      var newArr, randomElement, _ref;
+      _ref = getRandomElement(arr), randomElement = _ref[0], newArr = _ref[1];
+      acc.push(randomElement);
+      if (acc.length === num) {
+        return acc;
+      } else {
+        return recur(newArr, acc);
+      }
+    };
+    return recur(arr, []);
+  };
   hideLetters = function(char) {
     if (!isLetter(char)) {
       return decodeKeyStates.SOLVED;
@@ -167,6 +201,7 @@ module.exports = function() {
       return decodeKeyStates.HIDDEN;
     }
   };
+  isUnsolved = R.compose(R.not, R.eq(decodeKeyStates.SOLVED));
   decodeChar = function(secretChar, decodingStatus) {
     if (shouldReveal(decodingStatus)) {
       return secretChar;
@@ -272,6 +307,7 @@ module.exports = function() {
           scope.comboString = "";
           scope.score = R.filter(isLetter, secretMessage).length * 5;
           scope.moves = 0;
+          scope.hints = 0;
           scope.lastInput = null;
           return ["play", scope];
         } else {
@@ -290,10 +326,30 @@ module.exports = function() {
     play: {
       onEnter: function() {},
       onEvent: function(eventData, scope, trigger) {
-        var char, existingSolved, isUnsolved, potentialCombo, totalUnsolved;
+        var char, elementsToReveal, existingSolved, hintAllowance, indexedDecodeKey, indexesToReaveal, oneOrOneTenth, potentialCombo, totalUnsolved, unsolvedChars;
+        console.log(scope);
         if (trigger === "giveUp") {
           return ["gaveUp", scope];
-        } else if (trigger === "keyPress") {
+        }
+        if (trigger === "hint") {
+          oneOrOneTenth = function(items) {
+            return Math.ceil(items / 10);
+          };
+          indexedDecodeKey = saveIndexes(scope.decodeKey);
+          unsolvedChars = R.filter(R.compose(isUnsolved, R.prop("status")))(indexedDecodeKey);
+          hintAllowance = oneOrOneTenth(unsolvedChars.length);
+          elementsToReveal = getRandomElements(unsolvedChars, hintAllowance);
+          indexesToReaveal = R.map(R.prop("index"), elementsToReveal);
+          R.forEach(function(index) {
+            return scope.decodeKey[index] = decodeKeyStates.SOLVED;
+          }, indexesToReaveal);
+          scope.hints += 1;
+          scope.score = Math.floor(scope.score / 2);
+          if (unsolvedChars.length === 1) {
+            return ["solved", scope];
+          }
+        }
+        if (trigger === "keyPress") {
           char = String.fromCharCode(eventData.keyCode).toLowerCase();
           if (isLetter(char)) {
             potentialCombo = scope.comboString + char;
@@ -304,7 +360,6 @@ module.exports = function() {
             scope.decodeKey = getAllMatches(scope.comboGroups, scope.comboString, existingSolved);
             scope.lastInput = char;
           }
-          isUnsolved = R.compose(R.not, R.eq(decodeKeyStates.SOLVED));
           totalUnsolved = R.length(R.filter(isUnsolved)(scope.decodeKey));
           if (totalUnsolved === 0) {
             return ["solved", scope];
@@ -332,6 +387,7 @@ module.exports = function() {
         scope.comboString = void 0;
         scope.score = void 0;
         scope.moves = void 0;
+        scope.hints = void 0;
         scope.lastInput = void 0;
         return ["loading", scope];
       },
@@ -353,13 +409,16 @@ module.exports = function() {
         scope.comboString = void 0;
         scope.score = void 0;
         scope.moves = void 0;
+        scope.hints = void 0;
         scope.lastInput = void 0;
         return ["loading", scope];
       },
       getRenderData: function(scope) {
+        var hints;
+        hints = scope.hints > 1 ? scope.hints : "no";
         return {
           secretMessage: decode(scope.secretMessage, scope.decodeKey),
-          feedback: "SOLVED in " + scope.moves + " moves!<br>Press any key to play again.",
+          feedback: "SOLVED in " + scope.moves + " moves (with " + hints + " hints)!<br>Press any key to play again.",
           score: scope.score,
           showPlayActions: false
         };
@@ -415,6 +474,10 @@ module.exports = function() {
     e.preventDefault();
     return updateFrame("giveUp", null);
   };
+  onHint = function(e) {
+    e.preventDefault();
+    return updateFrame("hint", null);
+  };
   render = function(data) {
     var $feedback, $score, $secretMessage, feedback, score, secretMessage, showPlayActions;
     $secretMessage = Zepto("#secret-message");
@@ -433,6 +496,7 @@ module.exports = function() {
   return Zepto(function($) {
     $(document).on("keydown", onKeyDown);
     $("#give-up-button").on("click", onGiveUp);
+    $("#hint-button").on("click", onHint);
     fetchQuote();
     return updateFrame("startGame", null);
   });

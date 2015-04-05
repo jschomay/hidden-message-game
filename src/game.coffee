@@ -14,11 +14,36 @@ module.exports = ->
   isSpace = (char) ->
     /[\s]/i.test char
 
+  saveIndexes = R.mapIndexed (value, index) -> {index: index, status: value}
+
+  getRandomElement = (arr) ->
+    randomI = Math.floor(Math.random() * arr.length)
+    randomElement = arr[randomI]
+    newArray = R.remove randomI, 1, arr
+    [randomElement, newArray]
+
+  # Keep taking random elements from array until reaching the
+  # desired amount.  Makes sure not to take the same element.
+  getRandomElements = (arr, num = 1) ->
+    if typeof num isnt "number"
+      console.error "expected a number, got", num
+      num = 1
+    recur = (arr, acc) ->
+      [randomElement, newArr] = getRandomElement arr
+      acc.push randomElement
+      if acc.length is num
+        return acc
+      else
+        return recur newArr, acc
+    recur arr, []
+
   hideLetters = (char) ->
     if not isLetter char
       decodeKeyStates.SOLVED
     else
       decodeKeyStates.HIDDEN
+
+  isUnsolved = R.compose(R.not, (R.eq decodeKeyStates.SOLVED))
 
   decodeChar = (secretChar, decodingStatus)  ->
     if shouldReveal decodingStatus
@@ -123,6 +148,7 @@ module.exports = ->
           scope.comboString = ""
           scope.score = R.filter(isLetter, secretMessage).length * 5
           scope.moves = 0
+          scope.hints = 0
           scope.lastInput = null
           return ["play", scope]
         else
@@ -137,10 +163,31 @@ module.exports = ->
     play:
       onEnter: ->
       onEvent: (eventData, scope, trigger) ->
+        console.log scope
         if trigger is "giveUp"
           return ["gaveUp", scope]
 
-        else if trigger is "keyPress"
+        if trigger is "hint"
+          # get random 1/10th of remaining unsolved letters permanently filled in
+          # cuts your score in half each time
+          oneOrOneTenth = (items) -> Math.ceil items / 10
+          indexedDecodeKey = saveIndexes scope.decodeKey
+          unsolvedChars = R.filter(R.compose(isUnsolved, R.prop "status")) indexedDecodeKey
+          hintAllowance = oneOrOneTenth unsolvedChars.length
+          elementsToReveal = getRandomElements unsolvedChars, hintAllowance
+          indexesToReaveal = R.map R.prop("index"), elementsToReveal
+          R.forEach (index) ->
+            scope.decodeKey[index] = decodeKeyStates.SOLVED
+          , indexesToReaveal
+
+          scope.hints += 1
+          scope.score = Math.floor scope.score / 2
+
+          # in case the last missing char was just filled in
+          if unsolvedChars.length is 1
+            return ["solved", scope]
+
+        if trigger is "keyPress"
           char = String.fromCharCode(eventData.keyCode).toLowerCase()
 
           # ignore non-letter inputs
@@ -156,7 +203,6 @@ module.exports = ->
             scope.lastInput = char
 
           # won?
-          isUnsolved = R.compose(R.not, (R.eq decodeKeyStates.SOLVED))
           totalUnsolved = R.length(R.filter(isUnsolved) scope.decodeKey)
           if totalUnsolved is 0
             return ["solved", scope]
@@ -180,6 +226,7 @@ module.exports = ->
         scope.comboString = undefined
         scope.score = undefined
         scope.moves = undefined
+        scope.hints = undefined
         scope.lastInput = undefined
 
         return ["loading", scope]
@@ -200,13 +247,15 @@ module.exports = ->
         scope.comboString = undefined
         scope.score = undefined
         scope.moves = undefined
+        scope.hints = undefined
         scope.lastInput = undefined
 
         return ["loading", scope]
 
       getRenderData: (scope) ->
+        hints = if scope.hints > 1 then scope.hints else "no"
         secretMessage: decode(scope.secretMessage, scope.decodeKey)
-        feedback:  "SOLVED in #{scope.moves} moves!<br>Press any key to play again."
+        feedback:  "SOLVED in #{scope.moves} moves (with #{hints} hints)!<br>Press any key to play again."
         score: scope.score
         showPlayActions: false
 
@@ -272,6 +321,10 @@ module.exports = ->
     e.preventDefault()
     updateFrame "giveUp", null
 
+  onHint = (e) ->
+    e.preventDefault()
+    updateFrame "hint", null
+
 
   # drawing
 
@@ -297,6 +350,7 @@ module.exports = ->
     # bind inputs
     $(document).on "keydown", onKeyDown
     $("#give-up-button").on "click", onGiveUp
+    $("#hint-button").on "click", onHint
 
     fetchQuote()
     updateFrame "startGame", null
