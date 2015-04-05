@@ -132,33 +132,34 @@ module.exports = ->
         secretMessage: ""
         feedback: "LOADING"
         score: ""
-        showGameActions: false
+        showPlayActions: false
 
     play:
       onEnter: ->
-      onEvent: (eventData, scope) ->
-        if eventData.keyCode is 191 # "?"
+      onEvent: (eventData, scope, trigger) ->
+        if trigger is "giveUp"
           return ["gaveUp", scope]
 
-        char = String.fromCharCode(eventData.keyCode).toLowerCase()
+        else if trigger is "keyPress"
+          char = String.fromCharCode(eventData.keyCode).toLowerCase()
 
-        # ignore non-letter inputs
-        if isLetter char
-          potentialCombo = scope.comboString + char
-          existingSolved = resetAllUnsolved scope.decodeKey
+          # ignore non-letter inputs
+          if isLetter char
+            potentialCombo = scope.comboString + char
+            existingSolved = resetAllUnsolved scope.decodeKey
 
-          # update state
-          scope.moves += 1
-          scope.score = Math.max(0, scope.score - 1)
-          scope.comboString = getValidComboStream potentialCombo, scope.comboGroups
-          scope.decodeKey = getAllMatches scope.comboGroups, scope.comboString, existingSolved
-          scope.lastInput = char
+            # update state
+            scope.moves += 1
+            scope.score = Math.max(0, scope.score - 1)
+            scope.comboString = getValidComboStream potentialCombo, scope.comboGroups
+            scope.decodeKey = getAllMatches scope.comboGroups, scope.comboString, existingSolved
+            scope.lastInput = char
 
-        # won?
-        isUnsolved = R.compose(R.not, (R.eq decodeKeyStates.SOLVED))
-        totalUnsolved = R.length(R.filter(isUnsolved) scope.decodeKey)
-        if totalUnsolved is 0
-          return ["solved", scope]
+          # won?
+          isUnsolved = R.compose(R.not, (R.eq decodeKeyStates.SOLVED))
+          totalUnsolved = R.length(R.filter(isUnsolved) scope.decodeKey)
+          if totalUnsolved is 0
+            return ["solved", scope]
 
         ["play", scope]
 
@@ -167,7 +168,7 @@ module.exports = ->
         secretMessage: decode(scope.secretMessage, scope.decodeKey)
         feedback: comboString or scope.lastInput  or "Type letter combos to reveal the hidden message."
         score: scope.score
-        showGameActions: true
+        showPlayActions: true
 
     gaveUp:
       onEnter: ->
@@ -187,7 +188,7 @@ module.exports = ->
         secretMessage: scope.secretMessage
         feedback: "You gave up!<br>Press any key to play again."
         score: 0
-        showGameActions: false
+        showPlayActions: false
 
     solved:
       onEnter: ->
@@ -207,7 +208,7 @@ module.exports = ->
         secretMessage: decode(scope.secretMessage, scope.decodeKey)
         feedback:  "SOLVED in #{scope.moves} moves!<br>Press any key to play again."
         score: scope.score
-        showGameActions: false
+        showPlayActions: false
 
 
 
@@ -234,10 +235,10 @@ module.exports = ->
 
   # This is a wrapper that holds state so that the rest of the
   # code can be completely pure.
-  # In an FRP style, this could be done by folding over events instead
-  # It is called by all game events.
-  updateFrame = (type, data) ->
-    {state, scope} = frame {state: @currentState, scope: @store}, type, data
+  # In an FRP style, this could be done by folding over events instead.
+  # It is called by all game events with the event trigger and event data.
+  updateFrame = (trigger, data) ->
+    {state, scope} = frame {state: @currentState, scope: @store}, trigger, data
     @currentState = state
     @store = scope
 
@@ -267,6 +268,10 @@ module.exports = ->
     e.preventDefault()
     updateFrame "keyPress", e
 
+  onGiveUp = (e) ->
+    e.preventDefault()
+    updateFrame "giveUp", null
+
 
   # drawing
 
@@ -274,21 +279,24 @@ module.exports = ->
     $secretMessage = Zepto("#secret-message")
     $feedback = Zepto("#feedback")
     $score = Zepto("#score")
-    {secretMessage, feedback, score, showGameActions} = data
+    {secretMessage, feedback, score, showPlayActions} = data
 
     $secretMessage.text secretMessage
     $feedback.html feedback # make sure only known or escaped strings go through here!
     $score.text score
 
-    if showGameActions
-      Zepto("#give-up").show()
+    if showPlayActions
+      Zepto("#play-actions").show()
     else
-      Zepto("#give-up").hide()
+      Zepto("#play-actions").hide()
 
 
 
   # kick off when document is pready
   Zepto ($) ->
+    # bind inputs
     $(document).on "keydown", onKeyDown
+    $("#give-up-button").on "click", onGiveUp
+
     fetchQuote()
     updateFrame "startGame", null

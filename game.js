@@ -144,7 +144,7 @@
 
 require.register("src/game", function(exports, require, module) {
 module.exports = function() {
-  var comboToString, decode, decodeChar, decodeKeyStates, fetchQuote, frame, getAllMatches, getValidComboStream, hideLetters, isLetter, isLetterOrSpace, isSpace, onKeyDown, quoteApiUrl, render, resetAllUnsolved, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, shouldReveal, states, updateFrame, updatedecodeKey;
+  var comboToString, decode, decodeChar, decodeKeyStates, fetchQuote, frame, getAllMatches, getValidComboStream, hideLetters, isLetter, isLetterOrSpace, isSpace, onGiveUp, onKeyDown, quoteApiUrl, render, resetAllUnsolved, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, shouldReveal, states, updateFrame, updatedecodeKey;
   quoteApiUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D'http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
   decodeKeyStates = {
     HIDDEN: 0,
@@ -283,31 +283,32 @@ module.exports = function() {
           secretMessage: "",
           feedback: "LOADING",
           score: "",
-          showGameActions: false
+          showPlayActions: false
         };
       }
     },
     play: {
       onEnter: function() {},
-      onEvent: function(eventData, scope) {
+      onEvent: function(eventData, scope, trigger) {
         var char, existingSolved, isUnsolved, potentialCombo, totalUnsolved;
-        if (eventData.keyCode === 191) {
+        if (trigger === "giveUp") {
           return ["gaveUp", scope];
-        }
-        char = String.fromCharCode(eventData.keyCode).toLowerCase();
-        if (isLetter(char)) {
-          potentialCombo = scope.comboString + char;
-          existingSolved = resetAllUnsolved(scope.decodeKey);
-          scope.moves += 1;
-          scope.score = Math.max(0, scope.score - 1);
-          scope.comboString = getValidComboStream(potentialCombo, scope.comboGroups);
-          scope.decodeKey = getAllMatches(scope.comboGroups, scope.comboString, existingSolved);
-          scope.lastInput = char;
-        }
-        isUnsolved = R.compose(R.not, R.eq(decodeKeyStates.SOLVED));
-        totalUnsolved = R.length(R.filter(isUnsolved)(scope.decodeKey));
-        if (totalUnsolved === 0) {
-          return ["solved", scope];
+        } else if (trigger === "keyPress") {
+          char = String.fromCharCode(eventData.keyCode).toLowerCase();
+          if (isLetter(char)) {
+            potentialCombo = scope.comboString + char;
+            existingSolved = resetAllUnsolved(scope.decodeKey);
+            scope.moves += 1;
+            scope.score = Math.max(0, scope.score - 1);
+            scope.comboString = getValidComboStream(potentialCombo, scope.comboGroups);
+            scope.decodeKey = getAllMatches(scope.comboGroups, scope.comboString, existingSolved);
+            scope.lastInput = char;
+          }
+          isUnsolved = R.compose(R.not, R.eq(decodeKeyStates.SOLVED));
+          totalUnsolved = R.length(R.filter(isUnsolved)(scope.decodeKey));
+          if (totalUnsolved === 0) {
+            return ["solved", scope];
+          }
         }
         return ["play", scope];
       },
@@ -318,7 +319,7 @@ module.exports = function() {
           secretMessage: decode(scope.secretMessage, scope.decodeKey),
           feedback: comboString || scope.lastInput || "Type letter combos to reveal the hidden message.",
           score: scope.score,
-          showGameActions: true
+          showPlayActions: true
         };
       }
     },
@@ -339,7 +340,7 @@ module.exports = function() {
           secretMessage: scope.secretMessage,
           feedback: "You gave up!<br>Press any key to play again.",
           score: 0,
-          showGameActions: false
+          showPlayActions: false
         };
       }
     },
@@ -360,7 +361,7 @@ module.exports = function() {
           secretMessage: decode(scope.secretMessage, scope.decodeKey),
           feedback: "SOLVED in " + scope.moves + " moves!<br>Press any key to play again.",
           score: scope.score,
-          showGameActions: false
+          showPlayActions: false
         };
       }
     }
@@ -377,12 +378,12 @@ module.exports = function() {
       scope: newScope
     };
   };
-  updateFrame = function(type, data) {
+  updateFrame = function(trigger, data) {
     var scope, state, _ref;
     _ref = frame({
       state: this.currentState,
       scope: this.store
-    }, type, data), state = _ref.state, scope = _ref.scope;
+    }, trigger, data), state = _ref.state, scope = _ref.scope;
     this.currentState = state;
     return this.store = scope;
   };
@@ -410,23 +411,28 @@ module.exports = function() {
     e.preventDefault();
     return updateFrame("keyPress", e);
   };
+  onGiveUp = function(e) {
+    e.preventDefault();
+    return updateFrame("giveUp", null);
+  };
   render = function(data) {
-    var $feedback, $score, $secretMessage, feedback, score, secretMessage, showGameActions;
+    var $feedback, $score, $secretMessage, feedback, score, secretMessage, showPlayActions;
     $secretMessage = Zepto("#secret-message");
     $feedback = Zepto("#feedback");
     $score = Zepto("#score");
-    secretMessage = data.secretMessage, feedback = data.feedback, score = data.score, showGameActions = data.showGameActions;
+    secretMessage = data.secretMessage, feedback = data.feedback, score = data.score, showPlayActions = data.showPlayActions;
     $secretMessage.text(secretMessage);
     $feedback.html(feedback);
     $score.text(score);
-    if (showGameActions) {
-      return Zepto("#give-up").show();
+    if (showPlayActions) {
+      return Zepto("#play-actions").show();
     } else {
-      return Zepto("#give-up").hide();
+      return Zepto("#play-actions").hide();
     }
   };
   return Zepto(function($) {
     $(document).on("keydown", onKeyDown);
+    $("#give-up-button").on("click", onGiveUp);
     fetchQuote();
     return updateFrame("startGame", null);
   });

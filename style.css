@@ -32,11 +32,36 @@ body {
   right: 60px;
   color: #ccc;
 }
-#give-up {
-  display: none;
-  font: 14px Helvetica;
+
+#play-actions {
   position: absolute;
-  bottom: 30px;
-  left: 60px;
-  color: #ccc;
+  left: 30px;
+  bottom: 40px;
+}
+
+.button {
+  padding: 14px 10px;
+  background: #bbb;
+  color: #fff;
+  font: 20px Helvetica;
+  border-radius: 6px;
+  -webkit-border-radius: 6px; 
+  -moz-border-radius: 6px; 
+  margin-top: 20px;
+  text-align: center;
+  cursor: pointer;
+}
+.button:hover {
+  background: #aaa;
+}
+.button.secondary {
+  background: #eee;
+  border: 1px solid #ddd;
+  color: #bbb;
+  font-size: 14px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.button.secondary:hover {
+  background: #eaeaea;
 }
