@@ -276,7 +276,7 @@ module.exports = ->
     {secretMessage, feedback, score, showGameActions} = data
 
     $secretMessage.text secretMessage
-    $feedback.text feedback
+    $feedback.html feedback # make sure only known or escaped strings go through here!
     $score.text score
 
     if showGameActions

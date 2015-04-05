@@ -416,7 +416,7 @@ module.exports = function() {
     $score = Zepto("#score");
     secretMessage = data.secretMessage, feedback = data.feedback, score = data.score, showGameActions = data.showGameActions;
     $secretMessage.text(secretMessage);
-    $feedback.text(feedback);
+    $feedback.html(feedback);
     $score.text(score);
     if (showGameActions) {
       return Zepto("#give-up").show();
