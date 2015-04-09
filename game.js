@@ -144,12 +144,14 @@
 
 require.register("src/game", function(exports, require, module) {
 module.exports = function() {
-  var comboToString, decode, decodeChar, decodeKeyStates, fetchQuote, frame, getAllMatches, getRandomElement, getRandomElements, getValidComboStream, hideLetters, isLetter, isLetterOrSpace, isSpace, isUnsolved, onGiveUp, onHint, onKeyDown, quoteApiUrl, render, resetAllUnsolved, saveIndexes, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, shouldReveal, states, updateFrame, updatedecodeKey;
+  var buildSecredMessage, comboToString, decode, decodeKeyStates, fetchQuote, frame, getAllMatches, getRandomElement, getRandomElements, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, onGiveUp, onHint, onKeyDown, quoteApiUrl, render, resetAllUnsolved, saveIndexes, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, states, updateFrame, updatedecodeKey;
   quoteApiUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D'http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
   decodeKeyStates = {
     HIDDEN: 0,
     REVEALED: 1,
-    SOLVED: 2
+    SOLVED: 2,
+    HINTED: 3,
+    HINTEDFILLED: 4
   };
   isLetter = function(char) {
     return /[a-z]/i.test(char);
@@ -201,15 +203,14 @@ module.exports = function() {
       return decodeKeyStates.HIDDEN;
     }
   };
-  isUnsolved = R.compose(R.not, R.eq(decodeKeyStates.SOLVED));
-  decodeChar = function(secretChar, decodingStatus) {
-    if (shouldReveal(decodingStatus)) {
-      return secretChar;
-    } else {
-      return "_";
-    }
-  };
-  decode = R.compose(R.join(''), R.zipWith(decodeChar));
+  isHidden = R.eq(decodeKeyStates.HIDDEN);
+  isSolved = R.eq(decodeKeyStates.SOLVED);
+  decode = R.zipWith(function(secretChar, decodingStatus) {
+    return {
+      char: secretChar,
+      status: decodingStatus
+    };
+  });
   sentanceToWords = function(sentance) {
     var breakIntoWords;
     breakIntoWords = function(acc, char, index) {
@@ -229,9 +230,6 @@ module.exports = function() {
       return acc;
     };
     return R.reduceIndexed(breakIntoWords, [[]], sentance);
-  };
-  shouldReveal = function(decodingStatus) {
-    return decodingStatus === decodeKeyStates.REVEALED || decodingStatus === decodeKeyStates.SOLVED;
   };
   comboToString = R.compose(R.join(""), R.map(R.prop("char")));
   setIndexIfNotSolved = function(value, arr, index) {
@@ -326,7 +324,7 @@ module.exports = function() {
     play: {
       onEnter: function() {},
       onEvent: function(eventData, scope, trigger) {
-        var char, elementsToReveal, existingSolved, hintAllowance, indexedDecodeKey, indexesToReaveal, oneOrOneTenth, potentialCombo, totalUnsolved, unsolvedChars;
+        var char, elementsToReveal, existingSolved, hiddenChars, hintAllowance, indexedDecodeKey, indexesToReaveal, oneOrOneTenth, potentialCombo, totalSolved;
         console.log(scope);
         if (trigger === "giveUp") {
           return ["gaveUp", scope];
@@ -336,16 +334,16 @@ module.exports = function() {
             return Math.ceil(items / 10);
           };
           indexedDecodeKey = saveIndexes(scope.decodeKey);
-          unsolvedChars = R.filter(R.compose(isUnsolved, R.prop("status")))(indexedDecodeKey);
-          hintAllowance = oneOrOneTenth(unsolvedChars.length);
-          elementsToReveal = getRandomElements(unsolvedChars, hintAllowance);
+          hiddenChars = R.filter(R.compose(isHidden, R.prop("status")))(indexedDecodeKey);
+          hintAllowance = oneOrOneTenth(hiddenChars.length);
+          elementsToReveal = getRandomElements(hiddenChars, hintAllowance);
           indexesToReaveal = R.map(R.prop("index"), elementsToReveal);
           R.forEach(function(index) {
-            return scope.decodeKey[index] = decodeKeyStates.SOLVED;
+            return scope.decodeKey[index] = decodeKeyStates.HINTED;
           }, indexesToReaveal);
           scope.hints += 1;
           scope.score = Math.floor(scope.score / 2);
-          if (unsolvedChars.length === 1) {
+          if (hiddenChars.length === 1) {
             return ["solved", scope];
           }
         }
@@ -360,8 +358,8 @@ module.exports = function() {
             scope.decodeKey = getAllMatches(scope.comboGroups, scope.comboString, existingSolved);
             scope.lastInput = char;
           }
-          totalUnsolved = R.length(R.filter(isUnsolved)(scope.decodeKey));
-          if (totalUnsolved === 0) {
+          totalSolved = R.length(R.filter(isSolved)(scope.decodeKey));
+          if (totalSolved === scope.secretMessage.length) {
             return ["solved", scope];
           }
         }
@@ -478,13 +476,29 @@ module.exports = function() {
     e.preventDefault();
     return updateFrame("hint", null);
   };
+  buildSecredMessage = function(secretMessage) {
+    var renderLetter, statusMap;
+    statusMap = R.invertObj(decodeKeyStates);
+    renderLetter = function(letter) {
+      var status, text;
+      text = void 0;
+      if (letter.status === decodeKeyStates.HIDDEN) {
+        text = " ";
+      } else {
+        text = letter.char;
+      }
+      status = statusMap[letter.status].toLowerCase();
+      return "<span class='letter " + status + "'>" + text + "</span>";
+    };
+    return R.join("", R.map(renderLetter, secretMessage));
+  };
   render = function(data) {
     var $feedback, $score, $secretMessage, feedback, score, secretMessage, showPlayActions;
     $secretMessage = Zepto("#secret-message");
     $feedback = Zepto("#feedback");
     $score = Zepto("#score");
     secretMessage = data.secretMessage, feedback = data.feedback, score = data.score, showPlayActions = data.showPlayActions;
-    $secretMessage.text(secretMessage);
+    $secretMessage.html(buildSecredMessage(secretMessage));
     $feedback.html(feedback);
     $score.text(score);
     if (showPlayActions) {

@@ -6,6 +6,8 @@ module.exports = ->
     HIDDEN: 0
     REVEALED: 1
     SOLVED: 2
+    HINTED: 3
+    HINTEDFILLED: 4
 
   isLetter = (char) ->
     /[a-z]/i.test char
@@ -43,16 +45,13 @@ module.exports = ->
     else
       decodeKeyStates.HIDDEN
 
-  isUnsolved = R.compose(R.not, (R.eq decodeKeyStates.SOLVED))
+  isHidden = R.eq decodeKeyStates.HIDDEN
+  isSolved = R.eq decodeKeyStates.SOLVED
 
-  decodeChar = (secretChar, decodingStatus)  ->
-    if shouldReveal decodingStatus
-      return secretChar
-    else
-      return "_"
-
-  # encodedMessage, decodeKey -> decodedMessage
-  decode = R.compose(R.join(''), R.zipWith(decodeChar))
+  # (encodedMessage, decodeKey) -> decodedMessage [{char, status}]
+  decode = R.zipWith (secretChar, decodingStatus) ->
+    char: secretChar
+    status: decodingStatus
 
   sentanceToWords = (sentance) ->
     breakIntoWords = (acc, char, index) ->
@@ -67,10 +66,6 @@ module.exports = ->
           acc[acc.length - 1].push charInfo
       acc
     R.reduceIndexed breakIntoWords, [[]], sentance
-
-
-  shouldReveal = (decodingStatus) ->
-    decodingStatus in [decodeKeyStates.REVEALED, decodeKeyStates.SOLVED]
 
   comboToString = R.compose R.join(""), R.map(R.prop "char")
 
@@ -172,19 +167,19 @@ module.exports = ->
           # cuts your score in half each time
           oneOrOneTenth = (items) -> Math.ceil items / 10
           indexedDecodeKey = saveIndexes scope.decodeKey
-          unsolvedChars = R.filter(R.compose(isUnsolved, R.prop "status")) indexedDecodeKey
-          hintAllowance = oneOrOneTenth unsolvedChars.length
-          elementsToReveal = getRandomElements unsolvedChars, hintAllowance
+          hiddenChars = R.filter(R.compose(isHidden, R.prop "status")) indexedDecodeKey
+          hintAllowance = oneOrOneTenth hiddenChars.length
+          elementsToReveal = getRandomElements hiddenChars, hintAllowance
           indexesToReaveal = R.map R.prop("index"), elementsToReveal
           R.forEach (index) ->
-            scope.decodeKey[index] = decodeKeyStates.SOLVED
+            scope.decodeKey[index] = decodeKeyStates.HINTED
           , indexesToReaveal
 
           scope.hints += 1
           scope.score = Math.floor scope.score / 2
 
           # in case the last missing char was just filled in
-          if unsolvedChars.length is 1
+          if hiddenChars.length is 1
             return ["solved", scope]
 
         if trigger is "keyPress"
@@ -203,8 +198,8 @@ module.exports = ->
             scope.lastInput = char
 
           # won?
-          totalUnsolved = R.length(R.filter(isUnsolved) scope.decodeKey)
-          if totalUnsolved is 0
+          totalSolved = R.length(R.filter(isSolved) scope.decodeKey)
+          if totalSolved is scope.secretMessage.length
             return ["solved", scope]
 
         ["play", scope]
@@ -328,13 +323,27 @@ module.exports = ->
 
   # drawing
 
+  buildSecredMessage = (secretMessage) ->
+    statusMap = R.invertObj decodeKeyStates
+
+    renderLetter = (letter) ->
+      text = undefined
+      if letter.status is decodeKeyStates.HIDDEN
+        text = " "
+      else
+        text = letter.char
+      status = statusMap[letter.status].toLowerCase()
+      "<span class='letter #{status}'>#{text}</span>"
+
+    R.join "", R.map renderLetter, secretMessage
+
   render = (data) ->
     $secretMessage = Zepto("#secret-message")
     $feedback = Zepto("#feedback")
     $score = Zepto("#score")
     {secretMessage, feedback, score, showPlayActions} = data
 
-    $secretMessage.text secretMessage
+    $secretMessage.html buildSecredMessage secretMessage
     $feedback.html feedback # make sure only known or escaped strings go through here!
     $score.text score
 

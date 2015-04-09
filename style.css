@@ -8,15 +8,29 @@ body {
   margin: 0;
 }
 #secret-message {
-  font: 40px courier;
-  letter-spacing: 5px;
-  line-height: 1.5em;
-  white-space: pre-wrap;
   width: 80%;
   position: relative;
   margin: auto;
   top: 20%;
   text-align: center;
+}
+.letter {
+  font: 40px courier;
+  line-height: 1.5em;
+  white-space: pre-wrap;
+  margin: 0px 2px;
+  color: black;
+  position: relative;
+  display: inline-block;
+}
+.letter.hinted {
+  color: #ddd;
+}
+.letter.hidden:before {
+  content: "_";
+  position: absolute;
+  bottom: 0;
+  left: 0;
 }
 #feedback {
   font: 20px courier;
@@ -65,3 +79,4 @@ body {
 .button.secondary:hover {
   background: #eaeaea;
 }
+
