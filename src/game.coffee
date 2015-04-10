@@ -168,19 +168,20 @@ module.exports = ->
           oneOrOneTenth = (items) -> Math.ceil items / 10
           indexedDecodeKey = saveIndexes scope.decodeKey
           hiddenChars = R.filter(R.compose(isHidden, R.prop "status")) indexedDecodeKey
+          # if there are none left, just return
+          if hiddenChars.length is 0
+            return ["play", scope]
+
           hintAllowance = oneOrOneTenth hiddenChars.length
           elementsToReveal = getRandomElements hiddenChars, hintAllowance
           indexesToReaveal = R.map R.prop("index"), elementsToReveal
+
           R.forEach (index) ->
             scope.decodeKey[index] = decodeKeyStates.HINTED
           , indexesToReaveal
-
           scope.hints += 1
           scope.score = Math.floor scope.score / 2
 
-          # in case the last missing char was just filled in
-          if hiddenChars.length is 1
-            return ["solved", scope]
 
         if trigger is "keyPress"
           char = String.fromCharCode(eventData.keyCode).toLowerCase()
@@ -227,7 +228,7 @@ module.exports = ->
         return ["loading", scope]
 
       getRenderData: (scope) ->
-        secretMessage: scope.secretMessage
+        secretMessage: decode(scope.secretMessage, R.map( R.always(decodeKeyStates.SOLVED), scope.decodeKey))
         feedback: "You gave up!<br>Press any key to play again."
         score: 0
         showPlayActions: false

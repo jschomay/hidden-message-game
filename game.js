@@ -335,6 +335,9 @@ module.exports = function() {
           };
           indexedDecodeKey = saveIndexes(scope.decodeKey);
           hiddenChars = R.filter(R.compose(isHidden, R.prop("status")))(indexedDecodeKey);
+          if (hiddenChars.length === 0) {
+            return ["play", scope];
+          }
           hintAllowance = oneOrOneTenth(hiddenChars.length);
           elementsToReveal = getRandomElements(hiddenChars, hintAllowance);
           indexesToReaveal = R.map(R.prop("index"), elementsToReveal);
@@ -343,9 +346,6 @@ module.exports = function() {
           }, indexesToReaveal);
           scope.hints += 1;
           scope.score = Math.floor(scope.score / 2);
-          if (hiddenChars.length === 1) {
-            return ["solved", scope];
-          }
         }
         if (trigger === "keyPress") {
           char = String.fromCharCode(eventData.keyCode).toLowerCase();
@@ -391,7 +391,7 @@ module.exports = function() {
       },
       getRenderData: function(scope) {
         return {
-          secretMessage: scope.secretMessage,
+          secretMessage: decode(scope.secretMessage, R.map(R.always(decodeKeyStates.SOLVED), scope.decodeKey)),
           feedback: "You gave up!<br>Press any key to play again.",
           score: 0,
           showPlayActions: false
