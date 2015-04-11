@@ -154,7 +154,7 @@ module.exports = ->
           scope.score = R.filter(isLetter, secretMessage).length * 5
           scope.moves = 0
           scope.hints = 0
-          scope.lastInput = null
+          scope.lastCombo = null
           return ["play", scope]
         else
           ["loading", scope]
@@ -203,7 +203,7 @@ module.exports = ->
             scope.score = Math.max(0, scope.score - 1)
             scope.comboString = getValidComboStream potentialCombo, scope.comboGroups
             scope.decodeKey = getAllMatches scope.comboGroups, scope.comboString, existingSolved
-            scope.lastInput = char
+            scope.lastCombo = potentialCombo
 
           # won?
           totalSolved = R.length(R.filter(isSolved) scope.decodeKey)
@@ -215,7 +215,8 @@ module.exports = ->
       getRenderData: (scope) ->
         comboString = if scope.comboString.length then scope.comboString else null
         secretMessage: decode(scope.secretMessage, scope.decodeKey)
-        feedback: comboString or scope.lastInput  or "Type letter combos to reveal the hidden message."
+        feedback: comboString or scope.lastCombo  or "Type letter combos to reveal the hidden message."
+        match: if scope.lastCombo then !!scope.comboString.length > 0 else null
         score: scope.score
         showPlayActions: true
 
@@ -230,7 +231,7 @@ module.exports = ->
         scope.score = undefined
         scope.moves = undefined
         scope.hints = undefined
-        scope.lastInput = undefined
+        scope.lastCombo = undefined
 
         return ["loading", scope]
 
@@ -251,7 +252,7 @@ module.exports = ->
         scope.score = undefined
         scope.moves = undefined
         scope.hints = undefined
-        scope.lastInput = undefined
+        scope.lastCombo = undefined
 
         return ["loading", scope]
 
@@ -353,11 +354,17 @@ module.exports = ->
     $secretMessage = Zepto("#secret-message")
     $feedback = Zepto("#feedback")
     $score = Zepto("#score")
-    {secretMessage, feedback, score, showPlayActions} = data
+    {secretMessage, feedback, score, showPlayActions, match} = data
 
     $secretMessage.html buildSecredMessage secretMessage
     $feedback.html feedback # make sure only known or escaped strings go through here!
     $score.text score
+    $feedback.removeClass "no-match"
+    $feedback.removeClass "match"
+    if match is true
+      $feedback.addClass "match"
+    if match is false
+      $feedback.addClass "no-match"
 
     if showPlayActions
       Zepto("#play-actions").show()

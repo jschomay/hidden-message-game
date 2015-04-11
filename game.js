@@ -312,7 +312,7 @@ module.exports = function() {
           scope.score = R.filter(isLetter, secretMessage).length * 5;
           scope.moves = 0;
           scope.hints = 0;
-          scope.lastInput = null;
+          scope.lastCombo = null;
           return ["play", scope];
         } else {
           return ["loading", scope];
@@ -359,7 +359,7 @@ module.exports = function() {
             scope.score = Math.max(0, scope.score - 1);
             scope.comboString = getValidComboStream(potentialCombo, scope.comboGroups);
             scope.decodeKey = getAllMatches(scope.comboGroups, scope.comboString, existingSolved);
-            scope.lastInput = char;
+            scope.lastCombo = potentialCombo;
           }
           totalSolved = R.length(R.filter(isSolved)(scope.decodeKey));
           if (totalSolved === scope.secretMessage.length) {
@@ -373,7 +373,8 @@ module.exports = function() {
         comboString = scope.comboString.length ? scope.comboString : null;
         return {
           secretMessage: decode(scope.secretMessage, scope.decodeKey),
-          feedback: comboString || scope.lastInput || "Type letter combos to reveal the hidden message.",
+          feedback: comboString || scope.lastCombo || "Type letter combos to reveal the hidden message.",
+          match: scope.lastCombo ? !!scope.comboString.length > 0 : null,
           score: scope.score,
           showPlayActions: true
         };
@@ -389,7 +390,7 @@ module.exports = function() {
         scope.score = void 0;
         scope.moves = void 0;
         scope.hints = void 0;
-        scope.lastInput = void 0;
+        scope.lastCombo = void 0;
         return ["loading", scope];
       },
       getRenderData: function(scope) {
@@ -411,7 +412,7 @@ module.exports = function() {
         scope.score = void 0;
         scope.moves = void 0;
         scope.hints = void 0;
-        scope.lastInput = void 0;
+        scope.lastCombo = void 0;
         return ["loading", scope];
       },
       getRenderData: function(scope) {
@@ -502,14 +503,22 @@ module.exports = function() {
     return (R.reduce(buildMarkup, "<span class='word'>", secretMessage)) + "</span>";
   };
   render = function(data) {
-    var $feedback, $score, $secretMessage, feedback, score, secretMessage, showPlayActions;
+    var $feedback, $score, $secretMessage, feedback, match, score, secretMessage, showPlayActions;
     $secretMessage = Zepto("#secret-message");
     $feedback = Zepto("#feedback");
     $score = Zepto("#score");
-    secretMessage = data.secretMessage, feedback = data.feedback, score = data.score, showPlayActions = data.showPlayActions;
+    secretMessage = data.secretMessage, feedback = data.feedback, score = data.score, showPlayActions = data.showPlayActions, match = data.match;
     $secretMessage.html(buildSecredMessage(secretMessage));
     $feedback.html(feedback);
     $score.text(score);
+    $feedback.removeClass("no-match");
+    $feedback.removeClass("match");
+    if (match === true) {
+      $feedback.addClass("match");
+    }
+    if (match === false) {
+      $feedback.addClass("no-match");
+    }
     if (showPlayActions) {
       return Zepto("#play-actions").show();
     } else {

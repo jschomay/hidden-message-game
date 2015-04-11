@@ -43,6 +43,13 @@ body {
   top: 40%;
   color: #bbb;
 }
+#feedback.match {
+  color: #aaddaa;
+}
+#feedback.no-match {
+  color: #ddaaaa;
+}
+
 #score {
   font: 60px Helvetica;
   position: absolute;
