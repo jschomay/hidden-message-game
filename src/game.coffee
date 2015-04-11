@@ -69,8 +69,9 @@ module.exports = ->
   comboToString = R.compose R.join(""), R.map(R.prop "char")
 
   setIndexIfNotSolved = (value, arr, index) ->
-    if arr[index] isnt decodeKeyStates.SOLVED
-      arr[index] = value
+    if typeof value is "function"
+      value = value arr[index]
+    arr[index] = value
     arr
 
   setIndexes = R.curry (value, arr, indexes) ->
@@ -78,14 +79,24 @@ module.exports = ->
 
 
   setIndexesToSolved = setIndexes decodeKeyStates.SOLVED
-  setIndexesToRevealed = setIndexes decodeKeyStates.REVEALED
 
-  resetAllUnsolved = (decodeKey) ->
-    nullifyAllNonSolved = (i) ->
-      if i is decodeKeyStates.SOLVED then i else decodeKeyStates.HIDDEN
-    R.map nullifyAllNonSolved, decodeKey
+  setIndexesToRevealed = setIndexes (currentStatus) ->
+    map = {}
+    map[decodeKeyStates.HIDDEN] = decodeKeyStates.REVEALED
+    map[decodeKeyStates.HINTED] = decodeKeyStates.HINTEDFILLED
+    map[currentStatus] or currentStatus
 
-  updatedecodeKey = (comboString, decodeKey, comboGroup) ->
+  resetDecodeKey = (decodeKey) ->
+    map = {}
+    map[decodeKeyStates.SOLVED] = decodeKeyStates.SOLVED
+    map[decodeKeyStates.HINTED] = decodeKeyStates.HINTED
+    map[decodeKeyStates.HINTEDFILLED] = decodeKeyStates.HINTED
+
+    resetTransform = (currentStatus) ->
+      map[currentStatus] or decodeKeyStates.HIDDEN
+    R.map resetTransform, decodeKey
+
+  updateDecodeKey = (comboString, decodeKey, comboGroup) ->
     pattern = new RegExp "^" + comboString, "i"
     comboGroupString = comboToString comboGroup
 
@@ -102,7 +113,7 @@ module.exports = ->
   getAllMatches = (comboGroups, comboString, decodeKey) ->
     if comboString.length < 1
       return decodeKey
-    decodeKey = R.reduce R.partial(updatedecodeKey, comboString), decodeKey, comboGroups
+    decodeKey = R.reduce R.partial(updateDecodeKey, comboString), decodeKey, comboGroups
     return getAllMatches comboGroups, comboString.slice(1), decodeKey
 
 
@@ -157,7 +168,6 @@ module.exports = ->
     play:
       onEnter: ->
       onEvent: (eventData, scope, trigger) ->
-        console.log scope
         if trigger is "giveUp"
           return ["gaveUp", scope]
 
@@ -186,7 +196,7 @@ module.exports = ->
           # ignore non-letter inputs
           if isLetter char
             potentialCombo = scope.comboString + char
-            existingSolved = resetAllUnsolved scope.decodeKey
+            existingSolved = resetDecodeKey scope.decodeKey
 
             # update state
             scope.moves += 1
