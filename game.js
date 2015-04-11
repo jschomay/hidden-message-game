@@ -144,8 +144,12 @@
 
 require.register("src/game", function(exports, require, module) {
 module.exports = function() {
-  var buildSecredMessage, comboToString, decode, decodeKeyStates, fetchQuote, frame, getAllMatches, getRandomElement, getRandomElements, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, onGiveUp, onHint, onKeyDown, quoteApiUrl, render, resetDecodeKey, saveIndexes, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, states, updateDecodeKey, updateFrame;
+  var SOUNDS, buildSecredMessage, comboToString, decode, decodeKeyStates, fetchQuote, frame, getAllMatches, getRandomElement, getRandomElements, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadSounds, numSoundsLoaded, onGiveUp, onHint, onKeyDown, playSound, preload, quoteApiUrl, render, resetDecodeKey, saveIndexes, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, startGame, states, updateDecodeKey, updateFrame, updateLoadProgress;
   quoteApiUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D'http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
+  SOUNDS = {};
+  playSound = function(key) {
+    return SOUNDS[key].play();
+  };
   decodeKeyStates = {
     HIDDEN: 0,
     REVEALED: 1,
@@ -331,7 +335,7 @@ module.exports = function() {
       getRenderData: function(scope) {
         return {
           secretMessage: "",
-          feedback: "LOADING",
+          feedback: "LOADING...",
           score: "",
           showPlayActions: false
         };
@@ -371,6 +375,11 @@ module.exports = function() {
             scope.comboString = getValidComboStream(potentialCombo, unsolvedComboGroups);
             scope.decodeKey = getAllMatches(scope.comboGroups, scope.comboString, existingSolved);
             scope.lastCombo = potentialCombo;
+            if (scope.comboString.length) {
+              playSound("keyPressHit");
+            } else {
+              playSound("keyPressMiss");
+            }
             if (scope.comboCompleted === true) {
               scope.lastCombo = char;
             }
@@ -541,13 +550,43 @@ module.exports = function() {
       return Zepto("#play-actions").hide();
     }
   };
-  return Zepto(function($) {
-    $(document).on("keydown", onKeyDown);
-    $("#give-up-button").on("click", onGiveUp);
-    $("#hint-button").on("click", onHint);
-    fetchQuote();
-    return updateFrame("startGame", null);
-  });
+  numSoundsLoaded = function(soundsLoaded) {
+    return R.length(R.filter(R.compose(R.identity, R.prop("_loaded")), R.values(soundsLoaded)));
+  };
+  updateLoadProgress = function(soundsToLoad, soundsLoaded) {
+    if (numSoundsLoaded(soundsLoaded) === soundsToLoad) {
+      return startGame();
+    }
+  };
+  loadSounds = function(sounds) {
+    var initializeSounds, totalSounds;
+    totalSounds = R.length(R.keys(sounds));
+    initializeSounds = function(acc, sound) {
+      acc[sound[0]] = new Howl({
+        urls: sound[1],
+        onload: function() {
+          return updateLoadProgress(totalSounds, acc);
+        }
+      });
+      return acc;
+    };
+    return R.reduce(initializeSounds, SOUNDS, R.toPairs(sounds));
+  };
+  preload = function() {
+    return loadSounds({
+      keyPressMiss: ['assets/key-press-miss.wav'],
+      keyPressHit: ['assets/key-press-hit.wav']
+    });
+  };
+  startGame = function() {
+    return Zepto(function($) {
+      $(document).on("keydown", onKeyDown);
+      $("#give-up-button").on("click", onGiveUp);
+      $("#hint-button").on("click", onHint);
+      return fetchQuote();
+    });
+  };
+  return preload();
 };
 
 });

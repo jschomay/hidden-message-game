@@ -2,6 +2,10 @@ module.exports = ->
 
   quoteApiUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D'http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys"
 
+  SOUNDS = {}
+  playSound = (key) ->
+    SOUNDS[key].play()
+
   decodeKeyStates =
     HIDDEN: 0
     REVEALED: 1
@@ -168,7 +172,7 @@ module.exports = ->
 
       getRenderData: (scope) ->
         secretMessage: ""
-        feedback: "LOADING"
+        feedback: "LOADING..."
         score: ""
         showPlayActions: false
 
@@ -213,6 +217,12 @@ module.exports = ->
             scope.comboString = getValidComboStream potentialCombo, unsolvedComboGroups
             scope.decodeKey = getAllMatches scope.comboGroups, scope.comboString, existingSolved
             scope.lastCombo = potentialCombo
+
+            # reveal or miss?
+            if scope.comboString.length
+              playSound "keyPressHit"
+            else
+              playSound "keyPressMiss"
 
             # if the last keypress completed a combo, reset the last combo
             if scope.comboCompleted is true
@@ -388,13 +398,40 @@ module.exports = ->
       Zepto("#play-actions").hide()
 
 
+  # load sounds
+  numSoundsLoaded = (soundsLoaded) ->
+    R.length R.filter R.compose(R.identity, R.prop("_loaded")), R.values soundsLoaded
 
-  # kick off when document is pready
-  Zepto ($) ->
-    # bind inputs
-    $(document).on "keydown", onKeyDown
-    $("#give-up-button").on "click", onGiveUp
-    $("#hint-button").on "click", onHint
+  updateLoadProgress = (soundsToLoad, soundsLoaded) ->
+    if numSoundsLoaded(soundsLoaded) is soundsToLoad
+      startGame()
 
-    fetchQuote()
-    updateFrame "startGame", null
+  loadSounds = (sounds) ->
+    totalSounds = R.length R.keys sounds
+
+    initializeSounds = (acc, sound) ->
+      acc[sound[0]] = new Howl
+        urls: sound[1]
+        onload: -> updateLoadProgress totalSounds, acc
+      acc
+
+    R.reduce initializeSounds, SOUNDS, R.toPairs sounds
+
+  preload = ->
+    loadSounds
+      keyPressMiss: ['assets/key-press-miss.wav']
+      keyPressHit: ['assets/key-press-hit.wav']
+
+  startGame = ->
+    # make sure document is loaded before starting (it should be by now)
+    Zepto ($) ->
+      # bind inputs
+      $(document).on "keydown", onKeyDown
+      $("#give-up-button").on "click", onGiveUp
+      $("#hint-button").on "click", onHint
+
+      fetchQuote()
+
+
+  # kick off game
+  preload()
