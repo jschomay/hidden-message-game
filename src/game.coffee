@@ -62,7 +62,6 @@ module.exports = ->
           charInfo =
             char: char
             index: index
-            reveal: false
           acc[acc.length - 1].push charInfo
       acc
     R.reduceIndexed breakIntoWords, [[]], sentance

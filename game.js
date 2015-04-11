@@ -221,8 +221,7 @@ module.exports = function() {
         } else {
           charInfo = {
             char: char,
-            index: index,
-            reveal: false
+            index: index
           };
           acc[acc.length - 1].push(charInfo);
         }
