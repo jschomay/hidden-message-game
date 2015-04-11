@@ -341,9 +341,7 @@ module.exports = function() {
           hintAllowance = oneOrOneTenth(hiddenChars.length);
           elementsToReveal = getRandomElements(hiddenChars, hintAllowance);
           indexesToReaveal = R.map(R.prop("index"), elementsToReveal);
-          R.forEach(function(index) {
-            return scope.decodeKey[index] = decodeKeyStates.HINTED;
-          }, indexesToReaveal);
+          scope.decodeKey = setIndexes(decodeKeyStates.HINTED, scope.decodeKey, indexesToReaveal);
           scope.hints += 1;
           scope.score = Math.floor(scope.score / 2);
         }
