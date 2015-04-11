@@ -14,13 +14,17 @@ body {
   top: 20%;
   text-align: center;
 }
+.word {
+  margin-right: 27px;
+  display: inline-block;
+}
 .letter {
   font: 40px courier;
   line-height: 1.5em;
-  white-space: pre-wrap;
   margin: 0px 2px;
   color: black;
   position: relative;
+  white-space: pre;
   display: inline-block;
 }
 .letter.hinted {

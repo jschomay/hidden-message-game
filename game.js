@@ -477,20 +477,26 @@ module.exports = function() {
     return updateFrame("hint", null);
   };
   buildSecredMessage = function(secretMessage) {
-    var renderLetter, statusMap;
+    var buildMarkup, statusMap;
     statusMap = R.invertObj(decodeKeyStates);
-    renderLetter = function(letter) {
-      var status, text;
-      text = void 0;
-      if (letter.status === decodeKeyStates.HIDDEN) {
-        text = " ";
+    buildMarkup = function(acc, letter) {
+      var newLine, status, text;
+      if (isSpace(letter.char)) {
+        newLine = "";
+        if (/[\n\r]/.test(letter.char)) {
+          newLine = "<br>";
+        }
+        return acc + ("</span>" + newLine + "<span class='word'>");
       } else {
         text = letter.char;
+        if (letter.status === decodeKeyStates.HIDDEN) {
+          text = " ";
+        }
+        status = statusMap[letter.status].toLowerCase();
+        return acc + ("<span class='letter " + status + "'>" + text + "</span>");
       }
-      status = statusMap[letter.status].toLowerCase();
-      return "<span class='letter " + status + "'>" + text + "</span>";
     };
-    return R.join("", R.map(renderLetter, secretMessage));
+    return (R.reduce(buildMarkup, "<span class='word'>", secretMessage)) + "</span>";
   };
   render = function(data) {
     var $feedback, $score, $secretMessage, feedback, score, secretMessage, showPlayActions;

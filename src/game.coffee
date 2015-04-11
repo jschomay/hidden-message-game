@@ -327,16 +327,20 @@ module.exports = ->
   buildSecredMessage = (secretMessage) ->
     statusMap = R.invertObj decodeKeyStates
 
-    renderLetter = (letter) ->
-      text = undefined
-      if letter.status is decodeKeyStates.HIDDEN
-        text = " "
+    buildMarkup = (acc, letter) ->
+      if isSpace letter.char
+        newLine = ""
+        if /[\n\r]/.test letter.char
+          newLine = "<br>"
+        acc + "</span>#{newLine}<span class='word'>"
       else
         text = letter.char
-      status = statusMap[letter.status].toLowerCase()
-      "<span class='letter #{status}'>#{text}</span>"
+        if letter.status is decodeKeyStates.HIDDEN
+          text = " "
+        status = statusMap[letter.status].toLowerCase()
+        acc + "<span class='letter #{status}'>#{text}</span>"
 
-    R.join "", R.map renderLetter, secretMessage
+    (R.reduce buildMarkup, "<span class='word'>", secretMessage) + "</span>"
 
   render = (data) ->
     $secretMessage = Zepto("#secret-message")
