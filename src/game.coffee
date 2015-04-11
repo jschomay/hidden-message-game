@@ -214,6 +214,13 @@ module.exports = ->
             scope.decodeKey = getAllMatches scope.comboGroups, scope.comboString, existingSolved
             scope.lastCombo = potentialCombo
 
+            # if the last keypress completed a combo, reset the last combo
+            if scope.comboCompleted is true
+              scope.lastCombo = char
+
+            newUnsolvedComboGroups = R.filter isUnsolvedGroup(scope.decodeKey), scope.comboGroups
+            scope.comboCompleted = unsolvedComboGroups.length > newUnsolvedComboGroups.length
+
           # won?
           totalSolved = R.length(R.filter(isSolved) scope.decodeKey)
           if totalSolved is scope.secretMessage.length

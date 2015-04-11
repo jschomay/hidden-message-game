@@ -340,7 +340,7 @@ module.exports = function() {
     play: {
       onEnter: function() {},
       onEvent: function(eventData, scope, trigger) {
-        var char, elementsToReveal, existingSolved, hiddenChars, hintAllowance, indexedDecodeKey, indexesToReaveal, oneOrOneTenth, potentialCombo, totalSolved, unsolvedComboGroups;
+        var char, elementsToReveal, existingSolved, hiddenChars, hintAllowance, indexedDecodeKey, indexesToReaveal, newUnsolvedComboGroups, oneOrOneTenth, potentialCombo, totalSolved, unsolvedComboGroups;
         if (trigger === "giveUp") {
           return ["gaveUp", scope];
         }
@@ -371,6 +371,11 @@ module.exports = function() {
             scope.comboString = getValidComboStream(potentialCombo, unsolvedComboGroups);
             scope.decodeKey = getAllMatches(scope.comboGroups, scope.comboString, existingSolved);
             scope.lastCombo = potentialCombo;
+            if (scope.comboCompleted === true) {
+              scope.lastCombo = char;
+            }
+            newUnsolvedComboGroups = R.filter(isUnsolvedGroup(scope.decodeKey), scope.comboGroups);
+            scope.comboCompleted = unsolvedComboGroups.length > newUnsolvedComboGroups.length;
           }
           totalSolved = R.length(R.filter(isSolved)(scope.decodeKey));
           if (totalSolved === scope.secretMessage.length) {
