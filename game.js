@@ -144,7 +144,7 @@
 
 require.register("src/game", function(exports, require, module) {
 module.exports = function() {
-  var buildSecredMessage, comboToString, decode, decodeKeyStates, fetchQuote, frame, getAllMatches, getRandomElement, getRandomElements, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, onGiveUp, onHint, onKeyDown, quoteApiUrl, render, resetDecodeKey, saveIndexes, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, states, updateDecodeKey, updateFrame;
+  var buildSecredMessage, comboToString, decode, decodeKeyStates, fetchQuote, frame, getAllMatches, getRandomElement, getRandomElements, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, onGiveUp, onHint, onKeyDown, quoteApiUrl, render, resetDecodeKey, saveIndexes, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, states, updateDecodeKey, updateFrame;
   quoteApiUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D'http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
   decodeKeyStates = {
     HIDDEN: 0,
@@ -231,6 +231,16 @@ module.exports = function() {
     return R.reduceIndexed(breakIntoWords, [[]], sentance);
   };
   comboToString = R.compose(R.join(""), R.map(R.prop("char")));
+  isUnsolvedGroup = R.curry(function(decodeKey, group) {
+    var numSolvedInGroup;
+    numSolvedInGroup = function(acc, char) {
+      if (decodeKey[char.index] === decodeKeyStates.SOLVED) {
+        acc++;
+      }
+      return acc;
+    };
+    return (R.reduce(numSolvedInGroup, 0, group)) !== group.length;
+  });
   setIndexIfNotSolved = function(value, arr, index) {
     if (typeof value === "function") {
       value = value(arr[index]);
@@ -330,7 +340,7 @@ module.exports = function() {
     play: {
       onEnter: function() {},
       onEvent: function(eventData, scope, trigger) {
-        var char, elementsToReveal, existingSolved, hiddenChars, hintAllowance, indexedDecodeKey, indexesToReaveal, oneOrOneTenth, potentialCombo, totalSolved;
+        var char, elementsToReveal, existingSolved, hiddenChars, hintAllowance, indexedDecodeKey, indexesToReaveal, oneOrOneTenth, potentialCombo, totalSolved, unsolvedComboGroups;
         if (trigger === "giveUp") {
           return ["gaveUp", scope];
         }
@@ -355,9 +365,10 @@ module.exports = function() {
           if (isLetter(char)) {
             potentialCombo = scope.comboString + char;
             existingSolved = resetDecodeKey(scope.decodeKey);
+            unsolvedComboGroups = R.filter(isUnsolvedGroup(scope.decodeKey), scope.comboGroups);
             scope.moves += 1;
             scope.score = Math.max(0, scope.score - 1);
-            scope.comboString = getValidComboStream(potentialCombo, scope.comboGroups);
+            scope.comboString = getValidComboStream(potentialCombo, unsolvedComboGroups);
             scope.decodeKey = getAllMatches(scope.comboGroups, scope.comboString, existingSolved);
             scope.lastCombo = potentialCombo;
           }

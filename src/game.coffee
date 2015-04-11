@@ -68,6 +68,13 @@ module.exports = ->
 
   comboToString = R.compose R.join(""), R.map(R.prop "char")
 
+  isUnsolvedGroup = R.curry (decodeKey, group) ->
+    numSolvedInGroup = (acc, char) ->
+      if decodeKey[char.index] is decodeKeyStates.SOLVED
+        acc++
+      acc
+    (R.reduce numSolvedInGroup, 0, group) isnt group.length
+
   setIndexIfNotSolved = (value, arr, index) ->
     if typeof value is "function"
       value = value arr[index]
@@ -198,10 +205,12 @@ module.exports = ->
             potentialCombo = scope.comboString + char
             existingSolved = resetDecodeKey scope.decodeKey
 
+            unsolvedComboGroups = R.filter isUnsolvedGroup(scope.decodeKey), scope.comboGroups
+
             # update state
             scope.moves += 1
             scope.score = Math.max(0, scope.score - 1)
-            scope.comboString = getValidComboStream potentialCombo, scope.comboGroups
+            scope.comboString = getValidComboStream potentialCombo, unsolvedComboGroups
             scope.decodeKey = getAllMatches scope.comboGroups, scope.comboString, existingSolved
             scope.lastCombo = potentialCombo
 
