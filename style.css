@@ -92,3 +92,15 @@ body {
   background: #eaeaea;
 }
 
+#settings {
+  position: absolute;
+  left: 130px;
+  bottom: 40px;
+}
+.small-link {
+  cursor: pointer;
+  display: inline-block;
+  margin-right: 20px;
+  font: 12px Helvetica;
+  color: #ccc;
+}

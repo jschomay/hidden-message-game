@@ -144,7 +144,7 @@
 
 require.register("src/game", function(exports, require, module) {
 module.exports = function() {
-  var SOUNDS, VOLUMES, buildSecredMessage, comboToString, decode, decodeKeyStates, fadeDownMusic, fadeInMusic, fadeUpMusic, fetchQuote, frame, getAllMatches, getRandomElement, getRandomElements, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadSounds, numSoundsLoaded, onGiveUp, onHint, onKeyDown, playSound, preload, quoteApiUrl, render, resetDecodeKey, saveIndexes, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, startGame, states, updateDecodeKey, updateFrame, updateLoadProgress;
+  var SOUNDS, VOLUMES, buildSecredMessage, comboToString, decode, decodeKeyStates, fadeDownMusic, fadeInMusic, fadeUpMusic, fetchQuote, frame, getAllMatches, getMusic, getRandomElement, getRandomElements, getSFX, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadSounds, numSoundsLoaded, onFrameEnter, onGiveUp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, quoteApiUrl, render, resetDecodeKey, saveIndexes, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, startGame, states, updateDecodeKey, updateFrame, updateLoadProgress;
   quoteApiUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D'http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
   SOUNDS = {};
   VOLUMES = {
@@ -154,18 +154,40 @@ module.exports = function() {
   playSound = function(key) {
     return SOUNDS[key].play();
   };
+  getMusic = function() {
+    return SOUNDS["backgroundMusic"];
+  };
+  getSFX = function() {
+    return R.omit(["backgroundMusic"], SOUNDS);
+  };
+  playMusic = function() {
+    return getMusic().play();
+  };
+  pauseMusic = function() {
+    return getMusic().pause();
+  };
+  playSFX = function() {
+    return R.forEach((function(sound) {
+      return sound[1].volume(VOLUMES[sound[0]] || 1);
+    }), R.toPairs(getSFX()));
+  };
+  pauseSFX = function() {
+    return R.forEach((function(sound) {
+      return sound.volume(0);
+    }), R.values(getSFX()));
+  };
   fadeInMusic = function() {
-    return SOUNDS['backgroundMusic'].fadeIn(VOLUMES.backgroundMusic, 2000);
+    return getMusic().fadeIn(VOLUMES.backgroundMusic, 2000);
   };
   fadeDownMusic = function() {
     var volume;
-    volume = SOUNDS["backgroundMusic"]._volume;
-    return SOUNDS["backgroundMusic"].fade(volume, VOLUMES.backgroundMusic * 1 / 10, 700);
+    volume = getMusic()._volume;
+    return getMusic().fade(volume, VOLUMES.backgroundMusic * 1 / 10, 700);
   };
   fadeUpMusic = function() {
     var volume;
-    volume = SOUNDS["backgroundMusic"]._volume;
-    return SOUNDS["backgroundMusic"].fade(volume, VOLUMES.backgroundMusic, 1500);
+    volume = getMusic()._volume;
+    return getMusic().fade(volume, VOLUMES.backgroundMusic, 1500);
   };
   decodeKeyStates = {
     HIDDEN: 0,
@@ -499,7 +521,7 @@ module.exports = function() {
     if (states[newState] !== seed.state) {
       states[newState].onEnter();
     }
-    render(states[newState].getRenderData(newScope));
+    render(states[newState].getRenderData(newScope), newScope);
     return {
       state: states[newState],
       scope: newScope
@@ -507,6 +529,7 @@ module.exports = function() {
   };
   updateFrame = function(trigger, data) {
     var scope, state, _ref;
+    this.store = onFrameEnter(this.store, trigger, data);
     _ref = frame({
       state: this.currentState,
       scope: this.store
@@ -517,6 +540,25 @@ module.exports = function() {
   updateFrame.currentState = states.loading;
   updateFrame.store = {};
   updateFrame = updateFrame.bind(updateFrame);
+  onFrameEnter = function(scope, trigger, eventData) {
+    if (trigger === "toggleMuteMusic") {
+      if (scope.musicIsPaused) {
+        playMusic();
+      } else {
+        pauseMusic();
+      }
+      scope.musicIsPaused = !scope.musicIsPaused;
+    }
+    if (trigger === "toggleMuteSFX") {
+      if (scope.SFXIsPaused) {
+        playSFX();
+      } else {
+        pauseSFX();
+      }
+      scope.SFXIsPaused = !scope.SFXIsPaused;
+    }
+    return scope;
+  };
   fetchQuote = function() {
     return Zepto.get(quoteApiUrl, function(response) {
       var message, parse, quote, source;
@@ -546,6 +588,14 @@ module.exports = function() {
     e.preventDefault();
     return updateFrame("hint", null);
   };
+  onMuteMusic = function(e) {
+    e.preventDefault();
+    return updateFrame("toggleMuteMusic", null);
+  };
+  onMuteSFX = function(e) {
+    e.preventDefault();
+    return updateFrame("toggleMuteSFX", null);
+  };
   buildSecredMessage = function(secretMessage) {
     var buildMarkup, statusMap;
     statusMap = R.invertObj(decodeKeyStates);
@@ -568,12 +618,14 @@ module.exports = function() {
     };
     return (R.reduce(buildMarkup, "<span class='word'>", secretMessage)) + "</span>";
   };
-  render = function(data) {
-    var $feedback, $score, $secretMessage, feedback, match, score, secretMessage, showPlayActions;
+  render = function(renderData, rawScope) {
+    var $feedback, $muteMusic, $muteSFX, $score, $secretMessage, feedback, match, score, secretMessage, showPlayActions;
     $secretMessage = Zepto("#secret-message");
     $feedback = Zepto("#feedback");
     $score = Zepto("#score");
-    secretMessage = data.secretMessage, feedback = data.feedback, score = data.score, showPlayActions = data.showPlayActions, match = data.match;
+    $muteMusic = Zepto("#mute-music-button");
+    $muteSFX = Zepto("#mute-sfx-button");
+    secretMessage = renderData.secretMessage, feedback = renderData.feedback, score = renderData.score, showPlayActions = renderData.showPlayActions, match = renderData.match;
     $secretMessage.html(buildSecredMessage(secretMessage));
     $feedback.html(feedback);
     $score.text(score);
@@ -586,9 +638,19 @@ module.exports = function() {
       $feedback.addClass("no-match");
     }
     if (showPlayActions) {
-      return Zepto("#play-actions").show();
+      Zepto("#play-actions").show();
     } else {
-      return Zepto("#play-actions").hide();
+      Zepto("#play-actions").hide();
+    }
+    if (rawScope.musicIsPaused) {
+      $muteMusic.text("Play music");
+    } else {
+      $muteMusic.text("Mute music");
+    }
+    if (rawScope.SFXIsPaused) {
+      return $muteSFX.text("Play sound effects");
+    } else {
+      return $muteSFX.text("Mute sound effects");
     }
   };
   numSoundsLoaded = function(soundsLoaded) {
@@ -653,6 +715,8 @@ module.exports = function() {
       $(document).on("keydown", onKeyDown);
       $("#give-up-button").on("click", onGiveUp);
       $("#hint-button").on("click", onHint);
+      $("#mute-music-button").on("click", onMuteMusic);
+      $("#mute-sfx-button").on("click", onMuteSFX);
       fadeInMusic();
       return fetchQuote();
     });

@@ -2,6 +2,7 @@ module.exports = ->
 
   quoteApiUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D'http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys"
 
+  # sound constants and utils (using howler.js)
   SOUNDS = {}
   VOLUMES =
     backgroundMusic: 0.1
@@ -9,14 +10,26 @@ module.exports = ->
 
   playSound = (key) ->
     SOUNDS[key].play()
+  getMusic = ->
+    SOUNDS["backgroundMusic"]
+  getSFX = ->
+    R.omit ["backgroundMusic"], SOUNDS
+  playMusic = ->
+    getMusic().play()
+  pauseMusic = ->
+    getMusic().pause()
+  playSFX = ->
+    R.forEach ((sound) -> sound[1].volume(VOLUMES[sound[0]] or 1)), R.toPairs getSFX()
+  pauseSFX = ->
+    R.forEach ((sound) -> sound.volume(0)), R.values getSFX()
   fadeInMusic = ->
-    SOUNDS['backgroundMusic'].fadeIn VOLUMES.backgroundMusic, 2000
+    getMusic().fadeIn VOLUMES.backgroundMusic, 2000
   fadeDownMusic = ->
-    volume = SOUNDS["backgroundMusic"]._volume
-    SOUNDS["backgroundMusic"].fade volume, VOLUMES.backgroundMusic * 1 / 10, 700
+    volume = getMusic()._volume
+    getMusic().fade volume, VOLUMES.backgroundMusic * 1 / 10, 700
   fadeUpMusic = ->
-    volume = SOUNDS["backgroundMusic"]._volume
-    SOUNDS["backgroundMusic"].fade volume, VOLUMES.backgroundMusic, 1500
+    volume = getMusic()._volume
+    getMusic().fade volume, VOLUMES.backgroundMusic, 1500
 
   decodeKeyStates =
     HIDDEN: 0
@@ -25,6 +38,8 @@ module.exports = ->
     HINTED: 3
     HINTEDFILLED: 4
 
+
+  # utils
   isLetter = (char) ->
     /[a-z]/i.test char
   isLetterOrSpace = (char) ->
@@ -55,6 +70,9 @@ module.exports = ->
         return recur newArr, acc
     recur arr, []
 
+
+
+  # game logic
   hideLetters = (char) ->
     if not isLetter char
       decodeKeyStates.SOLVED
@@ -339,7 +357,7 @@ module.exports = ->
     if states[newState] isnt seed.state
       states[newState].onEnter()
 
-    render states[newState].getRenderData newScope
+    render states[newState].getRenderData(newScope), newScope
 
     {state: states[newState], scope: newScope}
 
@@ -350,6 +368,7 @@ module.exports = ->
   # In an FRP style, this could be done by folding over events instead.
   # It is called by all game events with the event trigger and event data.
   updateFrame = (trigger, data) ->
+    @store = onFrameEnter @store, trigger, data
     {state, scope} = frame {state: @currentState, scope: @store}, trigger, data
     @currentState = state
     @store = scope
@@ -357,6 +376,26 @@ module.exports = ->
   updateFrame.currentState = states.loading
   updateFrame.store = {}
   updateFrame = updateFrame.bind updateFrame
+
+
+  # code to run on every frame regardless of which state is active
+  onFrameEnter = (scope, trigger, eventData) ->
+    if trigger is "toggleMuteMusic"
+      if scope.musicIsPaused
+        playMusic()
+      else
+        pauseMusic()
+      scope.musicIsPaused = !scope.musicIsPaused
+
+
+    if trigger is "toggleMuteSFX"
+      if scope.SFXIsPaused
+        playSFX()
+      else
+        pauseSFX()
+      scope.SFXIsPaused = !scope.SFXIsPaused
+    scope
+
 
 
 
@@ -388,6 +427,14 @@ module.exports = ->
     e.preventDefault()
     updateFrame "hint", null
 
+  onMuteMusic = (e) ->
+    e.preventDefault()
+    updateFrame "toggleMuteMusic", null
+
+  onMuteSFX = (e) ->
+    e.preventDefault()
+    updateFrame "toggleMuteSFX", null
+
 
   # drawing
 
@@ -409,11 +456,13 @@ module.exports = ->
 
     (R.reduce buildMarkup, "<span class='word'>", secretMessage) + "</span>"
 
-  render = (data) ->
+  render = (renderData, rawScope) ->
     $secretMessage = Zepto("#secret-message")
     $feedback = Zepto("#feedback")
     $score = Zepto("#score")
-    {secretMessage, feedback, score, showPlayActions, match} = data
+    $muteMusic = Zepto("#mute-music-button")
+    $muteSFX = Zepto("#mute-sfx-button")
+    {secretMessage, feedback, score, showPlayActions, match} = renderData
 
     $secretMessage.html buildSecredMessage secretMessage
     $feedback.html feedback # make sure only known or escaped strings go through here!
@@ -425,10 +474,21 @@ module.exports = ->
     if match is false
       $feedback.addClass "no-match"
 
+    # hint and give up buttons
     if showPlayActions
       Zepto("#play-actions").show()
     else
       Zepto("#play-actions").hide()
+
+    # sound state
+    if rawScope.musicIsPaused
+      $muteMusic.text "Play music"
+    else
+      $muteMusic.text "Mute music"
+    if rawScope.SFXIsPaused
+      $muteSFX.text "Play sound effects"
+    else
+      $muteSFX.text "Mute sound effects"
 
 
   # load sounds
@@ -480,6 +540,8 @@ module.exports = ->
       $(document).on "keydown", onKeyDown
       $("#give-up-button").on "click", onGiveUp
       $("#hint-button").on "click", onHint
+      $("#mute-music-button").on "click", onMuteMusic
+      $("#mute-sfx-button").on "click", onMuteSFX
 
       fadeInMusic()
       fetchQuote()
