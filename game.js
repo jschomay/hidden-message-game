@@ -144,11 +144,28 @@
 
 require.register("src/game", function(exports, require, module) {
 module.exports = function() {
-  var SOUNDS, buildSecredMessage, comboToString, decode, decodeKeyStates, fetchQuote, frame, getAllMatches, getRandomElement, getRandomElements, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadSounds, numSoundsLoaded, onGiveUp, onHint, onKeyDown, playSound, preload, quoteApiUrl, render, resetDecodeKey, saveIndexes, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, startGame, states, updateDecodeKey, updateFrame, updateLoadProgress;
+  var SOUNDS, VOLUMES, buildSecredMessage, comboToString, decode, decodeKeyStates, fadeDownMusic, fadeInMusic, fadeUpMusic, fetchQuote, frame, getAllMatches, getRandomElement, getRandomElements, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadSounds, numSoundsLoaded, onGiveUp, onHint, onKeyDown, playSound, preload, quoteApiUrl, render, resetDecodeKey, saveIndexes, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, startGame, states, updateDecodeKey, updateFrame, updateLoadProgress;
   quoteApiUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D'http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
   SOUNDS = {};
+  VOLUMES = {
+    backgroundMusic: 0.1,
+    keyPressHit: 0.9
+  };
   playSound = function(key) {
     return SOUNDS[key].play();
+  };
+  fadeInMusic = function() {
+    return SOUNDS['backgroundMusic'].fadeIn(VOLUMES.backgroundMusic, 2000);
+  };
+  fadeDownMusic = function() {
+    var volume;
+    volume = SOUNDS["backgroundMusic"]._volume;
+    return SOUNDS["backgroundMusic"].fade(volume, VOLUMES.backgroundMusic * 1 / 10, 700);
+  };
+  fadeUpMusic = function() {
+    var volume;
+    volume = SOUNDS["backgroundMusic"]._volume;
+    return SOUNDS["backgroundMusic"].fade(volume, VOLUMES.backgroundMusic, 1500);
   };
   decodeKeyStates = {
     HIDDEN: 0,
@@ -313,6 +330,7 @@ module.exports = function() {
   states = {
     loading: {
       onEnter: function() {
+        fadeUpMusic();
         return fetchQuote();
       },
       onEvent: function(eventData, scope, trigger) {
@@ -425,7 +443,9 @@ module.exports = function() {
       }
     },
     gaveUp: {
-      onEnter: function() {},
+      onEnter: function() {
+        return fadeDownMusic();
+      },
       onEvent: function(eventData, scope) {
         scope.secretMessage = void 0;
         scope.comboGroups = void 0;
@@ -447,7 +467,9 @@ module.exports = function() {
       }
     },
     solved: {
-      onEnter: function() {},
+      onEnter: function() {
+        return fadeDownMusic();
+      },
       onEvent: function(eventData, scope) {
         scope.secretMessage = void 0;
         scope.comboGroups = void 0;
@@ -613,26 +635,25 @@ module.exports = function() {
       keyPressMiss: "assets/key-press-miss",
       keyPressHit: [
         "assets/key-press-hit", {
-          volume: 0.9
+          volume: VOLUMES.keyPressHit
         }
       ],
       giveUp: "assets/give-up",
       solved: "assets/solved",
       backgroundMusic: [
         "assets/background-music", {
-          buffer: true,
           loop: true,
-          volume: 0.04
+          volume: VOLUMES.backgroundMusic
         }
       ]
     });
   };
   startGame = function() {
-    playSound("backgroundMusic");
     return Zepto(function($) {
       $(document).on("keydown", onKeyDown);
       $("#give-up-button").on("click", onGiveUp);
       $("#hint-button").on("click", onHint);
+      fadeInMusic();
       return fetchQuote();
     });
   };

@@ -3,8 +3,20 @@ module.exports = ->
   quoteApiUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D'http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys"
 
   SOUNDS = {}
+  VOLUMES =
+    backgroundMusic: 0.1
+    keyPressHit: 0.9
+
   playSound = (key) ->
     SOUNDS[key].play()
+  fadeInMusic = ->
+    SOUNDS['backgroundMusic'].fadeIn VOLUMES.backgroundMusic, 2000
+  fadeDownMusic = ->
+    volume = SOUNDS["backgroundMusic"]._volume
+    SOUNDS["backgroundMusic"].fade volume, VOLUMES.backgroundMusic * 1 / 10, 700
+  fadeUpMusic = ->
+    volume = SOUNDS["backgroundMusic"]._volume
+    SOUNDS["backgroundMusic"].fade volume, VOLUMES.backgroundMusic, 1500
 
   decodeKeyStates =
     HIDDEN: 0
@@ -152,6 +164,7 @@ module.exports = ->
   states =
     loading:
       onEnter: ->
+        fadeUpMusic()
         fetchQuote()
 
       onEvent: (eventData, scope, trigger) ->
@@ -264,6 +277,8 @@ module.exports = ->
 
     gaveUp:
       onEnter: ->
+        fadeDownMusic()
+
       onEvent: (eventData, scope) ->
         # reset everything
         scope.secretMessage = undefined
@@ -285,6 +300,8 @@ module.exports = ->
 
     solved:
       onEnter: ->
+        fadeDownMusic()
+
       onEvent: (eventData, scope) ->
         # reset everything
         scope.secretMessage = undefined
@@ -448,17 +465,15 @@ module.exports = ->
   preload = ->
     loadSounds
       keyPressMiss: "assets/key-press-miss"
-      keyPressHit: ["assets/key-press-hit", volume: 0.9]
+      keyPressHit: ["assets/key-press-hit", volume: VOLUMES.keyPressHit]
       giveUp: "assets/give-up"
       solved: "assets/solved"
       backgroundMusic: ["assets/background-music",
-        buffer: true,
         loop: true,
-        volume: 0.04,
+        volume: VOLUMES.backgroundMusic,
       ]
 
   startGame = ->
-    playSound "backgroundMusic"
     # make sure document is loaded before starting (it should be by now)
     Zepto ($) ->
       # bind inputs
@@ -466,6 +481,7 @@ module.exports = ->
       $("#give-up-button").on "click", onGiveUp
       $("#hint-button").on "click", onHint
 
+      fadeInMusic()
       fetchQuote()
 
 
