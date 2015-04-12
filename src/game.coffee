@@ -180,6 +180,7 @@ module.exports = ->
       onEnter: ->
       onEvent: (eventData, scope, trigger) ->
         if trigger is "giveUp"
+          playSound "giveUp"
           return ["gaveUp", scope]
 
         if trigger is "hint"
@@ -200,6 +201,13 @@ module.exports = ->
           scope.hints += 1
           scope.score = Math.floor scope.score / 2
 
+          # play sound (one keyPressHit for each hinted char with slight delay)
+          playKeySounds = (repeatTimes, playCount = 1) ->
+            playSound "keyPressMiss"
+            if playCount < repeatTimes
+              setTimeout (-> playKeySounds repeatTimes, playCount + 1), 120
+          playKeySounds hintAllowance
+
 
         if trigger is "keyPress"
           char = String.fromCharCode(eventData.keyCode).toLowerCase()
@@ -216,24 +224,32 @@ module.exports = ->
             scope.score = Math.max(0, scope.score - 1)
             scope.comboString = getValidComboStream potentialCombo, unsolvedComboGroups
             scope.decodeKey = getAllMatches scope.comboGroups, scope.comboString, existingSolved
-            scope.lastCombo = potentialCombo
 
-            # reveal or miss?
-            if scope.comboString.length
-              playSound "keyPressHit"
-            else
-              playSound "keyPressMiss"
-
-            # if the last keypress completed a combo, reset the last combo
+            # if the previous keypress completed a combo, reset the last combo
             if scope.comboCompleted is true
               scope.lastCombo = char
+            else
+              scope.lastCombo = potentialCombo
 
             newUnsolvedComboGroups = R.filter isUnsolvedGroup(scope.decodeKey), scope.comboGroups
             scope.comboCompleted = unsolvedComboGroups.length > newUnsolvedComboGroups.length
 
+            isMatch = !!scope.comboString.length
+            wordComplete = scope.comboCompleted is true
+
+            # sounds
+            if wordComplete
+              playSound "keyPressHit"
+            else if isMatch
+              playSound "keyPressHit"
+            else
+              playSound "keyPressMiss"
+
+
           # won?
           totalSolved = R.length(R.filter(isSolved) scope.decodeKey)
           if totalSolved is scope.secretMessage.length
+            playSound "solved"
             return ["solved", scope]
 
         ["play", scope]
@@ -408,21 +424,41 @@ module.exports = ->
 
   loadSounds = (sounds) ->
     totalSounds = R.length R.keys sounds
+    formats = [".ogg", ".m4a", ".wav"]
+    getFormats = (filePath) ->
+      R.map R.concat(filePath), formats
 
     initializeSounds = (acc, sound) ->
-      acc[sound[0]] = new Howl
-        urls: sound[1]
-        onload: -> updateLoadProgress totalSounds, acc
+      getConfig = ->
+        if typeof sound[1] is "string"
+          urls: getFormats sound[1]
+          onload: -> updateLoadProgress totalSounds, acc
+        else
+          R.merge sound[1][1],
+            urls: getFormats sound[1][0]
+            onload: -> updateLoadProgress totalSounds, acc
+
+
+
+      acc[sound[0]] = new Howl getConfig()
       acc
 
     R.reduce initializeSounds, SOUNDS, R.toPairs sounds
 
   preload = ->
     loadSounds
-      keyPressMiss: ['assets/key-press-miss.wav']
-      keyPressHit: ['assets/key-press-hit.wav']
+      keyPressMiss: "assets/key-press-miss"
+      keyPressHit: ["assets/key-press-hit", volume: 0.9]
+      giveUp: "assets/give-up"
+      solved: "assets/solved"
+      backgroundMusic: ["assets/background-music",
+        buffer: true,
+        loop: true,
+        volume: 0.04,
+      ]
 
   startGame = ->
+    playSound "backgroundMusic"
     # make sure document is loaded before starting (it should be by now)
     Zepto ($) ->
       # bind inputs

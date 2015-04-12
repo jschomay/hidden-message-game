@@ -344,8 +344,9 @@ module.exports = function() {
     play: {
       onEnter: function() {},
       onEvent: function(eventData, scope, trigger) {
-        var char, elementsToReveal, existingSolved, hiddenChars, hintAllowance, indexedDecodeKey, indexesToReaveal, newUnsolvedComboGroups, oneOrOneTenth, potentialCombo, totalSolved, unsolvedComboGroups;
+        var char, elementsToReveal, existingSolved, hiddenChars, hintAllowance, indexedDecodeKey, indexesToReaveal, isMatch, newUnsolvedComboGroups, oneOrOneTenth, playKeySounds, potentialCombo, totalSolved, unsolvedComboGroups, wordComplete;
         if (trigger === "giveUp") {
+          playSound("giveUp");
           return ["gaveUp", scope];
         }
         if (trigger === "hint") {
@@ -363,6 +364,18 @@ module.exports = function() {
           scope.decodeKey = setIndexes(decodeKeyStates.HINTED, scope.decodeKey, indexesToReaveal);
           scope.hints += 1;
           scope.score = Math.floor(scope.score / 2);
+          playKeySounds = function(repeatTimes, playCount) {
+            if (playCount == null) {
+              playCount = 1;
+            }
+            playSound("keyPressMiss");
+            if (playCount < repeatTimes) {
+              return setTimeout((function() {
+                return playKeySounds(repeatTimes, playCount + 1);
+              }), 120);
+            }
+          };
+          playKeySounds(hintAllowance);
         }
         if (trigger === "keyPress") {
           char = String.fromCharCode(eventData.keyCode).toLowerCase();
@@ -374,20 +387,26 @@ module.exports = function() {
             scope.score = Math.max(0, scope.score - 1);
             scope.comboString = getValidComboStream(potentialCombo, unsolvedComboGroups);
             scope.decodeKey = getAllMatches(scope.comboGroups, scope.comboString, existingSolved);
-            scope.lastCombo = potentialCombo;
-            if (scope.comboString.length) {
+            if (scope.comboCompleted === true) {
+              scope.lastCombo = char;
+            } else {
+              scope.lastCombo = potentialCombo;
+            }
+            newUnsolvedComboGroups = R.filter(isUnsolvedGroup(scope.decodeKey), scope.comboGroups);
+            scope.comboCompleted = unsolvedComboGroups.length > newUnsolvedComboGroups.length;
+            isMatch = !!scope.comboString.length;
+            wordComplete = scope.comboCompleted === true;
+            if (wordComplete) {
+              playSound("keyPressHit");
+            } else if (isMatch) {
               playSound("keyPressHit");
             } else {
               playSound("keyPressMiss");
             }
-            if (scope.comboCompleted === true) {
-              scope.lastCombo = char;
-            }
-            newUnsolvedComboGroups = R.filter(isUnsolvedGroup(scope.decodeKey), scope.comboGroups);
-            scope.comboCompleted = unsolvedComboGroups.length > newUnsolvedComboGroups.length;
           }
           totalSolved = R.length(R.filter(isSolved)(scope.decodeKey));
           if (totalSolved === scope.secretMessage.length) {
+            playSound("solved");
             return ["solved", scope];
           }
         }
@@ -559,26 +578,57 @@ module.exports = function() {
     }
   };
   loadSounds = function(sounds) {
-    var initializeSounds, totalSounds;
+    var formats, getFormats, initializeSounds, totalSounds;
     totalSounds = R.length(R.keys(sounds));
+    formats = [".ogg", ".m4a", ".wav"];
+    getFormats = function(filePath) {
+      return R.map(R.concat(filePath), formats);
+    };
     initializeSounds = function(acc, sound) {
-      acc[sound[0]] = new Howl({
-        urls: sound[1],
-        onload: function() {
-          return updateLoadProgress(totalSounds, acc);
+      var getConfig;
+      getConfig = function() {
+        if (typeof sound[1] === "string") {
+          return {
+            urls: getFormats(sound[1]),
+            onload: function() {
+              return updateLoadProgress(totalSounds, acc);
+            }
+          };
+        } else {
+          return R.merge(sound[1][1], {
+            urls: getFormats(sound[1][0]),
+            onload: function() {
+              return updateLoadProgress(totalSounds, acc);
+            }
+          });
         }
-      });
+      };
+      acc[sound[0]] = new Howl(getConfig());
       return acc;
     };
     return R.reduce(initializeSounds, SOUNDS, R.toPairs(sounds));
   };
   preload = function() {
     return loadSounds({
-      keyPressMiss: ['assets/key-press-miss.wav'],
-      keyPressHit: ['assets/key-press-hit.wav']
+      keyPressMiss: "assets/key-press-miss",
+      keyPressHit: [
+        "assets/key-press-hit", {
+          volume: 0.9
+        }
+      ],
+      giveUp: "assets/give-up",
+      solved: "assets/solved",
+      backgroundMusic: [
+        "assets/background-music", {
+          buffer: true,
+          loop: true,
+          volume: 0.04
+        }
+      ]
     });
   };
   startGame = function() {
+    playSound("backgroundMusic");
     return Zepto(function($) {
       $(document).on("keydown", onKeyDown);
       $("#give-up-button").on("click", onGiveUp);
