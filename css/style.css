@@ -3,7 +3,7 @@ html {
   height: 100%;
 }
 body {
-  background-image: url(assets/paper-texture.jpg);
+  background-image: url(../assets/paper-texture.jpg);
   padding: 0;
   margin: 0;
 }
@@ -61,7 +61,7 @@ body {
 #play-actions {
   position: absolute;
   left: 30px;
-  bottom: 40px;
+  bottom: 60px;
   display: none;
 }
 
@@ -94,13 +94,26 @@ body {
 
 #settings {
   position: absolute;
-  left: 130px;
-  bottom: 40px;
+  left: 25px;
+  bottom: 7px;
 }
 .small-link {
   cursor: pointer;
   display: inline-block;
-  margin-right: 20px;
-  font: 12px Helvetica;
-  color: #ccc;
+  margin-right: 7px;
+  padding: 10px;
+  font: 22px "Ionicons";
+  color: #bbb;
+}
+#mute-music-button:before {
+  content: "\f46c";
+}
+#mute-sfx-button:before {
+  content: "\f4ce";
+}
+#mute-music-button.muted {
+  color: #ddd;
+}
+#mute-sfx-button.muted {
+  color: #ddd;
 }

@@ -481,14 +481,12 @@ module.exports = ->
       Zepto("#play-actions").hide()
 
     # sound state
+    $muteMusic.removeClass "muted"
+    $muteSFX.removeClass "muted"
     if rawScope.musicIsPaused
-      $muteMusic.text "Play music"
-    else
-      $muteMusic.text "Mute music"
+      $muteMusic.addClass "muted"
     if rawScope.SFXIsPaused
-      $muteSFX.text "Play sound effects"
-    else
-      $muteSFX.text "Mute sound effects"
+      $muteSFX.addClass "muted"
 
 
   # load sounds

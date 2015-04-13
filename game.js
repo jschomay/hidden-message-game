@@ -642,15 +642,13 @@ module.exports = function() {
     } else {
       Zepto("#play-actions").hide();
     }
+    $muteMusic.removeClass("muted");
+    $muteSFX.removeClass("muted");
     if (rawScope.musicIsPaused) {
-      $muteMusic.text("Play music");
-    } else {
-      $muteMusic.text("Mute music");
+      $muteMusic.addClass("muted");
     }
     if (rawScope.SFXIsPaused) {
-      return $muteSFX.text("Play sound effects");
-    } else {
-      return $muteSFX.text("Mute sound effects");
+      return $muteSFX.addClass("muted");
     }
   };
   numSoundsLoaded = function(soundsLoaded) {
