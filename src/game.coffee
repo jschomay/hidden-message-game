@@ -202,7 +202,7 @@ module.exports = ->
           ["loading", scope]
 
       getRenderData: (scope) ->
-        secretMessage: ""
+        secretMessage: []
         feedback: "LOADING..."
         score: ""
         showPlayActions: false

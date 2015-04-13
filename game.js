@@ -374,7 +374,7 @@ module.exports = function() {
       },
       getRenderData: function(scope) {
         return {
-          secretMessage: "",
+          secretMessage: [],
           feedback: "LOADING...",
           score: "",
           showPlayActions: false
