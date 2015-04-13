@@ -702,8 +702,10 @@ module.exports = function() {
       solved: "assets/solved",
       backgroundMusic: [
         "assets/background-music", {
-          loop: true,
-          volume: VOLUMES.backgroundMusic
+          volume: VOLUMES.backgroundMusic,
+          onend: function() {
+            return this.play();
+          }
         }
       ]
     });

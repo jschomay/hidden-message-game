@@ -527,8 +527,10 @@ module.exports = ->
       giveUp: "assets/give-up"
       solved: "assets/solved"
       backgroundMusic: ["assets/background-music",
-        loop: true,
         volume: VOLUMES.backgroundMusic,
+        onend: ->
+          # using this instead of loop to hopefully avoid a bug in howler
+          this.play()
       ]
 
   startGame = ->
