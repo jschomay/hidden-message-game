@@ -117,3 +117,34 @@ body {
 #mute-sfx-button.muted {
   color: #ddd;
 }
+
+#buy-hints {
+  display: none;
+  background: #eee;
+  text-align: center;
+  border: 2px solid #999;
+  border-radius: 10px;
+  -webkit-border-radius: 10px; 
+  -moz-border-radius: 10px; 
+  height: 50%;
+  width: 50%;
+  margin: auto;
+  padding: 30px;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+#buy-hints p {
+  color: #666;
+  font: 28px Helvetica;
+}
+#buy-hints #cancel-buy-hints {
+  position: absolute;
+  width: 20%;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  margin: auto;
+}

@@ -215,6 +215,7 @@ module.exports = ->
 
     play:
       onEnter: ->
+        fadeUpMusic()
       onEvent: (eventData, scope, trigger) ->
         if trigger is "giveUp"
           playSound "giveUp"
@@ -222,8 +223,7 @@ module.exports = ->
 
         if trigger is "hint"
           if scope.hintsRemaining <= 0
-            #for now just return if no hints left (will implement hint buying mechanic)
-            return ["play", scope]
+            return ["outOfHints", scope]
 
           # get random 1/10th of remaining unsolved letters permanently filled in
           # cuts your score in half each time
@@ -353,6 +353,25 @@ module.exports = ->
         score: scope.score
         showPlayActions: false
 
+    outOfHints:
+      onEnter: ->
+        fadeDownMusic()
+
+      onEvent: (eventData, scope, trigger) ->
+        if trigger is "cancelBuyHints"
+          return ["play", scope]
+
+        return ["outOfHints", scope]
+
+      getRenderData: (scope) ->
+        # same as "play" render data, plus additional buyHints flag
+        comboString = if scope.comboString.length then scope.comboString else null
+        secretMessage: decode(scope.secretMessage, scope.decodeKey)
+        feedback: comboString or scope.lastCombo  or "Type letter combos to reveal the hidden message."
+        match: if scope.lastCombo then !!scope.comboString.length > 0 else null
+        score: scope.score
+        showPlayActions: true
+        buyHints: true
 
 
 
@@ -448,6 +467,10 @@ module.exports = ->
     e.preventDefault()
     updateFrame "toggleMuteSFX", null
 
+  onCancelBuyHints = (e) ->
+    e.preventDefault()
+    updateFrame "cancelBuyHints", null
+
 
   # drawing
 
@@ -475,7 +498,7 @@ module.exports = ->
     $score = Zepto("#score")
     $muteMusic = Zepto("#mute-music-button")
     $muteSFX = Zepto("#mute-sfx-button")
-    {secretMessage, feedback, score, showPlayActions, match} = renderData
+    {secretMessage, feedback, score, showPlayActions, match, buyHints} = renderData
 
     $secretMessage.html buildSecredMessage secretMessage
     $feedback.html feedback # make sure only known or escaped strings go through here!
@@ -502,6 +525,13 @@ module.exports = ->
       $muteMusic.addClass "muted"
     if rawScope.SFXIsPaused
       $muteSFX.addClass "muted"
+
+    # buy hints dialog
+    # hint and give up buttons
+    if buyHints
+      Zepto("#buy-hints").show()
+    else
+      Zepto("#buy-hints").hide()
 
 
   # load sounds
@@ -557,6 +587,7 @@ module.exports = ->
       $("#hint-button").on "click", onHint
       $("#mute-music-button").on "click", onMuteMusic
       $("#mute-sfx-button").on "click", onMuteSFX
+      $("#cancel-buy-hints").on "click", onCancelBuyHints
 
       fadeInMusic()
       fetchQuote()

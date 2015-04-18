@@ -144,7 +144,7 @@
 
 require.register("src/game", function(exports, require, module) {
 module.exports = function() {
-  var CONSTANTS, SOUNDS, VOLUMES, buildSecredMessage, comboToString, decode, decodeKeyStates, fadeDownMusic, fadeInMusic, fadeUpMusic, fetchQuote, frame, getAllMatches, getMusic, getRandomElement, getRandomElements, getSFX, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadSounds, numSoundsLoaded, onFrameEnter, onGiveUp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, quoteApiUrl, render, resetDecodeKey, saveIndexes, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, startGame, states, updateDecodeKey, updateFrame, updateLoadProgress;
+  var CONSTANTS, SOUNDS, VOLUMES, buildSecredMessage, comboToString, decode, decodeKeyStates, fadeDownMusic, fadeInMusic, fadeUpMusic, fetchQuote, frame, getAllMatches, getMusic, getRandomElement, getRandomElements, getSFX, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadSounds, numSoundsLoaded, onCancelBuyHints, onFrameEnter, onGiveUp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, quoteApiUrl, render, resetDecodeKey, saveIndexes, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, startGame, states, updateDecodeKey, updateFrame, updateLoadProgress;
   quoteApiUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D'http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
   CONSTANTS = {
     startingHints: 5,
@@ -387,7 +387,9 @@ module.exports = function() {
       }
     },
     play: {
-      onEnter: function() {},
+      onEnter: function() {
+        return fadeUpMusic();
+      },
       onEvent: function(eventData, scope, trigger) {
         var char, elementsToReveal, existingSolved, hiddenChars, hintAllowance, indexedDecodeKey, indexesToReaveal, isMatch, newUnsolvedComboGroups, oneOrOneTenth, playKeySounds, potentialCombo, totalSolved, unsolvedComboGroups, wordComplete;
         if (trigger === "giveUp") {
@@ -396,7 +398,7 @@ module.exports = function() {
         }
         if (trigger === "hint") {
           if (scope.hintsRemaining <= 0) {
-            return ["play", scope];
+            return ["outOfHints", scope];
           }
           oneOrOneTenth = function(items) {
             return Math.ceil(items / 10);
@@ -524,6 +526,29 @@ module.exports = function() {
           showPlayActions: false
         };
       }
+    },
+    outOfHints: {
+      onEnter: function() {
+        return fadeDownMusic();
+      },
+      onEvent: function(eventData, scope, trigger) {
+        if (trigger === "cancelBuyHints") {
+          return ["play", scope];
+        }
+        return ["outOfHints", scope];
+      },
+      getRenderData: function(scope) {
+        var comboString;
+        comboString = scope.comboString.length ? scope.comboString : null;
+        return {
+          secretMessage: decode(scope.secretMessage, scope.decodeKey),
+          feedback: comboString || scope.lastCombo || "Type letter combos to reveal the hidden message.",
+          match: scope.lastCombo ? !!scope.comboString.length > 0 : null,
+          score: scope.score,
+          showPlayActions: true,
+          buyHints: true
+        };
+      }
     }
   };
   frame = function(seed, trigger, eventData) {
@@ -607,6 +632,10 @@ module.exports = function() {
     e.preventDefault();
     return updateFrame("toggleMuteSFX", null);
   };
+  onCancelBuyHints = function(e) {
+    e.preventDefault();
+    return updateFrame("cancelBuyHints", null);
+  };
   buildSecredMessage = function(secretMessage) {
     var buildMarkup, statusMap;
     statusMap = R.invertObj(decodeKeyStates);
@@ -630,13 +659,13 @@ module.exports = function() {
     return (R.reduce(buildMarkup, "<span class='word'>", secretMessage)) + "</span>";
   };
   render = function(renderData, rawScope) {
-    var $feedback, $muteMusic, $muteSFX, $score, $secretMessage, feedback, match, score, secretMessage, showPlayActions;
+    var $feedback, $muteMusic, $muteSFX, $score, $secretMessage, buyHints, feedback, match, score, secretMessage, showPlayActions;
     $secretMessage = Zepto("#secret-message");
     $feedback = Zepto("#feedback");
     $score = Zepto("#score");
     $muteMusic = Zepto("#mute-music-button");
     $muteSFX = Zepto("#mute-sfx-button");
-    secretMessage = renderData.secretMessage, feedback = renderData.feedback, score = renderData.score, showPlayActions = renderData.showPlayActions, match = renderData.match;
+    secretMessage = renderData.secretMessage, feedback = renderData.feedback, score = renderData.score, showPlayActions = renderData.showPlayActions, match = renderData.match, buyHints = renderData.buyHints;
     $secretMessage.html(buildSecredMessage(secretMessage));
     $feedback.html(feedback);
     $score.text(score);
@@ -660,7 +689,12 @@ module.exports = function() {
       $muteMusic.addClass("muted");
     }
     if (rawScope.SFXIsPaused) {
-      return $muteSFX.addClass("muted");
+      $muteSFX.addClass("muted");
+    }
+    if (buyHints) {
+      return Zepto("#buy-hints").show();
+    } else {
+      return Zepto("#buy-hints").hide();
     }
   };
   numSoundsLoaded = function(soundsLoaded) {
@@ -729,6 +763,7 @@ module.exports = function() {
       $("#hint-button").on("click", onHint);
       $("#mute-music-button").on("click", onMuteMusic);
       $("#mute-sfx-button").on("click", onMuteSFX);
+      $("#cancel-buy-hints").on("click", onCancelBuyHints);
       fadeInMusic();
       return fetchQuote();
     });
