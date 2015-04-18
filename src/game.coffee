@@ -2,6 +2,11 @@ module.exports = ->
 
   quoteApiUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D'http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys"
 
+  # constants
+  CONSTANTS =
+    startingHints: 5
+    hintSetback: 20
+
   # sound constants and utils (using howler.js)
   SOUNDS = {}
   VOLUMES =
@@ -196,6 +201,7 @@ module.exports = ->
           scope.score = R.filter(isLetter, secretMessage).length * 5
           scope.moves = 0
           scope.hints = 0
+          scope.hintsRemaining = CONSTANTS.startingHints
           scope.lastCombo = null
           return ["play", scope]
         else
@@ -215,6 +221,10 @@ module.exports = ->
           return ["gaveUp", scope]
 
         if trigger is "hint"
+          if scope.hintsRemaining <= 0
+            #for now just return if no hints left (will implement hint buying mechanic)
+            return ["play", scope]
+
           # get random 1/10th of remaining unsolved letters permanently filled in
           # cuts your score in half each time
           oneOrOneTenth = (items) -> Math.ceil items / 10
@@ -230,7 +240,8 @@ module.exports = ->
 
           scope.decodeKey = setIndexes decodeKeyStates.HINTED, scope.decodeKey, indexesToReaveal
           scope.hints += 1
-          scope.score = Math.floor scope.score / 2
+          scope.hintsRemaining -= 1
+          scope.score -= CONSTANTS.hintSetback
 
           # play sound (one keyPressHit for each hinted char with slight delay)
           playKeySounds = (repeatTimes, playCount = 1) ->
@@ -306,6 +317,7 @@ module.exports = ->
         scope.score = undefined
         scope.moves = undefined
         scope.hints = undefined
+        scope.hintsRemaining = undefined
         scope.lastCombo = undefined
 
         return ["loading", scope]
@@ -329,6 +341,7 @@ module.exports = ->
         scope.score = undefined
         scope.moves = undefined
         scope.hints = undefined
+        scope.hintsRemaining = undefined
         scope.lastCombo = undefined
 
         return ["loading", scope]
@@ -479,6 +492,8 @@ module.exports = ->
       Zepto("#play-actions").show()
     else
       Zepto("#play-actions").hide()
+
+    Zepto("#hint-button .hints-remaining").text rawScope.hintsRemaining
 
     # sound state
     $muteMusic.removeClass "muted"

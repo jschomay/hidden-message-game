@@ -144,8 +144,12 @@
 
 require.register("src/game", function(exports, require, module) {
 module.exports = function() {
-  var SOUNDS, VOLUMES, buildSecredMessage, comboToString, decode, decodeKeyStates, fadeDownMusic, fadeInMusic, fadeUpMusic, fetchQuote, frame, getAllMatches, getMusic, getRandomElement, getRandomElements, getSFX, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadSounds, numSoundsLoaded, onFrameEnter, onGiveUp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, quoteApiUrl, render, resetDecodeKey, saveIndexes, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, startGame, states, updateDecodeKey, updateFrame, updateLoadProgress;
+  var CONSTANTS, SOUNDS, VOLUMES, buildSecredMessage, comboToString, decode, decodeKeyStates, fadeDownMusic, fadeInMusic, fadeUpMusic, fetchQuote, frame, getAllMatches, getMusic, getRandomElement, getRandomElements, getSFX, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadSounds, numSoundsLoaded, onFrameEnter, onGiveUp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, quoteApiUrl, render, resetDecodeKey, saveIndexes, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, startGame, states, updateDecodeKey, updateFrame, updateLoadProgress;
   quoteApiUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D'http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
+  CONSTANTS = {
+    startingHints: 5,
+    hintSetback: 20
+  };
   SOUNDS = {};
   VOLUMES = {
     backgroundMusic: 0.1,
@@ -366,6 +370,7 @@ module.exports = function() {
           scope.score = R.filter(isLetter, secretMessage).length * 5;
           scope.moves = 0;
           scope.hints = 0;
+          scope.hintsRemaining = CONSTANTS.startingHints;
           scope.lastCombo = null;
           return ["play", scope];
         } else {
@@ -390,6 +395,9 @@ module.exports = function() {
           return ["gaveUp", scope];
         }
         if (trigger === "hint") {
+          if (scope.hintsRemaining <= 0) {
+            return ["play", scope];
+          }
           oneOrOneTenth = function(items) {
             return Math.ceil(items / 10);
           };
@@ -403,7 +411,8 @@ module.exports = function() {
           indexesToReaveal = R.map(R.prop("index"), elementsToReveal);
           scope.decodeKey = setIndexes(decodeKeyStates.HINTED, scope.decodeKey, indexesToReaveal);
           scope.hints += 1;
-          scope.score = Math.floor(scope.score / 2);
+          scope.hintsRemaining -= 1;
+          scope.score -= CONSTANTS.hintSetback;
           playKeySounds = function(repeatTimes, playCount) {
             if (playCount == null) {
               playCount = 1;
@@ -476,6 +485,7 @@ module.exports = function() {
         scope.score = void 0;
         scope.moves = void 0;
         scope.hints = void 0;
+        scope.hintsRemaining = void 0;
         scope.lastCombo = void 0;
         return ["loading", scope];
       },
@@ -500,6 +510,7 @@ module.exports = function() {
         scope.score = void 0;
         scope.moves = void 0;
         scope.hints = void 0;
+        scope.hintsRemaining = void 0;
         scope.lastCombo = void 0;
         return ["loading", scope];
       },
@@ -642,6 +653,7 @@ module.exports = function() {
     } else {
       Zepto("#play-actions").hide();
     }
+    Zepto("#hint-button .hints-remaining").text(rawScope.hintsRemaining);
     $muteMusic.removeClass("muted");
     $muteSFX.removeClass("muted");
     if (rawScope.musicIsPaused) {
