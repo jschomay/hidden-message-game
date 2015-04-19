@@ -6,6 +6,7 @@ body {
   background-image: url(../assets/paper-texture.jpg);
   padding: 0;
   margin: 0;
+  font-family: Helvetica;
 }
 #secret-message {
   width: 80%;
@@ -51,7 +52,7 @@ body {
 }
 
 #score {
-  font: 60px Helvetica;
+  font-size: 60px;
   position: absolute;
   bottom: 30px;
   right: 60px;
@@ -69,7 +70,7 @@ body {
   padding: 14px 10px;
   background: #bbb;
   color: #fff;
-  font: 20px Helvetica;
+  font-size: 20px;
   border-radius: 6px;
   -webkit-border-radius: 6px; 
   -moz-border-radius: 6px; 
@@ -138,7 +139,7 @@ body {
 }
 #buy-hints p {
   color: #666;
-  font: 28px Helvetica;
+  font-size: 28px;
 }
 #buy-hints #cancel-buy-hints {
   position: absolute;
@@ -147,4 +148,21 @@ body {
   left: 0;
   right: 0;
   margin: auto;
+}
+
+
+#user-info {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  width: auto;
+  font-size: 14px;
+  color: #ccc;
+  text-align:right;
+}
+#total-solved {
+  color: #aaddaa;
+}
+#total-skipped {
+  color: #ddaaaa;
 }

@@ -190,7 +190,7 @@ module.exports = ->
         fadeUpMusic()
         fetchQuote()
 
-      onEvent: (eventData, scope, trigger) ->
+      onEvent: (eventData, scope, trigger, userData) ->
         if trigger is "quoteLoaded"
           secretMessage = eventData
           # initialize game data with secret message
@@ -201,11 +201,10 @@ module.exports = ->
           scope.score = R.filter(isLetter, secretMessage).length * 5
           scope.moves = 0
           scope.hints = 0
-          scope.hintsRemaining = CONSTANTS.startingHints
           scope.lastCombo = null
-          return ["play", scope]
+          return ["play", scope, userData]
         else
-          ["loading", scope]
+          ["loading", scope, userData]
 
       getRenderData: (scope) ->
         secretMessage: []
@@ -216,14 +215,17 @@ module.exports = ->
     play:
       onEnter: ->
         fadeUpMusic()
-      onEvent: (eventData, scope, trigger) ->
+      onEvent: (eventData, scope, trigger, userData) ->
         if trigger is "giveUp"
           playSound "giveUp"
-          return ["gaveUp", scope]
+
+          userData.totalSkipped += 1
+
+          return ["gaveUp", scope, userData]
 
         if trigger is "hint"
-          if scope.hintsRemaining <= 0
-            return ["outOfHints", scope]
+          if userData.hintsRemaining <= 0
+            return ["outOfHints", scope, userData]
 
           # get random 1/10th of remaining unsolved letters permanently filled in
           # cuts your score in half each time
@@ -232,7 +234,7 @@ module.exports = ->
           hiddenChars = R.filter(R.compose(isHidden, R.prop "status")) indexedDecodeKey
           # if there are none left, just return
           if hiddenChars.length is 0
-            return ["play", scope]
+            return ["play", scope, userData]
 
           hintAllowance = oneOrOneTenth hiddenChars.length
           elementsToReveal = getRandomElements hiddenChars, hintAllowance
@@ -240,7 +242,7 @@ module.exports = ->
 
           scope.decodeKey = setIndexes decodeKeyStates.HINTED, scope.decodeKey, indexesToReaveal
           scope.hints += 1
-          scope.hintsRemaining -= 1
+          userData.hintsRemaining -= 1
           scope.score -= CONSTANTS.hintSetback
 
           # play sound (one keyPressHit for each hinted char with slight delay)
@@ -292,9 +294,13 @@ module.exports = ->
           totalSolved = R.length(R.filter(isSolved) scope.decodeKey)
           if totalSolved is scope.secretMessage.length
             playSound "solved"
-            return ["solved", scope]
 
-        ["play", scope]
+            userData.totalSolved += 1
+            userData.totalScore += scope.score
+
+            return ["solved", scope, userData]
+
+        ["play", scope, userData]
 
       getRenderData: (scope) ->
         comboString = if scope.comboString.length then scope.comboString else null
@@ -308,7 +314,7 @@ module.exports = ->
       onEnter: ->
         fadeDownMusic()
 
-      onEvent: (eventData, scope) ->
+      onEvent: (eventData, scope, trigger, userData) ->
         # reset everything
         scope.secretMessage = undefined
         scope.comboGroups = undefined
@@ -317,10 +323,9 @@ module.exports = ->
         scope.score = undefined
         scope.moves = undefined
         scope.hints = undefined
-        scope.hintsRemaining = undefined
         scope.lastCombo = undefined
 
-        return ["loading", scope]
+        return ["loading", scope, userData]
 
       getRenderData: (scope) ->
         secretMessage: decode(scope.secretMessage, R.map( R.always(decodeKeyStates.SOLVED), scope.decodeKey))
@@ -332,7 +337,7 @@ module.exports = ->
       onEnter: ->
         fadeDownMusic()
 
-      onEvent: (eventData, scope) ->
+      onEvent: (eventData, scope, trigger, userData) ->
         # reset everything
         scope.secretMessage = undefined
         scope.comboGroups = undefined
@@ -341,10 +346,9 @@ module.exports = ->
         scope.score = undefined
         scope.moves = undefined
         scope.hints = undefined
-        scope.hintsRemaining = undefined
         scope.lastCombo = undefined
 
-        return ["loading", scope]
+        return ["loading", scope, userData]
 
       getRenderData: (scope) ->
         hints = if scope.hints > 1 then scope.hints else "no"
@@ -357,11 +361,11 @@ module.exports = ->
       onEnter: ->
         fadeDownMusic()
 
-      onEvent: (eventData, scope, trigger) ->
+      onEvent: (eventData, scope, trigger, userData) ->
         if trigger is "cancelBuyHints"
-          return ["play", scope]
+          return ["play", scope, userData]
 
-        return ["outOfHints", scope]
+        return ["outOfHints", scope, userData]
 
       getRenderData: (scope) ->
         # same as "play" render data, plus additional buyHints flag
@@ -384,14 +388,14 @@ module.exports = ->
   # are transitioned depending on the outcome, and the resulting
   # active state renders the data.
   frame = (seed, trigger, eventData) ->
-    [newState, newScope] = seed.state.onEvent eventData, seed.scope, trigger
+    [newState, newScope, newUserData] = seed.state.onEvent eventData, seed.scope, trigger, seed.userData
 
     if states[newState] isnt seed.state
       states[newState].onEnter()
 
-    render states[newState].getRenderData(newScope), newScope
+    render states[newState].getRenderData(newScope), newScope, newUserData
 
-    {state: states[newState], scope: newScope}
+    {state: states[newState], scope: newScope, userData: newUserData}
 
 
 
@@ -401,13 +405,10 @@ module.exports = ->
   # It is called by all game events with the event trigger and event data.
   updateFrame = (trigger, data) ->
     @store = onFrameEnter @store, trigger, data
-    {state, scope} = frame {state: @currentState, scope: @store}, trigger, data
+    {state, scope, userData} = frame {state: @currentState, scope: @store, userData: @userData}, trigger, data
     @currentState = state
     @store = scope
-
-  updateFrame.currentState = states.loading
-  updateFrame.store = {}
-  updateFrame = updateFrame.bind updateFrame
+    @userData = userData
 
 
   # code to run on every frame regardless of which state is active
@@ -492,7 +493,7 @@ module.exports = ->
 
     (R.reduce buildMarkup, "<span class='word'>", secretMessage) + "</span>"
 
-  render = (renderData, rawScope) ->
+  render = (renderData, rawScope, userData) ->
     $secretMessage = Zepto("#secret-message")
     $feedback = Zepto("#feedback")
     $score = Zepto("#score")
@@ -516,7 +517,7 @@ module.exports = ->
     else
       Zepto("#play-actions").hide()
 
-    Zepto("#hint-button .hints-remaining").text rawScope.hintsRemaining
+    Zepto("#hint-button .hints-remaining").text userData.hintsRemaining
 
     # sound state
     $muteMusic.removeClass "muted"
@@ -532,6 +533,11 @@ module.exports = ->
       Zepto("#buy-hints").show()
     else
       Zepto("#buy-hints").hide()
+
+    # user info
+    Zepto("#total-solved").text userData.totalSolved
+    Zepto("#total-skipped").text userData.totalSkipped
+    Zepto("#total-score").text userData.totalScore
 
 
   # load sounds
@@ -581,6 +587,14 @@ module.exports = ->
   startGame = ->
     # make sure document is loaded before starting (it should be by now)
     Zepto ($) ->
+      fadeInMusic()
+
+      # initialize main loop with starting state
+      updateFrame.currentState = states.loading
+      updateFrame.store = {}
+      updateFrame.userData = getUserData()
+      updateFrame = updateFrame.bind updateFrame
+
       # bind inputs
       $(document).on "keydown", onKeyDown
       $("#give-up-button").on "click", onGiveUp
@@ -589,9 +603,13 @@ module.exports = ->
       $("#mute-sfx-button").on "click", onMuteSFX
       $("#cancel-buy-hints").on "click", onCancelBuyHints
 
-      fadeInMusic()
       fetchQuote()
 
+  getUserData = ->
+    hintsRemaining: CONSTANTS.startingHints
+    totalScore: 0
+    totalSolved: 0
+    totalSkipped: 0
 
   # kick off game
   preload()
