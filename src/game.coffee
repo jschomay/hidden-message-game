@@ -2,11 +2,24 @@ module.exports = ->
 
   quoteApiUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D'http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys"
 
+  saveQuoteUrl = "http://localhost:8000"
+
   saveQuote = (quote) ->
-    console.log "sending \"#{quote}\" to db..."
-    setTimeout ->
+    console.log "Saving \"#{quote}\"..."
+    success = ->
+      console.log "success"
       updateFrame "quoteSaved", null
-    , 500
+
+    error = (xhr) ->
+      throw new Error xhr.responseText
+
+    Zepto.ajax
+      type: 'POST',
+      url: saveQuoteUrl
+      data:
+        quote: quote
+      success: success
+      error: error
 
   # GAME STATES
   states =
@@ -104,7 +117,7 @@ module.exports = ->
 
       quote = JSON.parse(response.query.results.body).quote
 
-      message = quote.split(/[\n\r]?\s\s--/)[0]
+      message = quote.split(/[\n\r]?\s\s--/)[0].trim()
       source = quote.split(/[\n\r]?\s\s--/)[1]
 
       updateFrame "quoteLoaded", message
@@ -115,7 +128,9 @@ module.exports = ->
   onSaveQuote = (e) ->
     e.preventDefault()
     quote = Zepto("#quote").val()
-    updateFrame "saveQuote", quote
+    parse = (quote) ->
+      quote.trim()
+    updateFrame "saveQuote", parse quote
 
 
   # drawing

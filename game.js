@@ -144,13 +144,28 @@
 
 require.register("src/game", function(exports, require, module) {
 module.exports = function() {
-  var fetchQuote, frame, onFrameEnter, onSaveQuote, onSkipQuote, quoteApiUrl, render, saveQuote, start, states, updateFrame;
+  var fetchQuote, frame, onFrameEnter, onSaveQuote, onSkipQuote, quoteApiUrl, render, saveQuote, saveQuoteUrl, start, states, updateFrame;
   quoteApiUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D'http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
+  saveQuoteUrl = "http://localhost:8000";
   saveQuote = function(quote) {
-    console.log("sending \"" + quote + "\" to db...");
-    return setTimeout(function() {
+    var error, success;
+    console.log("Saving \"" + quote + "\"...");
+    success = function() {
+      console.log("success");
       return updateFrame("quoteSaved", null);
-    }, 500);
+    };
+    error = function(xhr) {
+      throw new Error(xhr.responseText);
+    };
+    return Zepto.ajax({
+      type: 'POST',
+      url: saveQuoteUrl,
+      data: {
+        quote: quote
+      },
+      success: success,
+      error: error
+    });
   };
   states = {
     loading: {
@@ -253,7 +268,7 @@ module.exports = function() {
         return str;
       };
       quote = JSON.parse(response.query.results.body).quote;
-      message = quote.split(/[\n\r]?\s\s--/)[0];
+      message = quote.split(/[\n\r]?\s\s--/)[0].trim();
       source = quote.split(/[\n\r]?\s\s--/)[1];
       return updateFrame("quoteLoaded", message);
     });
@@ -263,10 +278,13 @@ module.exports = function() {
     return updateFrame("skipQuote", null);
   };
   onSaveQuote = function(e) {
-    var quote;
+    var parse, quote;
     e.preventDefault();
     quote = Zepto("#quote").val();
-    return updateFrame("saveQuote", quote);
+    parse = function(quote) {
+      return quote.trim();
+    };
+    return updateFrame("saveQuote", parse(quote));
   };
   render = function(renderData, rawScope) {
     var $feedback, $quote, $saveQuote, $skipQuote, feedback, quote, showEditActions;
