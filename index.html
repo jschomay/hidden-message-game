@@ -3,36 +3,20 @@
 <head>
   <meta charset="utf-8">
   <title>Hidden Messages Game</title>
-  <link rel="stylesheet" type="text/css" href="css/ionicons.min.css" />
   <link rel="stylesheet" type="text/css" href="css/style.css" />
   <script src="assets/ramda.min.js"></script>
   <script src="assets/zepto.min.js"></script>
-  <script src="assets/howler.min.js"></script>
   <script src="game.js"></script>
   <script>
     require('src/game')()
   </script>
 </head>
 <body>
-  <div id="user-info">
-    Total score: <span id="total-score">0</span><br>
-    <span id="total-solved">0</span> / <span id="total-skipped">0</span>
-  </div>
-  <div id="secret-message"></div>
   <div id="feedback">LOADING...</div>
-  <div id="score"></div>
-  <div id="play-actions">
-    <div id="give-up-button" class="button secondary">Give up</div>
-    <div id="hint-button" class="button">Hint (<span class="hints-remaining"></span>)</div>
-  </div>
-  <div id="settings">
-    <div id="mute-music-button" class="small-link"></div>
-    <div id="mute-sfx-button" class="small-link"></div>
-  </div>
-  <div id="buy-hints">
-    <h3>You are out of hints!</h3>
-    <p>Next free hint awarded at <span id="next-free-hint"></span> points (<span id="points-to-go"></span> points to go)</p> 
-    <div id="cancel-buy-hints" class="button">OK</div>
+  <textarea id="quote" name="quote" rows="4" cols="50">...</textarea>
+  <div id="edit-actions">
+    <div id="skip-quote" class="button secondary">Skip</div>
+    <div id="save-quote" class="button">Save</div>
   </div>
 </body>
 </html>

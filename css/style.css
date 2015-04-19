@@ -8,65 +8,38 @@ body {
   margin: 0;
   font-family: Helvetica;
 }
-#secret-message {
+#quote {
   width: 80%;
-  position: relative;
-  margin: auto;
-  top: 20%;
-  text-align: center;
-}
-.word {
-  margin-right: 27px;
-  display: inline-block;
-}
-.letter {
-  font: 40px courier;
-  line-height: 1.5em;
-  margin: 0px 2px;
-  color: black;
-  position: relative;
-  white-space: pre;
-  display: inline-block;
-}
-.letter.hinted {
-  color: #ddd;
-}
-.letter.hidden:before {
-  content: "_";
   position: absolute;
-  bottom: 0;
+  margin: auto;
   left: 0;
+  right: 0;
+  top: 40%;
+  text-align: left;
+  font: 35px Helvetica;
+  color: #aaa;
+  padding: 20px;
 }
 #feedback {
   font: 20px courier;
   position: relative;
   text-align: center;
-  top: 40%;
+  top: 20%;
   color: #bbb;
 }
-#feedback.match {
-  color: #aaddaa;
-}
-#feedback.no-match {
-  color: #ddaaaa;
-}
-
-#score {
-  font-size: 60px;
-  position: absolute;
-  bottom: 30px;
-  right: 60px;
-  color: #ccc;
-}
-
-#play-actions {
-  position: absolute;
-  left: 30px;
-  bottom: 60px;
+#edit-actions {
+  position: relative;
+  left: 0;
+  right: 0;
+  margin: auto;
+  top: 80%;
   display: none;
+  width: 50%;
+  text-align: center;
 }
 
 .button {
+  display: inline-block;
   padding: 14px 10px;
   background: #bbb;
   color: #fff;
@@ -74,7 +47,7 @@ body {
   border-radius: 6px;
   -webkit-border-radius: 6px; 
   -moz-border-radius: 6px; 
-  margin-top: 20px;
+  margin-right: 20px;
   text-align: center;
   cursor: pointer;
 }
@@ -93,88 +66,3 @@ body {
   background: #eaeaea;
 }
 
-#settings {
-  position: absolute;
-  left: 25px;
-  bottom: 7px;
-}
-.small-link {
-  cursor: pointer;
-  display: inline-block;
-  margin-right: 7px;
-  padding: 10px;
-  font: 22px "Ionicons";
-  color: #bbb;
-}
-#mute-music-button:before {
-  content: "\f46c";
-}
-#mute-sfx-button:before {
-  content: "\f4ce";
-}
-#mute-music-button.muted {
-  color: #ddd;
-}
-#mute-sfx-button.muted {
-  color: #ddd;
-}
-
-#buy-hints {
-  display: none;
-  background: #eee;
-  text-align: center;
-  border: 2px solid #999;
-  border-radius: 10px;
-  -webkit-border-radius: 10px; 
-  -moz-border-radius: 10px; 
-  height: 50%;
-  width: 50%;
-  margin: auto;
-  padding: 30px;
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-}
-#buy-hints h3 {
-  color: #666;
-  font-size: 28px;
-  font-weight: bold;
-}
-#buy-hints #next-free-hint {
-  font-weight: bold;
-}
-#buy-hints p {
-  color: #666;
-  font-size: 20px;
-}
-#buy-hints #cancel-buy-hints {
-  position: absolute;
-  width: 20%;
-  bottom: 20px;
-  left: 0;
-  right: 0;
-  margin: auto;
-}
-
-
-#user-info {
-  display: none;
-  position: absolute;
-  top: 20px;
-  right: 30px;
-  width: auto;
-  font-size: 14px;
-  color: #ccc;
-  text-align:right;
-}
-#total-solved {
-  color: #aaddaa;
-}
-#total-skipped {
-  color: #ddaaaa;
-}
-#total-score {
-  font-weight: bold;
-}

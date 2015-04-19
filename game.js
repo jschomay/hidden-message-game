@@ -144,470 +144,101 @@
 
 require.register("src/game", function(exports, require, module) {
 module.exports = function() {
-  var CONSTANTS, SOUNDS, VOLUMES, buildSecredMessage, comboToString, decode, decodeKeyStates, fadeDownMusic, fadeInMusic, fadeUpMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancelBuyHints, onFrameEnter, onGiveUp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, quoteApiUrl, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, startGame, states, updateDecodeKey, updateFrame, updateLoadProgress;
+  var fetchQuote, frame, onFrameEnter, onSaveQuote, onSkipQuote, quoteApiUrl, render, saveQuote, start, states, updateFrame;
   quoteApiUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D'http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
-  CONSTANTS = {
-    startingHints: 5,
-    hintSetback: 20,
-    pointsForFreeHint: 150
-  };
-  SOUNDS = {};
-  VOLUMES = {
-    backgroundMusic: 0.1,
-    keyPressHit: 0.9
-  };
-  playSound = function(key) {
-    return SOUNDS[key].play();
-  };
-  getMusic = function() {
-    return SOUNDS["backgroundMusic"];
-  };
-  getSFX = function() {
-    return R.omit(["backgroundMusic"], SOUNDS);
-  };
-  playMusic = function() {
-    return getMusic().play();
-  };
-  pauseMusic = function() {
-    return getMusic().pause();
-  };
-  playSFX = function() {
-    return R.forEach((function(sound) {
-      return sound[1].volume(VOLUMES[sound[0]] || 1);
-    }), R.toPairs(getSFX()));
-  };
-  pauseSFX = function() {
-    return R.forEach((function(sound) {
-      return sound.volume(0);
-    }), R.values(getSFX()));
-  };
-  fadeInMusic = function() {
-    return getMusic().fadeIn(VOLUMES.backgroundMusic, 2000);
-  };
-  fadeDownMusic = function() {
-    var volume;
-    volume = getMusic()._volume;
-    return getMusic().fade(volume, VOLUMES.backgroundMusic * 1 / 10, 700);
-  };
-  fadeUpMusic = function() {
-    var volume;
-    volume = getMusic()._volume;
-    return getMusic().fade(volume, VOLUMES.backgroundMusic, 1500);
-  };
-  decodeKeyStates = {
-    HIDDEN: 0,
-    REVEALED: 1,
-    SOLVED: 2,
-    HINTED: 3,
-    HINTEDFILLED: 4
-  };
-  isLetter = function(char) {
-    return /[a-z]/i.test(char);
-  };
-  isLetterOrSpace = function(char) {
-    return /[a-z\s]/i.test(char);
-  };
-  isSpace = function(char) {
-    return /[\s]/i.test(char);
-  };
-  saveIndexes = R.mapIndexed(function(value, index) {
-    return {
-      index: index,
-      status: value
-    };
-  });
-  getRandomElement = function(arr) {
-    var newArray, randomElement, randomI;
-    randomI = Math.floor(Math.random() * arr.length);
-    randomElement = arr[randomI];
-    newArray = R.remove(randomI, 1, arr);
-    return [randomElement, newArray];
-  };
-  getRandomElements = function(arr, num) {
-    var recur;
-    if (num == null) {
-      num = 1;
-    }
-    if (typeof num !== "number") {
-      console.error("expected a number, got", num);
-      num = 1;
-    }
-    recur = function(arr, acc) {
-      var newArr, randomElement, _ref;
-      _ref = getRandomElement(arr), randomElement = _ref[0], newArr = _ref[1];
-      acc.push(randomElement);
-      if (acc.length === num) {
-        return acc;
-      } else {
-        return recur(newArr, acc);
-      }
-    };
-    return recur(arr, []);
-  };
-  getLastFreeHintScore = function(totalScore) {
-    return Math.floor(totalScore / CONSTANTS.pointsForFreeHint) * CONSTANTS.pointsForFreeHint;
-  };
-  getNextFreeHintScore = R.compose(R.add(CONSTANTS.pointsForFreeHint), getLastFreeHintScore);
-  numFreeHintsEarned = function(currentTotalScore, roundScore) {
-    var previousTarget, previousTotalScore;
-    previousTotalScore = currentTotalScore - roundScore;
-    previousTarget = getNextFreeHintScore(previousTotalScore);
-    return Math.ceil(Math.max(0, roundScore - (previousTarget - previousTotalScore)) / CONSTANTS.pointsForFreeHint);
-  };
-  hideLetters = function(char) {
-    if (!isLetter(char)) {
-      return decodeKeyStates.SOLVED;
-    } else {
-      return decodeKeyStates.HIDDEN;
-    }
-  };
-  isHidden = R.eq(decodeKeyStates.HIDDEN);
-  isSolved = R.eq(decodeKeyStates.SOLVED);
-  decode = R.zipWith(function(secretChar, decodingStatus) {
-    return {
-      char: secretChar,
-      status: decodingStatus
-    };
-  });
-  sentanceToWords = function(sentance) {
-    var breakIntoWords;
-    breakIntoWords = function(acc, char, index) {
-      var charInfo;
-      if (isLetterOrSpace(char)) {
-        if (isSpace(char)) {
-          acc.push([]);
-        } else {
-          charInfo = {
-            char: char,
-            index: index
-          };
-          acc[acc.length - 1].push(charInfo);
-        }
-      }
-      return acc;
-    };
-    return R.reduceIndexed(breakIntoWords, [[]], sentance);
-  };
-  comboToString = R.compose(R.join(""), R.map(R.prop("char")));
-  isUnsolvedGroup = R.curry(function(decodeKey, group) {
-    var numSolvedInGroup;
-    numSolvedInGroup = function(acc, char) {
-      if (decodeKey[char.index] === decodeKeyStates.SOLVED) {
-        acc++;
-      }
-      return acc;
-    };
-    return (R.reduce(numSolvedInGroup, 0, group)) !== group.length;
-  });
-  setIndexIfNotSolved = function(value, arr, index) {
-    if (typeof value === "function") {
-      value = value(arr[index]);
-    }
-    arr[index] = value;
-    return arr;
-  };
-  setIndexes = R.curry(function(value, arr, indexes) {
-    return R.reduce(R.partial(setIndexIfNotSolved, value), arr, indexes);
-  });
-  setIndexesToSolved = setIndexes(decodeKeyStates.SOLVED);
-  setIndexesToRevealed = setIndexes(function(currentStatus) {
-    var map;
-    map = {};
-    map[decodeKeyStates.HIDDEN] = decodeKeyStates.REVEALED;
-    map[decodeKeyStates.HINTED] = decodeKeyStates.HINTEDFILLED;
-    return map[currentStatus] || currentStatus;
-  });
-  resetDecodeKey = function(decodeKey) {
-    var map, resetTransform;
-    map = {};
-    map[decodeKeyStates.SOLVED] = decodeKeyStates.SOLVED;
-    map[decodeKeyStates.HINTED] = decodeKeyStates.HINTED;
-    map[decodeKeyStates.HINTEDFILLED] = decodeKeyStates.HINTED;
-    resetTransform = function(currentStatus) {
-      return map[currentStatus] || decodeKeyStates.HIDDEN;
-    };
-    return R.map(resetTransform, decodeKey);
-  };
-  updateDecodeKey = function(comboString, decodeKey, comboGroup) {
-    var comboGroupString, indexes, pattern;
-    pattern = new RegExp("^" + comboString, "i");
-    comboGroupString = comboToString(comboGroup);
-    if (pattern.test(comboGroupString)) {
-      indexes = R.map(R.prop("index"))(R.take(comboString.length, comboGroup));
-      if (comboString.length === comboGroup.length) {
-        return setIndexesToSolved(decodeKey, indexes);
-      } else {
-        return setIndexesToRevealed(decodeKey, indexes);
-      }
-    } else {
-      return decodeKey;
-    }
-  };
-  getAllMatches = function(comboGroups, comboString, decodeKey) {
-    if (comboString.length < 1) {
-      return decodeKey;
-    }
-    decodeKey = R.reduce(R.partial(updateDecodeKey, comboString), decodeKey, comboGroups);
-    return getAllMatches(comboGroups, comboString.slice(1), decodeKey);
-  };
-  getValidComboStream = function(comboString, comboGroups) {
-    var isValidCombo, joinAndMatch, pattern;
-    if (comboString.length < 1) {
-      return [];
-    }
-    pattern = new RegExp("^" + comboString, "i");
-    joinAndMatch = R.compose(R.match(pattern), comboToString);
-    isValidCombo = R.any(joinAndMatch, comboGroups);
-    if (isValidCombo) {
-      return comboString;
-    } else {
-      return getValidComboStream(comboString.slice(1), comboGroups);
-    }
+  saveQuote = function(quote) {
+    console.log("sending \"" + quote + "\" to db...");
+    return setTimeout(function() {
+      return updateFrame("quoteSaved", null);
+    }, 500);
   };
   states = {
     loading: {
       onEnter: function() {
-        fadeUpMusic();
         return fetchQuote();
       },
-      onEvent: function(eventData, scope, trigger, userData) {
-        var secretMessage;
+      onEvent: function(eventData, scope, trigger) {
+        var quote;
         if (trigger === "quoteLoaded") {
-          secretMessage = eventData;
-          scope.secretMessage = secretMessage;
-          scope.comboGroups = sentanceToWords(secretMessage);
-          scope.decodeKey = R.map(hideLetters, secretMessage);
-          scope.comboString = "";
-          scope.score = R.filter(isLetter, secretMessage).length * 5;
-          scope.moves = 0;
-          scope.hints = 0;
-          scope.lastCombo = null;
-          return ["play", scope, userData];
+          quote = eventData;
+          scope.quote = quote;
+          return ["editQuote", scope];
         } else {
-          return ["loading", scope, userData];
+          return ["loading", scope];
         }
       },
       getRenderData: function(scope) {
         return {
-          secretMessage: [],
+          quote: "",
           feedback: "LOADING...",
-          score: "",
-          showPlayActions: false
+          showEditActions: false
         };
       }
     },
-    play: {
-      onEnter: function() {
-        return fadeUpMusic();
-      },
-      onEvent: function(eventData, scope, trigger, userData) {
-        var char, elementsToReveal, existingSolved, hiddenChars, hintAllowance, indexedDecodeKey, indexesToReaveal, isMatch, newUnsolvedComboGroups, oneOrOneTenth, playKeySounds, potentialCombo, totalSolved, unsolvedComboGroups, wordComplete;
-        if (trigger === "giveUp") {
-          playSound("giveUp");
-          userData.totalSkipped += 1;
-          saveUserData(userData);
-          return ["gaveUp", scope, userData];
+    editQuote: {
+      onEnter: function() {},
+      onEvent: function(eventData, scope, trigger) {
+        if (trigger === "saveQuote") {
+          scope.quote = eventData;
+          return ["saving", scope];
+        } else if (trigger === "skipQuote") {
+          return ["loading", scope];
+        } else {
+          return ["editQuote", scope];
         }
-        if (trigger === "hint") {
-          if (userData.hintsRemaining <= 0) {
-            return ["outOfHints", scope, userData];
-          }
-          oneOrOneTenth = function(items) {
-            return Math.ceil(items / 10);
-          };
-          indexedDecodeKey = saveIndexes(scope.decodeKey);
-          hiddenChars = R.filter(R.compose(isHidden, R.prop("status")))(indexedDecodeKey);
-          if (hiddenChars.length === 0) {
-            return ["play", scope, userData];
-          }
-          hintAllowance = oneOrOneTenth(hiddenChars.length);
-          elementsToReveal = getRandomElements(hiddenChars, hintAllowance);
-          indexesToReaveal = R.map(R.prop("index"), elementsToReveal);
-          scope.decodeKey = setIndexes(decodeKeyStates.HINTED, scope.decodeKey, indexesToReaveal);
-          scope.hints += 1;
-          scope.score -= CONSTANTS.hintSetback;
-          userData.hintsRemaining -= 1;
-          saveUserData(userData);
-          playKeySounds = function(repeatTimes, playCount) {
-            if (playCount == null) {
-              playCount = 1;
-            }
-            playSound("keyPressMiss");
-            if (playCount < repeatTimes) {
-              return setTimeout((function() {
-                return playKeySounds(repeatTimes, playCount + 1);
-              }), 120);
-            }
-          };
-          playKeySounds(hintAllowance);
-        }
-        if (trigger === "keyPress") {
-          char = String.fromCharCode(eventData.keyCode).toLowerCase();
-          if (isLetter(char)) {
-            potentialCombo = scope.comboString + char;
-            existingSolved = resetDecodeKey(scope.decodeKey);
-            unsolvedComboGroups = R.filter(isUnsolvedGroup(scope.decodeKey), scope.comboGroups);
-            scope.moves += 1;
-            scope.score = Math.max(0, scope.score - 1);
-            scope.comboString = getValidComboStream(potentialCombo, unsolvedComboGroups);
-            scope.decodeKey = getAllMatches(scope.comboGroups, scope.comboString, existingSolved);
-            if (scope.comboCompleted === true) {
-              scope.lastCombo = char;
-            } else {
-              scope.lastCombo = potentialCombo;
-            }
-            newUnsolvedComboGroups = R.filter(isUnsolvedGroup(scope.decodeKey), scope.comboGroups);
-            scope.comboCompleted = unsolvedComboGroups.length > newUnsolvedComboGroups.length;
-            isMatch = !!scope.comboString.length;
-            wordComplete = scope.comboCompleted === true;
-            if (wordComplete) {
-              playSound("keyPressHit");
-            } else if (isMatch) {
-              playSound("keyPressHit");
-            } else {
-              playSound("keyPressMiss");
-            }
-          }
-          totalSolved = R.length(R.filter(isSolved)(scope.decodeKey));
-          if (totalSolved === scope.secretMessage.length) {
-            playSound("solved");
-            userData.totalSolved += 1;
-            userData.totalScore += scope.score;
-            userData.hintsRemaining += numFreeHintsEarned(userData.totalScore, scope.score);
-            saveUserData(userData);
-            return ["solved", scope, userData];
-          }
-        }
-        return ["play", scope, userData];
       },
       getRenderData: function(scope) {
-        var comboString;
-        comboString = scope.comboString.length ? scope.comboString : null;
         return {
-          secretMessage: decode(scope.secretMessage, scope.decodeKey),
-          feedback: comboString || scope.lastCombo || "Type letter combos to reveal the hidden message.",
-          match: scope.lastCombo ? !!scope.comboString.length > 0 : null,
-          score: scope.score,
-          showPlayActions: true
+          quote: scope.quote,
+          feedback: "You can edit this quote, save it, or skip it.",
+          showEditActions: true
         };
       }
     },
-    gaveUp: {
-      onEnter: function() {
-        return fadeDownMusic();
+    saving: {
+      onEnter: function(quote) {
+        return saveQuote(quote);
       },
-      onEvent: function(eventData, scope, trigger, userData) {
-        scope.secretMessage = void 0;
-        scope.comboGroups = void 0;
-        scope.decodeKey = void 0;
-        scope.comboString = void 0;
-        scope.score = void 0;
-        scope.moves = void 0;
-        scope.hints = void 0;
-        scope.lastCombo = void 0;
-        return ["loading", scope, userData];
-      },
-      getRenderData: function(scope) {
-        return {
-          secretMessage: decode(scope.secretMessage, R.map(R.always(decodeKeyStates.SOLVED), scope.decodeKey)),
-          feedback: "You gave up!<br>Press any key to play again.",
-          score: 0,
-          showPlayActions: false
-        };
-      }
-    },
-    solved: {
-      onEnter: function() {
-        return fadeDownMusic();
-      },
-      onEvent: function(eventData, scope, trigger, userData) {
-        scope.secretMessage = void 0;
-        scope.comboGroups = void 0;
-        scope.decodeKey = void 0;
-        scope.comboString = void 0;
-        scope.score = void 0;
-        scope.moves = void 0;
-        scope.hints = void 0;
-        scope.lastCombo = void 0;
-        return ["loading", scope, userData];
-      },
-      getRenderData: function(scope) {
-        var hints;
-        hints = scope.hints > 1 ? scope.hints : "no";
-        return {
-          secretMessage: decode(scope.secretMessage, scope.decodeKey),
-          feedback: "SOLVED in " + scope.moves + " moves (with " + hints + " hints)!<br>Press any key to play again.",
-          score: scope.score,
-          showPlayActions: false
-        };
-      }
-    },
-    outOfHints: {
-      onEnter: function() {
-        return fadeDownMusic();
-      },
-      onEvent: function(eventData, scope, trigger, userData) {
-        if (trigger === "cancelBuyHints") {
-          return ["play", scope, userData];
+      onEvent: function(eventData, scope, trigger) {
+        if (trigger === "quoteSaved") {
+          scope.quote = void 0;
+          return ["loading", scope];
+        } else {
+          return ["saving", scope];
         }
-        return ["outOfHints", scope, userData];
       },
       getRenderData: function(scope) {
-        var comboString;
-        comboString = scope.comboString.length ? scope.comboString : null;
         return {
-          secretMessage: decode(scope.secretMessage, scope.decodeKey),
-          feedback: comboString || scope.lastCombo || "Type letter combos to reveal the hidden message.",
-          match: scope.lastCombo ? !!scope.comboString.length > 0 : null,
-          score: scope.score,
-          showPlayActions: true,
-          buyHints: true
+          quote: scope.quote,
+          feedback: "Saving quote...",
+          showEditActions: false
         };
       }
     }
   };
   frame = function(seed, trigger, eventData) {
-    var newScope, newState, newUserData, _ref;
-    _ref = seed.state.onEvent(eventData, seed.scope, trigger, seed.userData), newState = _ref[0], newScope = _ref[1], newUserData = _ref[2];
+    var newScope, newState, _ref;
+    _ref = seed.state.onEvent(eventData, seed.scope, trigger), newState = _ref[0], newScope = _ref[1];
     if (states[newState] !== seed.state) {
-      states[newState].onEnter();
+      states[newState].onEnter(newScope.quote);
     }
-    render(states[newState].getRenderData(newScope), newScope, newUserData);
+    render(states[newState].getRenderData(newScope), newScope);
     return {
       state: states[newState],
-      scope: newScope,
-      userData: newUserData
+      scope: newScope
     };
   };
   updateFrame = function(trigger, data) {
-    var scope, state, userData, _ref;
+    var scope, state, _ref;
     this.store = onFrameEnter(this.store, trigger, data);
     _ref = frame({
       state: this.currentState,
-      scope: this.store,
-      userData: this.userData
-    }, trigger, data), state = _ref.state, scope = _ref.scope, userData = _ref.userData;
+      scope: this.store
+    }, trigger, data), state = _ref.state, scope = _ref.scope;
     this.currentState = state;
-    this.store = scope;
-    return this.userData = userData;
+    return this.store = scope;
   };
   onFrameEnter = function(scope, trigger, eventData) {
-    if (trigger === "toggleMuteMusic") {
-      if (scope.musicIsPaused) {
-        playMusic();
-      } else {
-        pauseMusic();
-      }
-      scope.musicIsPaused = !scope.musicIsPaused;
-    }
-    if (trigger === "toggleMuteSFX") {
-      if (scope.SFXIsPaused) {
-        playSFX();
-      } else {
-        pauseSFX();
-      }
-      scope.SFXIsPaused = !scope.SFXIsPaused;
-    }
     return scope;
   };
   fetchQuote = function() {
@@ -627,190 +258,42 @@ module.exports = function() {
       return updateFrame("quoteLoaded", message);
     });
   };
-  onKeyDown = function(e) {
+  onSkipQuote = function(e) {
     e.preventDefault();
-    return updateFrame("keyPress", e);
+    return updateFrame("skipQuote", null);
   };
-  onGiveUp = function(e) {
+  onSaveQuote = function(e) {
+    var quote;
     e.preventDefault();
-    return updateFrame("giveUp", null);
+    quote = Zepto("#quote").val();
+    return updateFrame("saveQuote", quote);
   };
-  onHint = function(e) {
-    e.preventDefault();
-    return updateFrame("hint", null);
-  };
-  onMuteMusic = function(e) {
-    e.preventDefault();
-    return updateFrame("toggleMuteMusic", null);
-  };
-  onMuteSFX = function(e) {
-    e.preventDefault();
-    return updateFrame("toggleMuteSFX", null);
-  };
-  onCancelBuyHints = function(e) {
-    e.preventDefault();
-    return updateFrame("cancelBuyHints", null);
-  };
-  buildSecredMessage = function(secretMessage) {
-    var buildMarkup, statusMap;
-    statusMap = R.invertObj(decodeKeyStates);
-    buildMarkup = function(acc, letter) {
-      var newLine, status, text;
-      if (isSpace(letter.char)) {
-        newLine = "";
-        if (/[\n\r]/.test(letter.char)) {
-          newLine = "<br>";
-        }
-        return acc + ("</span>" + newLine + "<span class='word'>");
-      } else {
-        text = letter.char;
-        if (letter.status === decodeKeyStates.HIDDEN) {
-          text = " ";
-        }
-        status = statusMap[letter.status].toLowerCase();
-        return acc + ("<span class='letter " + status + "'>" + text + "</span>");
-      }
-    };
-    return (R.reduce(buildMarkup, "<span class='word'>", secretMessage)) + "</span>";
-  };
-  render = function(renderData, rawScope, userData) {
-    var $feedback, $muteMusic, $muteSFX, $score, $secretMessage, buyHints, feedback, match, score, secretMessage, showPlayActions;
-    $secretMessage = Zepto("#secret-message");
+  render = function(renderData, rawScope) {
+    var $feedback, $quote, $saveQuote, $skipQuote, feedback, quote, showEditActions;
+    $quote = Zepto("#quote");
     $feedback = Zepto("#feedback");
-    $score = Zepto("#score");
-    $muteMusic = Zepto("#mute-music-button");
-    $muteSFX = Zepto("#mute-sfx-button");
-    secretMessage = renderData.secretMessage, feedback = renderData.feedback, score = renderData.score, showPlayActions = renderData.showPlayActions, match = renderData.match, buyHints = renderData.buyHints;
-    $secretMessage.html(buildSecredMessage(secretMessage));
-    $feedback.html(feedback);
-    $score.text(score);
-    $feedback.removeClass("no-match");
-    $feedback.removeClass("match");
-    if (match === true) {
-      $feedback.addClass("match");
-    }
-    if (match === false) {
-      $feedback.addClass("no-match");
-    }
-    if (showPlayActions) {
-      Zepto("#play-actions").show();
+    $saveQuote = Zepto("#save-quote");
+    $skipQuote = Zepto("#skip-quote");
+    quote = renderData.quote, feedback = renderData.feedback, showEditActions = renderData.showEditActions;
+    $quote.val(quote);
+    $feedback.text(feedback);
+    if (showEditActions) {
+      return Zepto("#edit-actions").show();
     } else {
-      Zepto("#play-actions").hide();
-    }
-    Zepto("#hint-button .hints-remaining").text(userData.hintsRemaining);
-    $muteMusic.removeClass("muted");
-    $muteSFX.removeClass("muted");
-    if (rawScope.musicIsPaused) {
-      $muteMusic.addClass("muted");
-    }
-    if (rawScope.SFXIsPaused) {
-      $muteSFX.addClass("muted");
-    }
-    if (buyHints) {
-      Zepto("#buy-hints").show();
-      Zepto("#next-free-hint").text(getNextFreeHintScore(userData.totalScore));
-      Zepto("#points-to-go").text(getNextFreeHintScore(userData.totalScore) - userData.totalScore);
-    } else {
-      Zepto("#buy-hints").hide();
-    }
-    Zepto("#user-info").show();
-    Zepto("#total-solved").text(userData.totalSolved);
-    Zepto("#total-skipped").text(userData.totalSkipped);
-    return Zepto("#total-score").text(userData.totalScore);
-  };
-  numSoundsLoaded = function(soundsLoaded) {
-    return R.length(R.filter(R.compose(R.identity, R.prop("_loaded")), R.values(soundsLoaded)));
-  };
-  updateLoadProgress = function(soundsToLoad, soundsLoaded) {
-    if (numSoundsLoaded(soundsLoaded) === soundsToLoad) {
-      return startGame();
+      return Zepto("#edit-actions").hide();
     }
   };
-  loadSounds = function(sounds) {
-    var formats, getFormats, initializeSounds, totalSounds;
-    totalSounds = R.length(R.keys(sounds));
-    formats = [".ogg", ".m4a", ".wav"];
-    getFormats = function(filePath) {
-      return R.map(R.concat(filePath), formats);
-    };
-    initializeSounds = function(acc, sound) {
-      var getConfig;
-      getConfig = function() {
-        if (typeof sound[1] === "string") {
-          return {
-            urls: getFormats(sound[1]),
-            onload: function() {
-              return updateLoadProgress(totalSounds, acc);
-            }
-          };
-        } else {
-          return R.merge(sound[1][1], {
-            urls: getFormats(sound[1][0]),
-            onload: function() {
-              return updateLoadProgress(totalSounds, acc);
-            }
-          });
-        }
-      };
-      acc[sound[0]] = new Howl(getConfig());
-      return acc;
-    };
-    return R.reduce(initializeSounds, SOUNDS, R.toPairs(sounds));
-  };
-  preload = function() {
-    return loadSounds({
-      keyPressMiss: "assets/key-press-miss",
-      keyPressHit: [
-        "assets/key-press-hit", {
-          volume: VOLUMES.keyPressHit
-        }
-      ],
-      giveUp: "assets/give-up",
-      solved: "assets/solved",
-      backgroundMusic: [
-        "assets/background-music", {
-          volume: VOLUMES.backgroundMusic,
-          onend: function() {
-            return this.play();
-          }
-        }
-      ]
-    });
-  };
-  startGame = function() {
+  start = function() {
     return Zepto(function($) {
-      fadeInMusic();
       updateFrame.currentState = states.loading;
       updateFrame.store = {};
-      updateFrame.userData = getUserData();
       updateFrame = updateFrame.bind(updateFrame);
-      $(document).on("keydown", onKeyDown);
-      $("#give-up-button").on("click", onGiveUp);
-      $("#hint-button").on("click", onHint);
-      $("#mute-music-button").on("click", onMuteMusic);
-      $("#mute-sfx-button").on("click", onMuteSFX);
-      $("#cancel-buy-hints").on("click", onCancelBuyHints);
+      $("#save-quote").on("click", onSaveQuote);
+      $("#skip-quote").on("click", onSkipQuote);
       return fetchQuote();
     });
   };
-  getUserData = function() {
-    var currentPlayer;
-    currentPlayer = JSON.parse(localStorage.getItem("currentPlayer"));
-    if (!currentPlayer) {
-      currentPlayer = {
-        hintsRemaining: CONSTANTS.startingHints,
-        totalScore: 0,
-        totalSolved: 0,
-        totalSkipped: 0
-      };
-      saveUserData(currentPlayer);
-    }
-    return currentPlayer;
-  };
-  saveUserData = function(userData) {
-    return localStorage.setItem("currentPlayer", JSON.stringify(userData));
-  };
-  return preload();
+  return start();
 };
 
 });
