@@ -708,6 +708,8 @@ module.exports = function() {
     }
     if (buyHints) {
       Zepto("#buy-hints").show();
+      Zepto("#next-free-hint").text(getNextFreeHintScore(userData.totalScore));
+      Zepto("#points-to-go").text(getNextFreeHintScore(userData.totalScore) - userData.totalScore);
     } else {
       Zepto("#buy-hints").hide();
     }

@@ -137,9 +137,17 @@ body {
   left: 0;
   right: 0;
 }
-#buy-hints p {
+#buy-hints h3 {
   color: #666;
   font-size: 28px;
+  font-weight: bold;
+}
+#buy-hints #next-free-hint {
+  font-weight: bold;
+}
+#buy-hints p {
+  color: #666;
+  font-size: 20px;
 }
 #buy-hints #cancel-buy-hints {
   position: absolute;
@@ -166,4 +174,7 @@ body {
 }
 #total-skipped {
   color: #ddaaaa;
+}
+#total-score {
+  font-weight: bold;
 }
