@@ -6,6 +6,7 @@ module.exports = ->
   CONSTANTS =
     startingHints: 5
     hintSetback: 20
+    pointsForFreeHint: 150
 
   # sound constants and utils (using howler.js)
   SOUNDS = {}
@@ -76,6 +77,16 @@ module.exports = ->
     recur arr, []
 
 
+  # hint calculations
+  getLastFreeHintScore = (totalScore) ->
+    Math.floor(totalScore / CONSTANTS.pointsForFreeHint) * CONSTANTS.pointsForFreeHint
+
+  getNextFreeHintScore = R.compose(R.add(CONSTANTS.pointsForFreeHint), getLastFreeHintScore)
+
+  numFreeHintsEarned = (currentTotalScore, roundScore) ->
+    previousTotalScore = currentTotalScore - roundScore
+    previousTarget = getNextFreeHintScore previousTotalScore
+    Math.ceil(Math.max(0, roundScore - (previousTarget - previousTotalScore)) / CONSTANTS.pointsForFreeHint)
 
   # game logic
   hideLetters = (char) ->
@@ -300,8 +311,10 @@ module.exports = ->
           if totalSolved is scope.secretMessage.length
             playSound "solved"
 
+
             userData.totalSolved += 1
             userData.totalScore += scope.score
+            userData.hintsRemaining += numFreeHintsEarned userData.totalScore, scope.score
 
             saveUserData userData
 
