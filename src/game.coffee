@@ -221,6 +221,8 @@ module.exports = ->
 
           userData.totalSkipped += 1
 
+          saveUserData userData
+
           return ["gaveUp", scope, userData]
 
         if trigger is "hint"
@@ -242,8 +244,11 @@ module.exports = ->
 
           scope.decodeKey = setIndexes decodeKeyStates.HINTED, scope.decodeKey, indexesToReaveal
           scope.hints += 1
-          userData.hintsRemaining -= 1
           scope.score -= CONSTANTS.hintSetback
+
+          userData.hintsRemaining -= 1
+
+          saveUserData userData
 
           # play sound (one keyPressHit for each hinted char with slight delay)
           playKeySounds = (repeatTimes, playCount = 1) ->
@@ -297,6 +302,8 @@ module.exports = ->
 
             userData.totalSolved += 1
             userData.totalScore += scope.score
+
+            saveUserData userData
 
             return ["solved", scope, userData]
 
@@ -535,6 +542,7 @@ module.exports = ->
       Zepto("#buy-hints").hide()
 
     # user info
+    Zepto("#user-info").show()
     Zepto("#total-solved").text userData.totalSolved
     Zepto("#total-skipped").text userData.totalSkipped
     Zepto("#total-score").text userData.totalScore
@@ -606,10 +614,20 @@ module.exports = ->
       fetchQuote()
 
   getUserData = ->
-    hintsRemaining: CONSTANTS.startingHints
-    totalScore: 0
-    totalSolved: 0
-    totalSkipped: 0
+    currentPlayer = JSON.parse localStorage.getItem "currentPlayer"
+    if not currentPlayer
+      currentPlayer =
+        hintsRemaining: CONSTANTS.startingHints
+        totalScore: 0
+        totalSolved: 0
+        totalSkipped: 0
+      saveUserData currentPlayer
+
+    currentPlayer
+
+  saveUserData = (userData) ->
+    localStorage.setItem "currentPlayer", JSON.stringify userData
+
 
   # kick off game
   preload()

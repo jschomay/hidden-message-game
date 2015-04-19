@@ -144,7 +144,7 @@
 
 require.register("src/game", function(exports, require, module) {
 module.exports = function() {
-  var CONSTANTS, SOUNDS, VOLUMES, buildSecredMessage, comboToString, decode, decodeKeyStates, fadeDownMusic, fadeInMusic, fadeUpMusic, fetchQuote, frame, getAllMatches, getMusic, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadSounds, numSoundsLoaded, onCancelBuyHints, onFrameEnter, onGiveUp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, quoteApiUrl, render, resetDecodeKey, saveIndexes, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, startGame, states, updateDecodeKey, updateFrame, updateLoadProgress;
+  var CONSTANTS, SOUNDS, VOLUMES, buildSecredMessage, comboToString, decode, decodeKeyStates, fadeDownMusic, fadeInMusic, fadeUpMusic, fetchQuote, frame, getAllMatches, getMusic, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadSounds, numSoundsLoaded, onCancelBuyHints, onFrameEnter, onGiveUp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, quoteApiUrl, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, startGame, states, updateDecodeKey, updateFrame, updateLoadProgress;
   quoteApiUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D'http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
   CONSTANTS = {
     startingHints: 5,
@@ -394,6 +394,7 @@ module.exports = function() {
         if (trigger === "giveUp") {
           playSound("giveUp");
           userData.totalSkipped += 1;
+          saveUserData(userData);
           return ["gaveUp", scope, userData];
         }
         if (trigger === "hint") {
@@ -413,8 +414,9 @@ module.exports = function() {
           indexesToReaveal = R.map(R.prop("index"), elementsToReveal);
           scope.decodeKey = setIndexes(decodeKeyStates.HINTED, scope.decodeKey, indexesToReaveal);
           scope.hints += 1;
-          userData.hintsRemaining -= 1;
           scope.score -= CONSTANTS.hintSetback;
+          userData.hintsRemaining -= 1;
+          saveUserData(userData);
           playKeySounds = function(repeatTimes, playCount) {
             if (playCount == null) {
               playCount = 1;
@@ -460,6 +462,7 @@ module.exports = function() {
             playSound("solved");
             userData.totalSolved += 1;
             userData.totalScore += scope.score;
+            saveUserData(userData);
             return ["solved", scope, userData];
           }
         }
@@ -696,6 +699,7 @@ module.exports = function() {
     } else {
       Zepto("#buy-hints").hide();
     }
+    Zepto("#user-info").show();
     Zepto("#total-solved").text(userData.totalSolved);
     Zepto("#total-skipped").text(userData.totalSkipped);
     return Zepto("#total-score").text(userData.totalScore);
@@ -776,12 +780,21 @@ module.exports = function() {
     });
   };
   getUserData = function() {
-    return {
-      hintsRemaining: CONSTANTS.startingHints,
-      totalScore: 0,
-      totalSolved: 0,
-      totalSkipped: 0
-    };
+    var currentPlayer;
+    currentPlayer = JSON.parse(localStorage.getItem("currentPlayer"));
+    if (!currentPlayer) {
+      currentPlayer = {
+        hintsRemaining: CONSTANTS.startingHints,
+        totalScore: 0,
+        totalSolved: 0,
+        totalSkipped: 0
+      };
+      saveUserData(currentPlayer);
+    }
+    return currentPlayer;
+  };
+  saveUserData = function(userData) {
+    return localStorage.setItem("currentPlayer", JSON.stringify(userData));
   };
   return preload();
 };
