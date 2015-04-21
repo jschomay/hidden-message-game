@@ -3,6 +3,10 @@ module.exports = ->
   quoteApiUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D'http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys"
 
   saveQuoteUrl = "http://localhost:8000"
+  quoteCountUrl = "http://localhost:8000/count"
+
+  ajaxError = (xhr) ->
+    throw new Error xhr.responseText
 
   saveQuote = (quote) ->
     console.log "Saving \"#{quote}\"..."
@@ -10,8 +14,6 @@ module.exports = ->
       console.log "success"
       updateFrame "quoteSaved", null
 
-    error = (xhr) ->
-      throw new Error xhr.responseText
 
     Zepto.ajax
       type: 'POST',
@@ -19,13 +21,24 @@ module.exports = ->
       data:
         quote: quote
       success: success
-      error: error
+      error: ajaxError
+
+  getQuoteCount = ->
+    success = (countInfo) ->
+      updateFrame "countInfo", countInfo
+
+    Zepto.ajax
+      type: 'GET',
+      url: quoteCountUrl
+      success: success
+      error: ajaxError
 
   # GAME STATES
   states =
     loading:
       onEnter: ->
         fetchQuote()
+        getQuoteCount()
       onEvent: (eventData, scope, trigger) ->
         if trigger is "quoteLoaded"
           quote = eventData
@@ -101,6 +114,8 @@ module.exports = ->
 
   # code to run on every frame regardless of which state is active
   onFrameEnter = (scope, trigger, eventData) ->
+    if trigger is "countInfo"
+      scope.countInfo = eventData
     scope
 
 
@@ -152,6 +167,10 @@ module.exports = ->
     else
       Zepto("#edit-actions").hide()
 
+    # quote count
+    Zepto("#quote-count").text rawScope.countInfo.count
+    Zepto("#bundle").text rawScope.countInfo.bundle
+
 
   start = ->
     # make sure document is loaded before starting (it should be by now)
@@ -167,6 +186,7 @@ module.exports = ->
       $("#skip-quote").on "click", onSkipQuote
 
       fetchQuote()
+      getQuoteCount()
 
   # kick off
   start()

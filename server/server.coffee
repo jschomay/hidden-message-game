@@ -15,6 +15,12 @@ mongodb.connect dbUrl, (err, db) ->
     console.log "connected to db"
 
 
+getQuoteCount = (cb) ->
+  quotes.count {bundle: BUNDLE}, (err, count) ->
+    return doError err, res if err
+    cb count
+
+
 doError = (err, res) ->
   console.log err
   res.writeHead 500,
@@ -23,23 +29,35 @@ doError = (err, res) ->
   res.end "Quote couldn't be saved to database:" + err.message
 
 server = http.createServer (req, res) ->
-  postdata req, res, (err, data) ->
-    return doError err, res if err
-    console.log "saving quote:", data.quote
+  if /count/.test req.url
+    getQuoteCount (count) ->
+      res.writeHead 200,
+        "Content-type": "application/json"
+        "access-control-allow-origin": "http://localhost:3333"
+      res.end JSON.stringify
+        count: count
+        bundle: BUNDLE
 
-    quotes.insert {quote: data.quote, bundle: BUNDLE}, (err, result) ->
+  else if "/" is req.url
+    postdata req, res, (err, data) ->
       return doError err, res if err
+      console.log "saving quote:", data.quote
 
-      console.log "success"
-
-      quotes.find({}).toArray (err, docs) ->
+      quotes.insert {quote: data.quote, bundle: BUNDLE}, (err, result) ->
         return doError err, res if err
-        console.log "quote collection:", docs
+
+        console.log "success"
 
         res.writeHead 200,
           "Content-type": "text/plain"
           "access-control-allow-origin": "http://localhost:3333"
         res.end()
+
+  else
+    console.log "Attempt to access", req.url
+    res.writeHead 404,
+      "access-control-allow-origin": "http://localhost:3333"
+    res.end()
 
 server.listen 8000
 console.log "Server running at localhost:8000"

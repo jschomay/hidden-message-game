@@ -20,6 +20,14 @@ body {
   color: #aaa;
   padding: 20px;
 }
+#count-info {
+  font: 28px courier;
+  position: absolute;
+  text-align: left;
+  bottom: 20px;
+  right: 40px;
+  color: #bbb;
+}
 #feedback {
   font: 20px courier;
   position: relative;

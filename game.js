@@ -144,18 +144,19 @@
 
 require.register("src/game", function(exports, require, module) {
 module.exports = function() {
-  var fetchQuote, frame, onFrameEnter, onSaveQuote, onSkipQuote, quoteApiUrl, render, saveQuote, saveQuoteUrl, start, states, updateFrame;
+  var ajaxError, fetchQuote, frame, getQuoteCount, onFrameEnter, onSaveQuote, onSkipQuote, quoteApiUrl, quoteCountUrl, render, saveQuote, saveQuoteUrl, start, states, updateFrame;
   quoteApiUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D'http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
   saveQuoteUrl = "http://localhost:8000";
+  quoteCountUrl = "http://localhost:8000/count";
+  ajaxError = function(xhr) {
+    throw new Error(xhr.responseText);
+  };
   saveQuote = function(quote) {
-    var error, success;
+    var success;
     console.log("Saving \"" + quote + "\"...");
     success = function() {
       console.log("success");
       return updateFrame("quoteSaved", null);
-    };
-    error = function(xhr) {
-      throw new Error(xhr.responseText);
     };
     return Zepto.ajax({
       type: 'POST',
@@ -164,13 +165,26 @@ module.exports = function() {
         quote: quote
       },
       success: success,
-      error: error
+      error: ajaxError
+    });
+  };
+  getQuoteCount = function() {
+    var success;
+    success = function(countInfo) {
+      return updateFrame("countInfo", countInfo);
+    };
+    return Zepto.ajax({
+      type: 'GET',
+      url: quoteCountUrl,
+      success: success,
+      error: ajaxError
     });
   };
   states = {
     loading: {
       onEnter: function() {
-        return fetchQuote();
+        fetchQuote();
+        return getQuoteCount();
       },
       onEvent: function(eventData, scope, trigger) {
         var quote;
@@ -254,6 +268,9 @@ module.exports = function() {
     return this.store = scope;
   };
   onFrameEnter = function(scope, trigger, eventData) {
+    if (trigger === "countInfo") {
+      scope.countInfo = eventData;
+    }
     return scope;
   };
   fetchQuote = function() {
@@ -296,10 +313,12 @@ module.exports = function() {
     $quote.val(quote);
     $feedback.text(feedback);
     if (showEditActions) {
-      return Zepto("#edit-actions").show();
+      Zepto("#edit-actions").show();
     } else {
-      return Zepto("#edit-actions").hide();
+      Zepto("#edit-actions").hide();
     }
+    Zepto("#quote-count").text(rawScope.countInfo.count);
+    return Zepto("#bundle").text(rawScope.countInfo.bundle);
   };
   start = function() {
     return Zepto(function($) {
@@ -308,7 +327,8 @@ module.exports = function() {
       updateFrame = updateFrame.bind(updateFrame);
       $("#save-quote").on("click", onSaveQuote);
       $("#skip-quote").on("click", onSkipQuote);
-      return fetchQuote();
+      fetchQuote();
+      return getQuoteCount();
     });
   };
   return start();
