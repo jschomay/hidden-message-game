@@ -31,11 +31,16 @@ body {
 .letter.hinted {
   color: #ddd;
 }
-.letter.hidden:before {
+.letter:before {
   content: "_";
+  color: black;
   position: absolute;
   bottom: 0;
   left: 0;
+}
+.letter.solved:before {
+  content: "";
+  display: none;
 }
 #feedback {
   font: 20px courier;
