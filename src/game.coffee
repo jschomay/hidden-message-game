@@ -335,21 +335,25 @@ module.exports = ->
         fadeDownMusic()
 
       onEvent: (eventData, scope, trigger, userData) ->
-        # reset everything
-        scope.secretMessage = undefined
-        scope.comboGroups = undefined
-        scope.decodeKey = undefined
-        scope.comboString = undefined
-        scope.score = undefined
-        scope.moves = undefined
-        scope.hints = undefined
-        scope.lastCombo = undefined
+        if eventData.keyCode is 32 # space bar
+          # reset everything
+          scope.secretMessage = undefined
+          scope.comboGroups = undefined
+          scope.decodeKey = undefined
+          scope.comboString = undefined
+          scope.score = undefined
+          scope.moves = undefined
+          scope.hints = undefined
+          scope.lastCombo = undefined
 
-        return ["loading", scope, userData]
+          return ["loading", scope, userData]
+
+        else
+          return ["gaveUp", scope, userData]
 
       getRenderData: (scope) ->
         secretMessage: decode(scope.secretMessage, R.map( R.always(decodeKeyStates.SOLVED), scope.decodeKey))
-        feedback: "You gave up!<br>Press any key to play again."
+        feedback: "You gave up!<br>Press 'Space bar' to play again."
         score: 0
         showPlayActions: false
 
@@ -358,22 +362,26 @@ module.exports = ->
         fadeDownMusic()
 
       onEvent: (eventData, scope, trigger, userData) ->
-        # reset everything
-        scope.secretMessage = undefined
-        scope.comboGroups = undefined
-        scope.decodeKey = undefined
-        scope.comboString = undefined
-        scope.score = undefined
-        scope.moves = undefined
-        scope.hints = undefined
-        scope.lastCombo = undefined
+        if eventData.keyCode is 32 # space bar
+          # reset everything
+          scope.secretMessage = undefined
+          scope.comboGroups = undefined
+          scope.decodeKey = undefined
+          scope.comboString = undefined
+          scope.score = undefined
+          scope.moves = undefined
+          scope.hints = undefined
+          scope.lastCombo = undefined
 
-        return ["loading", scope, userData]
+          return ["loading", scope, userData]
+
+        else
+          return ["solved", scope, userData]
 
       getRenderData: (scope) ->
         hints = if scope.hints > 1 then scope.hints else "no"
         secretMessage: decode(scope.secretMessage, scope.decodeKey)
-        feedback:  "SOLVED in #{scope.moves} moves (with #{hints} hints)!<br>Press any key to play again."
+        feedback:  "SOLVED in #{scope.moves} moves (with #{hints} hints)!<br>Press 'Space bar' to play again."
         score: scope.score
         showPlayActions: false
 
@@ -469,7 +477,9 @@ module.exports = ->
       updateFrame "quoteLoaded", message
 
   onKeyDown = (e) ->
-    e.preventDefault()
+    if e.keyCode is 8 #backspace
+      # don't want the browser to go back
+      e.preventDefault()
     updateFrame "keyPress", e
 
   onGiveUp = (e) ->

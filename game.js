@@ -497,20 +497,24 @@ module.exports = function() {
         return fadeDownMusic();
       },
       onEvent: function(eventData, scope, trigger, userData) {
-        scope.secretMessage = void 0;
-        scope.comboGroups = void 0;
-        scope.decodeKey = void 0;
-        scope.comboString = void 0;
-        scope.score = void 0;
-        scope.moves = void 0;
-        scope.hints = void 0;
-        scope.lastCombo = void 0;
-        return ["loading", scope, userData];
+        if (eventData.keyCode === 32) {
+          scope.secretMessage = void 0;
+          scope.comboGroups = void 0;
+          scope.decodeKey = void 0;
+          scope.comboString = void 0;
+          scope.score = void 0;
+          scope.moves = void 0;
+          scope.hints = void 0;
+          scope.lastCombo = void 0;
+          return ["loading", scope, userData];
+        } else {
+          return ["gaveUp", scope, userData];
+        }
       },
       getRenderData: function(scope) {
         return {
           secretMessage: decode(scope.secretMessage, R.map(R.always(decodeKeyStates.SOLVED), scope.decodeKey)),
-          feedback: "You gave up!<br>Press any key to play again.",
+          feedback: "You gave up!<br>Press 'Space bar' to play again.",
           score: 0,
           showPlayActions: false
         };
@@ -521,22 +525,26 @@ module.exports = function() {
         return fadeDownMusic();
       },
       onEvent: function(eventData, scope, trigger, userData) {
-        scope.secretMessage = void 0;
-        scope.comboGroups = void 0;
-        scope.decodeKey = void 0;
-        scope.comboString = void 0;
-        scope.score = void 0;
-        scope.moves = void 0;
-        scope.hints = void 0;
-        scope.lastCombo = void 0;
-        return ["loading", scope, userData];
+        if (eventData.keyCode === 32) {
+          scope.secretMessage = void 0;
+          scope.comboGroups = void 0;
+          scope.decodeKey = void 0;
+          scope.comboString = void 0;
+          scope.score = void 0;
+          scope.moves = void 0;
+          scope.hints = void 0;
+          scope.lastCombo = void 0;
+          return ["loading", scope, userData];
+        } else {
+          return ["solved", scope, userData];
+        }
       },
       getRenderData: function(scope) {
         var hints;
         hints = scope.hints > 1 ? scope.hints : "no";
         return {
           secretMessage: decode(scope.secretMessage, scope.decodeKey),
-          feedback: "SOLVED in " + scope.moves + " moves (with " + hints + " hints)!<br>Press any key to play again.",
+          feedback: "SOLVED in " + scope.moves + " moves (with " + hints + " hints)!<br>Press 'Space bar' to play again.",
           score: scope.score,
           showPlayActions: false
         };
@@ -628,7 +636,9 @@ module.exports = function() {
     });
   };
   onKeyDown = function(e) {
-    e.preventDefault();
+    if (e.keyCode === 8) {
+      e.preventDefault();
+    }
     return updateFrame("keyPress", e);
   };
   onGiveUp = function(e) {
