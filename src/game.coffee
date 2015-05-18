@@ -18,6 +18,7 @@ module.exports = ->
     startingHints: 5
     hintSetback: 20
     pointsForFreeHint: 150
+    pointsPerLetter: 5
 
   # sound constants and utils (using howler.js)
   SOUNDS = {}
@@ -220,7 +221,7 @@ module.exports = ->
           scope.comboGroups = sentanceToWords secretMessage
           scope.decodeKey = R.map hideLetters, secretMessage
           scope.comboString = ""
-          scope.score = R.filter(isLetter, secretMessage).length * 5
+          scope.score = R.filter(isLetter, secretMessage).length * CONSTANTS.pointsPerLetter
           scope.moves = 0
           scope.hints = 0
           scope.lastCombo = null
@@ -241,10 +242,11 @@ module.exports = ->
         if trigger is "giveUp"
           playSound "giveUp"
 
+          numUnsolved = R.length R.filter(R.compose(R.not, isSolved)) scope.decodeKey
           nextQuote = getNextQuoteIndex(userData.currentBundleIndex, userData. currentQuoteIndex)
           userData.currentBundleIndex = nextQuote.bundleIndex
           userData.currentQuoteIndex = nextQuote.quoteIndex
-          userData.totalScore -= scope.score
+          userData.totalScore -= numUnsolved * CONSTANTS.pointsPerLetter
           userData.totalSkipped += 1
 
           saveUserData userData
