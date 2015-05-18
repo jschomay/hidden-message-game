@@ -788,8 +788,6 @@ module.exports = function() {
       Zepto("#give-up-dialog").hide();
     }
     Zepto("#user-info").show();
-    Zepto("#total-solved").text(userData.totalSolved);
-    Zepto("#total-skipped").text(userData.totalSkipped);
     return Zepto("#total-score").text(userData.totalScore);
   };
   numSoundsLoaded = function(soundsLoaded) {

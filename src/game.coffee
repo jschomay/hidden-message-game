@@ -625,8 +625,6 @@ module.exports = ->
 
     # user info
     Zepto("#user-info").show()
-    Zepto("#total-solved").text userData.totalSolved
-    Zepto("#total-skipped").text userData.totalSkipped
     Zepto("#total-score").text userData.totalScore
 
 

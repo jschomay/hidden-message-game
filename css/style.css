@@ -174,12 +174,6 @@ body {
   color: #ccc;
   text-align:right;
 }
-#total-solved {
-  color: #aaddaa;
-}
-#total-skipped {
-  color: #ddaaaa;
-}
 #total-score {
   font-weight: bold;
 }
