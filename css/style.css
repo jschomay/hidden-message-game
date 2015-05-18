@@ -124,7 +124,7 @@ body {
   color: #ddd;
 }
 
-#buy-hints {
+.dialog {
   display: none;
   background: #eee;
   text-align: center;
@@ -183,3 +183,9 @@ body {
 #total-score {
   font-weight: bold;
 }
+
+#give-up-dialog .button {
+  display: inline-block;
+  margin-left: 10px;
+}
+

@@ -240,16 +240,6 @@ module.exports = ->
         fadeUpMusic()
       onEvent: (eventData, scope, trigger, userData) ->
         if trigger is "giveUp"
-          playSound "giveUp"
-
-          numUnsolved = R.length R.filter(R.compose(R.not, isSolved)) scope.decodeKey
-          nextQuote = getNextQuoteIndex(userData.currentBundleIndex, userData. currentQuoteIndex)
-          userData.currentBundleIndex = nextQuote.bundleIndex
-          userData.currentQuoteIndex = nextQuote.quoteIndex
-          userData.totalScore -= numUnsolved * CONSTANTS.pointsPerLetter
-          userData.totalSkipped += 1
-
-          saveUserData userData
 
           return ["gaveUp", scope, userData]
 
@@ -355,7 +345,46 @@ module.exports = ->
         fadeDownMusic()
 
       onEvent: (eventData, scope, trigger, userData) ->
+        if trigger is "confirmGiveUp"
+          playSound "giveUp"
+
+          numUnsolved = R.length R.filter(R.compose(R.not, isSolved)) scope.decodeKey
+          nextQuote = getNextQuoteIndex(userData.currentBundleIndex, userData. currentQuoteIndex)
+          userData.currentBundleIndex = nextQuote.bundleIndex
+          userData.currentQuoteIndex = nextQuote.quoteIndex
+          userData.totalScore -= numUnsolved * CONSTANTS.pointsPerLetter
+          userData.totalSkipped += 1
+
+          saveUserData userData
+
+          return ["confirmedGiveUp", scope, userData]
+
+        else if trigger is "cancelGiveUp"
+          return ["play", scope, userData]
+
+        else
+          return ["gaveUp", scope, userData]
+
+      getRenderData: (scope) ->
+        cost = CONSTANTS.pointsPerLetter * R.length R.filter(R.compose(R.not, isSolved)) scope.decodeKey
+        # same as "play" render data, plus additional give up flags
+        comboString = if scope.comboString.length then scope.comboString else null
+        secretMessage: decode(scope.secretMessage, scope.decodeKey)
+        feedback: comboString or scope.lastCombo  or "Type letter combos to reveal the hidden message."
+        match: if scope.lastCombo then !!scope.comboString.length > 0 else null
+        score: scope.score
+        showPlayActions: true
+        buyHints: true
+        giveUp: true
+        giveUpCost: cost
+
+
+    confirmedGiveUp:
+      onEnter: ->
+
+      onEvent: (eventData, scope, trigger, userData) ->
         if trigger is "keyPress" and eventData.keyCode is 32 # space bar
+
           # reset everything
           scope.secretMessage = undefined
           scope.comboGroups = undefined
@@ -369,7 +398,7 @@ module.exports = ->
           return ["loading", scope, userData]
 
         else
-          return ["gaveUp", scope, userData]
+          return ["confirmedGiveUp", scope, userData]
 
       getRenderData: (scope) ->
         secretMessage: decode(scope.secretMessage, R.map( R.always(decodeKeyStates.SOLVED), scope.decodeKey))
@@ -499,6 +528,14 @@ module.exports = ->
     e.preventDefault()
     updateFrame "giveUp", null
 
+  onConfirmGiveUp = (e) ->
+    e.preventDefault()
+    updateFrame "confirmGiveUp", null
+
+  onCancelGiveUp = (e) ->
+    e.preventDefault()
+    updateFrame "cancelGiveUp", null
+
   onHint = (e) ->
     e.preventDefault()
     updateFrame "hint", null
@@ -542,7 +579,7 @@ module.exports = ->
     $score = Zepto("#score")
     $muteMusic = Zepto("#mute-music-button")
     $muteSFX = Zepto("#mute-sfx-button")
-    {secretMessage, feedback, score, showPlayActions, match, buyHints} = renderData
+    {secretMessage, feedback, score, showPlayActions, match, buyHints, giveUp, giveUpCost} = renderData
 
     $secretMessage.html buildSecredMessage secretMessage
     $feedback.html feedback # make sure only known or escaped strings go through here!
@@ -578,6 +615,13 @@ module.exports = ->
       Zepto("#points-to-go").text getNextFreeHintScore(userData.totalScore) - userData.totalScore
     else
       Zepto("#buy-hints").hide()
+
+    # give up dialog
+    if giveUp
+      Zepto("#give-up-dialog").show()
+      Zepto("#give-up-cost").text giveUpCost
+    else
+      Zepto("#give-up-dialog").hide()
 
     # user info
     Zepto("#user-info").show()
@@ -645,6 +689,8 @@ module.exports = ->
       # bind inputs
       $(document).on "keydown", onKeyDown
       $("#give-up-button").on "click", onGiveUp
+      $("#cancel-give-up").on "click", onCancelGiveUp
+      $("#confirm-give-up").on "click", onConfirmGiveUp
       $("#hint-button").on "click", onHint
       $("#mute-music-button").on "click", onMuteMusic
       $("#mute-sfx-button").on "click", onMuteSFX

@@ -167,7 +167,7 @@ getNextQuoteIndex = function(currentBundleIndex, currentQuoteIndex) {
 };
 
 module.exports = function() {
-  var CONSTANTS, SOUNDS, VOLUMES, buildSecredMessage, comboToString, decode, decodeKeyStates, fadeDownMusic, fadeInMusic, fadeUpMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancelBuyHints, onFrameEnter, onGiveUp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, startGame, states, updateDecodeKey, updateFrame, updateLoadProgress;
+  var CONSTANTS, SOUNDS, VOLUMES, buildSecredMessage, comboToString, decode, decodeKeyStates, fadeDownMusic, fadeInMusic, fadeUpMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancelBuyHints, onCancelGiveUp, onConfirmGiveUp, onFrameEnter, onGiveUp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, startGame, states, updateDecodeKey, updateFrame, updateLoadProgress;
   CONSTANTS = {
     startingHints: 5,
     hintSetback: 20,
@@ -424,16 +424,8 @@ module.exports = function() {
         return fadeUpMusic();
       },
       onEvent: function(eventData, scope, trigger, userData) {
-        var char, elementsToReveal, existingSolved, hiddenChars, hintAllowance, indexedDecodeKey, indexesToReaveal, isMatch, newUnsolvedComboGroups, nextQuote, numUnsolved, oneOrOneTenth, playKeySounds, potentialCombo, totalSolved, unsolvedComboGroups, wordComplete;
+        var char, elementsToReveal, existingSolved, hiddenChars, hintAllowance, indexedDecodeKey, indexesToReaveal, isMatch, newUnsolvedComboGroups, nextQuote, oneOrOneTenth, playKeySounds, potentialCombo, totalSolved, unsolvedComboGroups, wordComplete;
         if (trigger === "giveUp") {
-          playSound("giveUp");
-          numUnsolved = R.length(R.filter(R.compose(R.not, isSolved))(scope.decodeKey));
-          nextQuote = getNextQuoteIndex(userData.currentBundleIndex, userData.currentQuoteIndex);
-          userData.currentBundleIndex = nextQuote.bundleIndex;
-          userData.currentQuoteIndex = nextQuote.quoteIndex;
-          userData.totalScore -= numUnsolved * CONSTANTS.pointsPerLetter;
-          userData.totalSkipped += 1;
-          saveUserData(userData);
           return ["gaveUp", scope, userData];
         }
         if (trigger === "hint") {
@@ -528,6 +520,42 @@ module.exports = function() {
         return fadeDownMusic();
       },
       onEvent: function(eventData, scope, trigger, userData) {
+        var nextQuote, numUnsolved;
+        if (trigger === "confirmGiveUp") {
+          playSound("giveUp");
+          numUnsolved = R.length(R.filter(R.compose(R.not, isSolved))(scope.decodeKey));
+          nextQuote = getNextQuoteIndex(userData.currentBundleIndex, userData.currentQuoteIndex);
+          userData.currentBundleIndex = nextQuote.bundleIndex;
+          userData.currentQuoteIndex = nextQuote.quoteIndex;
+          userData.totalScore -= numUnsolved * CONSTANTS.pointsPerLetter;
+          userData.totalSkipped += 1;
+          saveUserData(userData);
+          return ["confirmedGiveUp", scope, userData];
+        } else if (trigger === "cancelGiveUp") {
+          return ["play", scope, userData];
+        } else {
+          return ["gaveUp", scope, userData];
+        }
+      },
+      getRenderData: function(scope) {
+        var comboString, cost;
+        cost = CONSTANTS.pointsPerLetter * R.length(R.filter(R.compose(R.not, isSolved))(scope.decodeKey));
+        comboString = scope.comboString.length ? scope.comboString : null;
+        return {
+          secretMessage: decode(scope.secretMessage, scope.decodeKey),
+          feedback: comboString || scope.lastCombo || "Type letter combos to reveal the hidden message.",
+          match: scope.lastCombo ? !!scope.comboString.length > 0 : null,
+          score: scope.score,
+          showPlayActions: true,
+          buyHints: true,
+          giveUp: true,
+          giveUpCost: cost
+        };
+      }
+    },
+    confirmedGiveUp: {
+      onEnter: function() {},
+      onEvent: function(eventData, scope, trigger, userData) {
         if (trigger === "keyPress" && eventData.keyCode === 32) {
           scope.secretMessage = void 0;
           scope.comboGroups = void 0;
@@ -539,7 +567,7 @@ module.exports = function() {
           scope.lastCombo = void 0;
           return ["loading", scope, userData];
         } else {
-          return ["gaveUp", scope, userData];
+          return ["confirmedGiveUp", scope, userData];
         }
       },
       getRenderData: function(scope) {
@@ -667,6 +695,14 @@ module.exports = function() {
     e.preventDefault();
     return updateFrame("giveUp", null);
   };
+  onConfirmGiveUp = function(e) {
+    e.preventDefault();
+    return updateFrame("confirmGiveUp", null);
+  };
+  onCancelGiveUp = function(e) {
+    e.preventDefault();
+    return updateFrame("cancelGiveUp", null);
+  };
   onHint = function(e) {
     e.preventDefault();
     return updateFrame("hint", null);
@@ -706,13 +742,13 @@ module.exports = function() {
     return (R.reduce(buildMarkup, "<span class='word'>", secretMessage)) + "</span>";
   };
   render = function(renderData, rawScope, userData) {
-    var $feedback, $muteMusic, $muteSFX, $score, $secretMessage, buyHints, feedback, match, score, secretMessage, showPlayActions;
+    var $feedback, $muteMusic, $muteSFX, $score, $secretMessage, buyHints, feedback, giveUp, giveUpCost, match, score, secretMessage, showPlayActions;
     $secretMessage = Zepto("#secret-message");
     $feedback = Zepto("#feedback");
     $score = Zepto("#score");
     $muteMusic = Zepto("#mute-music-button");
     $muteSFX = Zepto("#mute-sfx-button");
-    secretMessage = renderData.secretMessage, feedback = renderData.feedback, score = renderData.score, showPlayActions = renderData.showPlayActions, match = renderData.match, buyHints = renderData.buyHints;
+    secretMessage = renderData.secretMessage, feedback = renderData.feedback, score = renderData.score, showPlayActions = renderData.showPlayActions, match = renderData.match, buyHints = renderData.buyHints, giveUp = renderData.giveUp, giveUpCost = renderData.giveUpCost;
     $secretMessage.html(buildSecredMessage(secretMessage));
     $feedback.html(feedback);
     $score.text(score);
@@ -744,6 +780,12 @@ module.exports = function() {
       Zepto("#points-to-go").text(getNextFreeHintScore(userData.totalScore) - userData.totalScore);
     } else {
       Zepto("#buy-hints").hide();
+    }
+    if (giveUp) {
+      Zepto("#give-up-dialog").show();
+      Zepto("#give-up-cost").text(giveUpCost);
+    } else {
+      Zepto("#give-up-dialog").hide();
     }
     Zepto("#user-info").show();
     Zepto("#total-solved").text(userData.totalSolved);
@@ -820,6 +862,8 @@ module.exports = function() {
       updateFrame = updateFrame.bind(updateFrame);
       $(document).on("keydown", onKeyDown);
       $("#give-up-button").on("click", onGiveUp);
+      $("#cancel-give-up").on("click", onCancelGiveUp);
+      $("#confirm-give-up").on("click", onConfirmGiveUp);
       $("#hint-button").on("click", onHint);
       $("#mute-music-button").on("click", onMuteMusic);
       $("#mute-sfx-button").on("click", onMuteSFX);
