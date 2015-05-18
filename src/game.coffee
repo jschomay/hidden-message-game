@@ -1,6 +1,17 @@
-module.exports = ->
+quoteBundles = [
+  require "./bundles/starter"
+]
 
-  quoteApiUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D'http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys"
+getNextQuoteIndex = (currentBundleIndex, currentQuoteIndex) ->
+  if currentQuoteIndex is quoteBundles[currentBundleIndex].length - 1
+    # start next bundle (or start from very begining if no next bundle)
+    quoteIndex: 0
+    bundleIndex: if quoteBundles[currentBundleIndex + 1] then currentBundleIndex + 1 else 0
+  else
+    quoteIndex: currentQuoteIndex + 1
+    bundleIndex: currentBundleIndex
+
+module.exports = ->
 
   # constants
   CONSTANTS =
@@ -197,9 +208,9 @@ module.exports = ->
   # GAME STATES
   states =
     loading:
-      onEnter: ->
+      onEnter: (scope, userData) ->
         fadeUpMusic()
-        fetchQuote()
+        fetchQuote(userData)
 
       onEvent: (eventData, scope, trigger, userData) ->
         if trigger is "quoteLoaded"
@@ -230,6 +241,10 @@ module.exports = ->
         if trigger is "giveUp"
           playSound "giveUp"
 
+          nextQuote = getNextQuoteIndex(userData.currentBundleIndex, userData. currentQuoteIndex)
+          userData.currentBundleIndex = nextQuote.bundleIndex
+          userData.currentQuoteIndex = nextQuote.quoteIndex
+          userData.totalScore -= scope.score
           userData.totalSkipped += 1
 
           saveUserData userData
@@ -315,6 +330,9 @@ module.exports = ->
             userData.totalSolved += 1
             userData.totalScore += scope.score
             userData.hintsRemaining += numFreeHintsEarned userData.totalScore, scope.score
+            nextQuote = getNextQuoteIndex(userData.currentBundleIndex, userData. currentQuoteIndex)
+            userData.currentBundleIndex = nextQuote.bundleIndex
+            userData.currentQuoteIndex = nextQuote.quoteIndex
 
             saveUserData userData
 
@@ -335,7 +353,7 @@ module.exports = ->
         fadeDownMusic()
 
       onEvent: (eventData, scope, trigger, userData) ->
-        if eventData.keyCode is 32 # space bar
+        if trigger is "keyPress" and eventData.keyCode is 32 # space bar
           # reset everything
           scope.secretMessage = undefined
           scope.comboGroups = undefined
@@ -419,7 +437,7 @@ module.exports = ->
     [newState, newScope, newUserData] = seed.state.onEvent eventData, seed.scope, trigger, seed.userData
 
     if states[newState] isnt seed.state
-      states[newState].onEnter()
+      states[newState].onEnter newScope, newUserData
 
     render states[newState].getRenderData(newScope), newScope, newUserData
 
@@ -460,21 +478,14 @@ module.exports = ->
 
 
 
-  # bindng game event streams
+  # binding game event streams
 
-  fetchQuote = ->
-    Zepto.get quoteApiUrl, (response) ->
-      parse = (str = "") ->
-        str = str.trim()
-        str = str.replace(/\t/g, "")
-        str
-
-      quote = JSON.parse(response.query.results.body).quote
-
-      message = quote.split(/[\n\r]?\s\s--/)[0]
-      source = quote.split(/[\n\r]?\s\s--/)[1]
-
+  fetchQuote = ({currentBundleIndex, currentQuoteIndex}) ->
+    message = quoteBundles[currentBundleIndex][currentQuoteIndex].quote
+    # need to make this async to go through the state machine properly
+    setTimeout ->
       updateFrame "quoteLoaded", message
+    , 0
 
   onKeyDown = (e) ->
     if e.keyCode is 8 #backspace
@@ -625,7 +636,8 @@ module.exports = ->
       # initialize main loop with starting state
       updateFrame.currentState = states.loading
       updateFrame.store = {}
-      updateFrame.userData = getUserData()
+      userData = getUserData()
+      updateFrame.userData = userData
       updateFrame = updateFrame.bind updateFrame
 
       # bind inputs
@@ -636,19 +648,24 @@ module.exports = ->
       $("#mute-sfx-button").on "click", onMuteSFX
       $("#cancel-buy-hints").on "click", onCancelBuyHints
 
-      fetchQuote()
+      fetchQuote(userData)
 
   getUserData = ->
-    currentPlayer = JSON.parse localStorage.getItem "currentPlayer"
-    if not currentPlayer
-      currentPlayer =
-        hintsRemaining: CONSTANTS.startingHints
-        totalScore: 0
-        totalSolved: 0
-        totalSkipped: 0
-      saveUserData currentPlayer
+    currentPlayerDefaults =
+      hintsRemaining: CONSTANTS.startingHints
+      totalScore: 0
+      totalSolved: 0
+      totalSkipped: 0
+      currentBundleIndex: 0
+      currentQuoteIndex: 0
 
-    currentPlayer
+    currentPlayer = JSON.parse localStorage.getItem "currentPlayer"
+
+    if not currentPlayer
+      saveUserData currentPlayerDefaults
+
+    # merge to update persisted data schema
+    R.merge currentPlayerDefaults, currentPlayer
 
   saveUserData = (userData) ->
     localStorage.setItem "currentPlayer", JSON.stringify userData

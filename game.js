@@ -142,10 +142,32 @@
   connect();
 })();
 
+require.register("src/bundles/starter", function(exports, require, module) {
+module.exports = [{ "_id" : { "$oid" : "554fb2980a061f9afcba2b6c" }, "quote" : "Today is the tomorrow you worried about yesterday.", "bundle" : "starter" },{ "_id" : { "$oid" : "554fb2c60a061f9afcba2b6d" }, "quote" : "Talk sense to a fool and he calls you foolish.", "bundle" : "starter" },{ "_id" : { "$oid" : "554fb40c0a061f9afcba2b6f" }, "quote" : "You teach best what you most need to learn.", "bundle" : "starter" },{ "_id" : { "$oid" : "554fb4420a061f9afcba2b70" }, "quote" : "Any simple idea will be worded in the most complicated way.", "bundle" : "starter" },{ "_id" : { "$oid" : "554fb46b0a061f9afcba2b71" }, "quote" : "The man who lives in the past, robs the present.", "bundle" : "starter" },{ "_id" : { "$oid" : "554fb4880a061f9afcba2b72" }, "quote" : "80% of success is just showing up.", "bundle" : "starter" },{ "_id" : { "$oid" : "554fb4ab0a061f9afcba2b73" }, "quote" : "Obstacles are what you see when you take your eyes off your goal.", "bundle" : "starter" },{ "_id" : { "$oid" : "554fb52e0a061f9afcba2b74" }, "quote" : "That's one small step for man, one giant leap for mankind.", "bundle" : "starter" },{ "_id" : { "$oid" : "554fb64d0a061f9afcba2b75" }, "quote" : "Be the change you wish to see in the world.", "bundle" : "starter" },{ "_id" : { "$oid" : "554fb8670a061f9afcba2b76" }, "quote" : "You miss 100% of the shots you don’t take.", "bundle" : "starter" },{ "_id" : { "$oid" : "554fb89e0a061f9afcba2b77" }, "quote" : "Life is what happens to you while you’re busy making other plans.", "bundle" : "starter" },{ "_id" : { "$oid" : "554fba310a061f9afcba2b78" }, "quote" : "My Mama always said, \"Life was like a box of chocolates; you never know what you're gonna get.\"", "bundle" : "starter" },{ "_id" : { "$oid" : "554fba3e0a061f9afcba2b79" }, "quote" : "Happiness isn't having what you want, it's wanting what you have.", "bundle" : "starter" },{ "_id" : { "$oid" : "554fbad40a061f9afcba2b7a" }, "quote" : "If all you have is a hammer, everything looks like a nail.", "bundle" : "starter" },{ "_id" : { "$oid" : "554fbb780a061f9afcba2b7b" }, "quote" : "He who laughs last, laughs longest.", "bundle" : "starter" },{ "_id" : { "$oid" : "554fbba30a061f9afcba2b7c" }, "quote" : "If a tree falls in a forest and no one is around to hear it, does it make a sound?", "bundle" : "starter" },{ "_id" : { "$oid" : "554fbbe40a061f9afcba2b7d" }, "quote" : "Never try to teach a pig to sing; it wastes your time and it annoys the pig.", "bundle" : "starter" },{ "_id" : { "$oid" : "554fbd090a061f9afcba2b7e" }, "quote" : "Two thirds of the people on earth have never seen snow.", "bundle" : "starter" },{ "_id" : { "$oid" : "554fc1230a061f9afcba2b7f" }, "quote" : "Two things are infinite: the universe and human stupidity; and I'm not sure about the the universe.", "bundle" : "starter" },{ "_id" : { "$oid" : "554fc398720a9ad00b7fa94b" }, "quote" : "If you choose not to decide, you still have made a choice.", "bundle" : "starter" }]
+;
+});
+
 require.register("src/game", function(exports, require, module) {
+var getNextQuoteIndex, quoteBundles;
+
+quoteBundles = [require("./bundles/starter")];
+
+getNextQuoteIndex = function(currentBundleIndex, currentQuoteIndex) {
+  if (currentQuoteIndex === quoteBundles[currentBundleIndex].length - 1) {
+    return {
+      quoteIndex: 0,
+      bundleIndex: quoteBundles[currentBundleIndex + 1] ? currentBundleIndex + 1 : 0
+    };
+  } else {
+    return {
+      quoteIndex: currentQuoteIndex + 1,
+      bundleIndex: currentBundleIndex
+    };
+  }
+};
+
 module.exports = function() {
-  var CONSTANTS, SOUNDS, VOLUMES, buildSecredMessage, comboToString, decode, decodeKeyStates, fadeDownMusic, fadeInMusic, fadeUpMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancelBuyHints, onFrameEnter, onGiveUp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, quoteApiUrl, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, startGame, states, updateDecodeKey, updateFrame, updateLoadProgress;
-  quoteApiUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D'http%3A%2F%2Fwww.iheartquotes.com%2Fapi%2Fv1%2Frandom%3Fmax_characters%3D75%26format%3Djson'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
+  var CONSTANTS, SOUNDS, VOLUMES, buildSecredMessage, comboToString, decode, decodeKeyStates, fadeDownMusic, fadeInMusic, fadeUpMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancelBuyHints, onFrameEnter, onGiveUp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, startGame, states, updateDecodeKey, updateFrame, updateLoadProgress;
   CONSTANTS = {
     startingHints: 5,
     hintSetback: 20,
@@ -366,9 +388,9 @@ module.exports = function() {
   };
   states = {
     loading: {
-      onEnter: function() {
+      onEnter: function(scope, userData) {
         fadeUpMusic();
-        return fetchQuote();
+        return fetchQuote(userData);
       },
       onEvent: function(eventData, scope, trigger, userData) {
         var secretMessage;
@@ -401,9 +423,13 @@ module.exports = function() {
         return fadeUpMusic();
       },
       onEvent: function(eventData, scope, trigger, userData) {
-        var char, elementsToReveal, existingSolved, hiddenChars, hintAllowance, indexedDecodeKey, indexesToReaveal, isMatch, newUnsolvedComboGroups, oneOrOneTenth, playKeySounds, potentialCombo, totalSolved, unsolvedComboGroups, wordComplete;
+        var char, elementsToReveal, existingSolved, hiddenChars, hintAllowance, indexedDecodeKey, indexesToReaveal, isMatch, newUnsolvedComboGroups, nextQuote, oneOrOneTenth, playKeySounds, potentialCombo, totalSolved, unsolvedComboGroups, wordComplete;
         if (trigger === "giveUp") {
           playSound("giveUp");
+          nextQuote = getNextQuoteIndex(userData.currentBundleIndex, userData.currentQuoteIndex);
+          userData.currentBundleIndex = nextQuote.bundleIndex;
+          userData.currentQuoteIndex = nextQuote.quoteIndex;
+          userData.totalScore -= scope.score;
           userData.totalSkipped += 1;
           saveUserData(userData);
           return ["gaveUp", scope, userData];
@@ -474,6 +500,9 @@ module.exports = function() {
             userData.totalSolved += 1;
             userData.totalScore += scope.score;
             userData.hintsRemaining += numFreeHintsEarned(userData.totalScore, scope.score);
+            nextQuote = getNextQuoteIndex(userData.currentBundleIndex, userData.currentQuoteIndex);
+            userData.currentBundleIndex = nextQuote.bundleIndex;
+            userData.currentQuoteIndex = nextQuote.quoteIndex;
             saveUserData(userData);
             return ["solved", scope, userData];
           }
@@ -497,7 +526,7 @@ module.exports = function() {
         return fadeDownMusic();
       },
       onEvent: function(eventData, scope, trigger, userData) {
-        if (eventData.keyCode === 32) {
+        if (trigger === "keyPress" && eventData.keyCode === 32) {
           scope.secretMessage = void 0;
           scope.comboGroups = void 0;
           scope.decodeKey = void 0;
@@ -578,7 +607,7 @@ module.exports = function() {
     var newScope, newState, newUserData, _ref;
     _ref = seed.state.onEvent(eventData, seed.scope, trigger, seed.userData), newState = _ref[0], newScope = _ref[1], newUserData = _ref[2];
     if (states[newState] !== seed.state) {
-      states[newState].onEnter();
+      states[newState].onEnter(newScope, newUserData);
     }
     render(states[newState].getRenderData(newScope), newScope, newUserData);
     return {
@@ -618,22 +647,13 @@ module.exports = function() {
     }
     return scope;
   };
-  fetchQuote = function() {
-    return Zepto.get(quoteApiUrl, function(response) {
-      var message, parse, quote, source;
-      parse = function(str) {
-        if (str == null) {
-          str = "";
-        }
-        str = str.trim();
-        str = str.replace(/\t/g, "");
-        return str;
-      };
-      quote = JSON.parse(response.query.results.body).quote;
-      message = quote.split(/[\n\r]?\s\s--/)[0];
-      source = quote.split(/[\n\r]?\s\s--/)[1];
+  fetchQuote = function(_arg) {
+    var currentBundleIndex, currentQuoteIndex, message;
+    currentBundleIndex = _arg.currentBundleIndex, currentQuoteIndex = _arg.currentQuoteIndex;
+    message = quoteBundles[currentBundleIndex][currentQuoteIndex].quote;
+    return setTimeout(function() {
       return updateFrame("quoteLoaded", message);
-    });
+    }, 0);
   };
   onKeyDown = function(e) {
     if (e.keyCode === 8) {
@@ -789,10 +809,12 @@ module.exports = function() {
   };
   startGame = function() {
     return Zepto(function($) {
+      var userData;
       fadeInMusic();
       updateFrame.currentState = states.loading;
       updateFrame.store = {};
-      updateFrame.userData = getUserData();
+      userData = getUserData();
+      updateFrame.userData = userData;
       updateFrame = updateFrame.bind(updateFrame);
       $(document).on("keydown", onKeyDown);
       $("#give-up-button").on("click", onGiveUp);
@@ -800,22 +822,24 @@ module.exports = function() {
       $("#mute-music-button").on("click", onMuteMusic);
       $("#mute-sfx-button").on("click", onMuteSFX);
       $("#cancel-buy-hints").on("click", onCancelBuyHints);
-      return fetchQuote();
+      return fetchQuote(userData);
     });
   };
   getUserData = function() {
-    var currentPlayer;
+    var currentPlayer, currentPlayerDefaults;
+    currentPlayerDefaults = {
+      hintsRemaining: CONSTANTS.startingHints,
+      totalScore: 0,
+      totalSolved: 0,
+      totalSkipped: 0,
+      currentBundleIndex: 0,
+      currentQuoteIndex: 0
+    };
     currentPlayer = JSON.parse(localStorage.getItem("currentPlayer"));
     if (!currentPlayer) {
-      currentPlayer = {
-        hintsRemaining: CONSTANTS.startingHints,
-        totalScore: 0,
-        totalSolved: 0,
-        totalSkipped: 0
-      };
-      saveUserData(currentPlayer);
+      saveUserData(currentPlayerDefaults);
     }
-    return currentPlayer;
+    return R.merge(currentPlayerDefaults, currentPlayer);
   };
   saveUserData = function(userData) {
     return localStorage.setItem("currentPlayer", JSON.stringify(userData));
