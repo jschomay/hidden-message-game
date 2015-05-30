@@ -168,11 +168,10 @@ body {
   display: none;
   position: absolute;
   top: 20px;
-  right: 30px;
+  left: 30px;
   width: auto;
   font-size: 14px;
   color: #ccc;
-  text-align:right;
 }
 #total-score {
   font-weight: bold;

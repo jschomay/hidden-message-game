@@ -555,7 +555,7 @@ module.exports = ->
 
   # drawing
 
-  buildSecredMessage = (secretMessage) ->
+  buildSecretMessage = (secretMessage) ->
     statusMap = R.invertObj decodeKeyStates
 
     buildMarkup = (acc, letter) ->
@@ -581,7 +581,7 @@ module.exports = ->
     $muteSFX = Zepto("#mute-sfx-button")
     {secretMessage, feedback, score, showPlayActions, match, buyHints, giveUp, giveUpCost} = renderData
 
-    $secretMessage.html buildSecredMessage secretMessage
+    $secretMessage.html buildSecretMessage secretMessage
     $feedback.html feedback # make sure only known or escaped strings go through here!
     $score.text score
     $feedback.removeClass "no-match"
@@ -624,7 +624,14 @@ module.exports = ->
       Zepto("#give-up-dialog").hide()
 
     # user info
+    bundleNames = [
+      "Starter"
+    ]
+    num = userData.currentQuoteIndex
+    bundleName = bundleNames[userData.currentBundleIndex]
+    total = quoteBundles[userData.currentBundleIndex].length
     Zepto("#user-info").show()
+    Zepto("#progress").html "Bundle: #{bundleName}<br>##{num} out of #{total}"
     Zepto("#total-score").text userData.totalScore
 
 

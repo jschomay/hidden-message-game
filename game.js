@@ -167,7 +167,7 @@ getNextQuoteIndex = function(currentBundleIndex, currentQuoteIndex) {
 };
 
 module.exports = function() {
-  var CONSTANTS, SOUNDS, VOLUMES, buildSecredMessage, comboToString, decode, decodeKeyStates, fadeDownMusic, fadeInMusic, fadeUpMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancelBuyHints, onCancelGiveUp, onConfirmGiveUp, onFrameEnter, onGiveUp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, startGame, states, updateDecodeKey, updateFrame, updateLoadProgress;
+  var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeDownMusic, fadeInMusic, fadeUpMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancelBuyHints, onCancelGiveUp, onConfirmGiveUp, onFrameEnter, onGiveUp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, startGame, states, updateDecodeKey, updateFrame, updateLoadProgress;
   CONSTANTS = {
     startingHints: 5,
     hintSetback: 20,
@@ -719,7 +719,7 @@ module.exports = function() {
     e.preventDefault();
     return updateFrame("cancelBuyHints", null);
   };
-  buildSecredMessage = function(secretMessage) {
+  buildSecretMessage = function(secretMessage) {
     var buildMarkup, statusMap;
     statusMap = R.invertObj(decodeKeyStates);
     buildMarkup = function(acc, letter) {
@@ -742,14 +742,14 @@ module.exports = function() {
     return (R.reduce(buildMarkup, "<span class='word'>", secretMessage)) + "</span>";
   };
   render = function(renderData, rawScope, userData) {
-    var $feedback, $muteMusic, $muteSFX, $score, $secretMessage, buyHints, feedback, giveUp, giveUpCost, match, score, secretMessage, showPlayActions;
+    var $feedback, $muteMusic, $muteSFX, $score, $secretMessage, bundleName, bundleNames, buyHints, feedback, giveUp, giveUpCost, match, num, score, secretMessage, showPlayActions, total;
     $secretMessage = Zepto("#secret-message");
     $feedback = Zepto("#feedback");
     $score = Zepto("#score");
     $muteMusic = Zepto("#mute-music-button");
     $muteSFX = Zepto("#mute-sfx-button");
     secretMessage = renderData.secretMessage, feedback = renderData.feedback, score = renderData.score, showPlayActions = renderData.showPlayActions, match = renderData.match, buyHints = renderData.buyHints, giveUp = renderData.giveUp, giveUpCost = renderData.giveUpCost;
-    $secretMessage.html(buildSecredMessage(secretMessage));
+    $secretMessage.html(buildSecretMessage(secretMessage));
     $feedback.html(feedback);
     $score.text(score);
     $feedback.removeClass("no-match");
@@ -787,7 +787,12 @@ module.exports = function() {
     } else {
       Zepto("#give-up-dialog").hide();
     }
+    bundleNames = ["Starter"];
+    num = userData.currentQuoteIndex;
+    bundleName = bundleNames[userData.currentBundleIndex];
+    total = quoteBundles[userData.currentBundleIndex].length;
     Zepto("#user-info").show();
+    Zepto("#progress").html("Bundle: " + bundleName + "<br>#" + num + " out of " + total);
     return Zepto("#total-score").text(userData.totalScore);
   };
   numSoundsLoaded = function(soundsLoaded) {
