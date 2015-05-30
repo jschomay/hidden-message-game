@@ -798,7 +798,7 @@ module.exports = function() {
     bundleName = bundleNames[userData.currentBundleIndex];
     total = quoteBundles[userData.currentBundleIndex].length;
     Zepto("#user-info").show();
-    Zepto("#progress").html("Bundle: " + bundleName + "<br>#" + num + " out of " + total);
+    Zepto("#progress").html("Bundle: \"" + bundleName + "\"<br>#" + num + " out of " + total);
     return Zepto("#total-score").text(userData.totalScore);
   };
   numSoundsLoaded = function(soundsLoaded) {
