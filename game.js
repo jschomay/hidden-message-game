@@ -152,16 +152,21 @@ var getNextQuoteIndex, quoteBundles;
 
 quoteBundles = [require("./bundles/starter")];
 
-getNextQuoteIndex = function(currentBundleIndex, currentQuoteIndex) {
-  if (currentQuoteIndex === quoteBundles[currentBundleIndex].length - 1) {
+getNextQuoteIndex = function(lastSolvedBundleIndex, lastSolvedQuoteIndex) {
+  if (lastSolvedQuoteIndex == null) {
     return {
       quoteIndex: 0,
-      bundleIndex: quoteBundles[currentBundleIndex + 1] ? currentBundleIndex + 1 : 0
+      bundleIndex: 0
+    };
+  } else if (lastSolvedQuoteIndex === quoteBundles[lastSolvedBundleIndex].length - 1) {
+    return {
+      quoteIndex: 0,
+      bundleIndex: quoteBundles[lastSolvedBundleIndex + 1] ? lastSolvedBundleIndex + 1 : 0
     };
   } else {
     return {
-      quoteIndex: currentQuoteIndex + 1,
-      bundleIndex: currentBundleIndex
+      quoteIndex: lastSolvedQuoteIndex + 1,
+      bundleIndex: lastSolvedBundleIndex
     };
   }
 };
@@ -388,6 +393,24 @@ module.exports = function() {
     }
   };
   states = {
+    start: {
+      onEnter: function() {},
+      onEvent: function(eventData, scope, trigger, userData) {
+        if (trigger === "start") {
+          return ["loading", scope, userData];
+        } else {
+          return ["start", scope, userData];
+        }
+      },
+      getRenderData: function() {
+        return {
+          secretMessage: [],
+          feedback: "LOADING...",
+          score: "",
+          showPlayActions: false
+        };
+      }
+    },
     loading: {
       onEnter: function(scope, userData) {
         fadeUpMusic();
@@ -396,8 +419,10 @@ module.exports = function() {
       onEvent: function(eventData, scope, trigger, userData) {
         var secretMessage;
         if (trigger === "quoteLoaded") {
-          secretMessage = eventData;
+          secretMessage = eventData.message;
           scope.secretMessage = secretMessage;
+          scope.currentBundleIndex = eventData.bundleIndex;
+          scope.currentQuoteIndex = eventData.quoteIndex;
           scope.comboGroups = sentanceToWords(secretMessage);
           scope.decodeKey = R.map(hideLetters, secretMessage);
           scope.comboString = "";
@@ -424,7 +449,7 @@ module.exports = function() {
         return fadeUpMusic();
       },
       onEvent: function(eventData, scope, trigger, userData) {
-        var char, elementsToReveal, existingSolved, hiddenChars, hintAllowance, indexedDecodeKey, indexesToReaveal, isMatch, newUnsolvedComboGroups, nextQuote, oneOrOneTenth, playKeySounds, potentialCombo, totalSolved, unsolvedComboGroups, wordComplete;
+        var char, elementsToReveal, existingSolved, hiddenChars, hintAllowance, indexedDecodeKey, indexesToReaveal, isMatch, newUnsolvedComboGroups, oneOrOneTenth, playKeySounds, potentialCombo, totalSolved, unsolvedComboGroups, wordComplete;
         if (trigger === "giveUp") {
           return ["gaveUp", scope, userData];
         }
@@ -494,9 +519,8 @@ module.exports = function() {
             userData.totalSolved += 1;
             userData.totalScore += scope.score;
             userData.hintsRemaining += numFreeHintsEarned(userData.totalScore, scope.score);
-            nextQuote = getNextQuoteIndex(userData.currentBundleIndex, userData.currentQuoteIndex);
-            userData.currentBundleIndex = nextQuote.bundleIndex;
-            userData.currentQuoteIndex = nextQuote.quoteIndex;
+            userData.lastSolvedBundleIndex = scope.currentBundleIndex;
+            userData.lastSolvedQuoteIndex = scope.currentQuoteIndex;
             saveUserData(userData);
             return ["solved", scope, userData];
           }
@@ -520,13 +544,12 @@ module.exports = function() {
         return fadeDownMusic();
       },
       onEvent: function(eventData, scope, trigger, userData) {
-        var nextQuote, numUnsolved;
+        var numUnsolved;
         if (trigger === "confirm") {
           playSound("giveUp");
           numUnsolved = R.length(R.filter(R.compose(R.not, isSolved))(scope.decodeKey));
-          nextQuote = getNextQuoteIndex(userData.currentBundleIndex, userData.currentQuoteIndex);
-          userData.currentBundleIndex = nextQuote.bundleIndex;
-          userData.currentQuoteIndex = nextQuote.quoteIndex;
+          userData.lastSolvedBundleIndex = scope.currentBundleIndex;
+          userData.lastSolvedQuoteIndex = scope.currentQuoteIndex;
           userData.totalScore -= numUnsolved * CONSTANTS.pointsPerLetter;
           userData.totalSkipped += 1;
           saveUserData(userData);
@@ -677,12 +700,16 @@ module.exports = function() {
     }
     return scope;
   };
-  fetchQuote = function(_arg) {
-    var currentBundleIndex, currentQuoteIndex, message;
-    currentBundleIndex = _arg.currentBundleIndex, currentQuoteIndex = _arg.currentQuoteIndex;
-    message = quoteBundles[currentBundleIndex][currentQuoteIndex].quote;
+  fetchQuote = function(userData) {
+    var message, nextQuote;
+    nextQuote = getNextQuoteIndex(userData.lastSolvedBundleIndex, userData.lastSolvedQuoteIndex);
+    message = quoteBundles[nextQuote.bundleIndex][nextQuote.quoteIndex].quote;
     return setTimeout(function() {
-      return updateFrame("quoteLoaded", message);
+      return updateFrame("quoteLoaded", {
+        message: message,
+        bundleIndex: nextQuote.bundleIndex,
+        quoteIndex: nextQuote.quoteIndex
+      });
     }, 0);
   };
   onKeyDown = function(e) {
@@ -791,12 +818,9 @@ module.exports = function() {
       Zepto("#dialog #cancel").text("No, I'll keep trying");
     }
     bundleNames = ["Starter"];
-    num = userData.currentQuoteIndex;
-    if (showPlayActions) {
-      num++;
-    }
-    bundleName = bundleNames[userData.currentBundleIndex];
-    total = quoteBundles[userData.currentBundleIndex].length;
+    num = (rawScope.currentQuoteIndex || 0) + 1;
+    bundleName = bundleNames[rawScope.currentBundleIndex || 0];
+    total = quoteBundles[rawScope.currentBundleIndex || 0].length;
     Zepto("#user-info").show();
     Zepto("#progress").html("Bundle: \"" + bundleName + "\"<br>#" + num + " out of " + total);
     return Zepto("#total-score").text(userData.totalScore);
@@ -864,7 +888,7 @@ module.exports = function() {
     return Zepto(function($) {
       var userData;
       fadeInMusic();
-      updateFrame.currentState = states.loading;
+      updateFrame.currentState = states.start;
       updateFrame.store = {};
       userData = getUserData();
       updateFrame.userData = userData;
@@ -876,7 +900,7 @@ module.exports = function() {
       $("#mute-sfx-button").on("click", onMuteSFX);
       $("#cancel").on("click", onCancel);
       $("#confirm").on("click", onConfirm);
-      return fetchQuote(userData);
+      return updateFrame("start");
     });
   };
   getUserData = function() {
@@ -886,8 +910,8 @@ module.exports = function() {
       totalScore: 0,
       totalSolved: 0,
       totalSkipped: 0,
-      currentBundleIndex: 0,
-      currentQuoteIndex: 0
+      lastSolvedBundleIndex: void 0,
+      lastSolvedQuoteIndex: void 0
     };
     currentPlayer = JSON.parse(localStorage.getItem("currentPlayer"));
     if (!currentPlayer) {

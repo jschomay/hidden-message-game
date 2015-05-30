@@ -2,14 +2,20 @@ quoteBundles = [
   require "./bundles/starter"
 ]
 
-getNextQuoteIndex = (currentBundleIndex, currentQuoteIndex) ->
-  if currentQuoteIndex is quoteBundles[currentBundleIndex].length - 1
-    # start next bundle (or start from very begining if no next bundle)
+getNextQuoteIndex = (lastSolvedBundleIndex, lastSolvedQuoteIndex) ->
+  if not lastSolvedQuoteIndex?
+    # new game
     quoteIndex: 0
-    bundleIndex: if quoteBundles[currentBundleIndex + 1] then currentBundleIndex + 1 else 0
+    bundleIndex: 0
+  else if lastSolvedQuoteIndex is quoteBundles[lastSolvedBundleIndex].length - 1
+    # bundle complete, start next bundle
+    # (or start from very begining if no next bundle)
+    quoteIndex: 0
+    bundleIndex: if quoteBundles[lastSolvedBundleIndex + 1] then lastSolvedBundleIndex + 1 else 0
   else
-    quoteIndex: currentQuoteIndex + 1
-    bundleIndex: currentBundleIndex
+    # next quote in bundle
+    quoteIndex: lastSolvedQuoteIndex + 1
+    bundleIndex: lastSolvedBundleIndex
 
 module.exports = ->
 
@@ -208,6 +214,21 @@ module.exports = ->
 
   # GAME STATES
   states =
+    start:
+      onEnter: ->
+
+      onEvent: (eventData, scope, trigger, userData) ->
+        if trigger is "start"
+          ["loading", scope, userData]
+        else
+          ["start", scope, userData]
+
+      getRenderData: ->
+        secretMessage: []
+        feedback: "LOADING..."
+        score: ""
+        showPlayActions: false
+
     loading:
       onEnter: (scope, userData) ->
         fadeUpMusic()
@@ -215,9 +236,11 @@ module.exports = ->
 
       onEvent: (eventData, scope, trigger, userData) ->
         if trigger is "quoteLoaded"
-          secretMessage = eventData
+          secretMessage = eventData.message
           # initialize game data with secret message
           scope.secretMessage = secretMessage
+          scope.currentBundleIndex = eventData.bundleIndex
+          scope.currentQuoteIndex = eventData.quoteIndex
           scope.comboGroups = sentanceToWords secretMessage
           scope.decodeKey = R.map hideLetters, secretMessage
           scope.comboString = ""
@@ -322,9 +345,8 @@ module.exports = ->
             userData.totalSolved += 1
             userData.totalScore += scope.score
             userData.hintsRemaining += numFreeHintsEarned userData.totalScore, scope.score
-            nextQuote = getNextQuoteIndex(userData.currentBundleIndex, userData. currentQuoteIndex)
-            userData.currentBundleIndex = nextQuote.bundleIndex
-            userData.currentQuoteIndex = nextQuote.quoteIndex
+            userData.lastSolvedBundleIndex = scope.currentBundleIndex
+            userData.lastSolvedQuoteIndex = scope.currentQuoteIndex
 
             saveUserData userData
 
@@ -349,9 +371,8 @@ module.exports = ->
           playSound "giveUp"
 
           numUnsolved = R.length R.filter(R.compose(R.not, isSolved)) scope.decodeKey
-          nextQuote = getNextQuoteIndex(userData.currentBundleIndex, userData. currentQuoteIndex)
-          userData.currentBundleIndex = nextQuote.bundleIndex
-          userData.currentQuoteIndex = nextQuote.quoteIndex
+          userData.lastSolvedBundleIndex = scope.currentBundleIndex
+          userData.lastSolvedQuoteIndex = scope.currentQuoteIndex
           userData.totalScore -= numUnsolved * CONSTANTS.pointsPerLetter
           userData.totalSkipped += 1
 
@@ -511,11 +532,15 @@ module.exports = ->
 
   # binding game event streams
 
-  fetchQuote = ({currentBundleIndex, currentQuoteIndex}) ->
-    message = quoteBundles[currentBundleIndex][currentQuoteIndex].quote
+  fetchQuote = (userData) ->
+    nextQuote = getNextQuoteIndex userData.lastSolvedBundleIndex, userData.lastSolvedQuoteIndex
+    message = quoteBundles[nextQuote.bundleIndex][nextQuote.quoteIndex].quote
     # need to make this async to go through the state machine properly
     setTimeout ->
-      updateFrame "quoteLoaded", message
+      updateFrame "quoteLoaded",
+        message: message
+        bundleIndex: nextQuote.bundleIndex
+        quoteIndex: nextQuote.quoteIndex
     , 0
 
   onKeyDown = (e) ->
@@ -631,12 +656,9 @@ module.exports = ->
     bundleNames = [
       "Starter"
     ]
-    num = userData.currentQuoteIndex #completed quotes
-    if showPlayActions
-      # if user is playing the next quote, need to add 1 to completed quotes
-      num++
-    bundleName = bundleNames[userData.currentBundleIndex]
-    total = quoteBundles[userData.currentBundleIndex].length
+    num = (rawScope.currentQuoteIndex or 0) + 1
+    bundleName = bundleNames[rawScope.currentBundleIndex or 0]
+    total = quoteBundles[rawScope.currentBundleIndex or 0].length
     Zepto("#user-info").show()
     Zepto("#progress").html "Bundle: \"#{bundleName}\"<br>##{num} out of #{total}"
     Zepto("#total-score").text userData.totalScore
@@ -692,7 +714,7 @@ module.exports = ->
       fadeInMusic()
 
       # initialize main loop with starting state
-      updateFrame.currentState = states.loading
+      updateFrame.currentState = states.start
       updateFrame.store = {}
       userData = getUserData()
       updateFrame.userData = userData
@@ -707,7 +729,7 @@ module.exports = ->
       $("#cancel").on "click", onCancel
       $("#confirm").on "click", onConfirm
 
-      fetchQuote(userData)
+      updateFrame "start"
 
   getUserData = ->
     currentPlayerDefaults =
@@ -715,8 +737,8 @@ module.exports = ->
       totalScore: 0
       totalSolved: 0
       totalSkipped: 0
-      currentBundleIndex: 0
-      currentQuoteIndex: 0
+      lastSolvedBundleIndex: undefined
+      lastSolvedQuoteIndex: undefined
 
     currentPlayer = JSON.parse localStorage.getItem "currentPlayer"
 
