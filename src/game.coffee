@@ -416,7 +416,11 @@ module.exports = ->
           scope.hints = undefined
           scope.lastCombo = undefined
 
-          return ["loading", scope, userData]
+          nextQuote = getNextQuoteIndex(userData.lastSolvedBundleIndex, userData.lastSolvedQuoteIndex)
+          if nextQuote.quoteIndex is 0 and nextQuote.bundleIndex is 0
+            return ["noMoreQuotes", scope, userData]
+          else
+            return ["loading", scope, userData]
 
         else
           return ["confirmedGiveUp", scope, userData]
@@ -476,6 +480,20 @@ module.exports = ->
         buyHints: true
 
 
+    noMoreQuotes:
+      onEnter: ->
+
+      onEvent: (eventData, scope, trigger, userData) ->
+        if trigger is "confirm"
+          return ["loading", scope, userData]
+        else
+          return ["noMoreQuotes", scope, userData]
+
+      getRenderData: (scope) ->
+        secretMessage: ""
+        feedback: ""
+        showPlayActions: false
+        noMoreQuotes: true
 
 
   # MAIN LOOP
@@ -651,6 +669,15 @@ module.exports = ->
       Zepto("#dialog p").text "You will lose #{giveUpCost} points for the remaining unsolved words."
       Zepto("#dialog #confirm").text "Yes, give up"
       Zepto("#dialog #cancel").text "No, I'll keep trying"
+
+    # no more quores dialog
+    if renderData.noMoreQuotes
+      Zepto("#dialog #cancel").hide()
+      Zepto("#dialog #confirm").show()
+      Zepto("#dialog").show()
+      Zepto("#dialog h3").text "Congratulaitons, you solved all of the quotes!"
+      Zepto("#dialog p").html "<p>Thank you for playing.</p><p><a target='_blank' href='http://codeperfectionist.com/portfolio/games/hidden-message-game/'>Stay tuned for more quote bundles and extra features</a></p>"
+      Zepto("#dialog #confirm").text "Play again?"
 
     # user info
     bundleNames = [

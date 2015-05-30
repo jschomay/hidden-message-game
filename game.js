@@ -579,6 +579,7 @@ module.exports = function() {
     confirmedGiveUp: {
       onEnter: function() {},
       onEvent: function(eventData, scope, trigger, userData) {
+        var nextQuote;
         if (trigger === "keyPress" && eventData.keyCode === 32) {
           scope.secretMessage = void 0;
           scope.comboGroups = void 0;
@@ -588,7 +589,12 @@ module.exports = function() {
           scope.moves = void 0;
           scope.hints = void 0;
           scope.lastCombo = void 0;
-          return ["loading", scope, userData];
+          nextQuote = getNextQuoteIndex(userData.lastSolvedBundleIndex, userData.lastSolvedQuoteIndex);
+          if (nextQuote.quoteIndex === 0 && nextQuote.bundleIndex === 0) {
+            return ["noMoreQuotes", scope, userData];
+          } else {
+            return ["loading", scope, userData];
+          }
         } else {
           return ["confirmedGiveUp", scope, userData];
         }
@@ -652,6 +658,24 @@ module.exports = function() {
           score: scope.score,
           showPlayActions: true,
           buyHints: true
+        };
+      }
+    },
+    noMoreQuotes: {
+      onEnter: function() {},
+      onEvent: function(eventData, scope, trigger, userData) {
+        if (trigger === "confirm") {
+          return ["loading", scope, userData];
+        } else {
+          return ["noMoreQuotes", scope, userData];
+        }
+      },
+      getRenderData: function(scope) {
+        return {
+          secretMessage: "",
+          feedback: "",
+          showPlayActions: false,
+          noMoreQuotes: true
         };
       }
     }
@@ -816,6 +840,14 @@ module.exports = function() {
       Zepto("#dialog p").text("You will lose " + giveUpCost + " points for the remaining unsolved words.");
       Zepto("#dialog #confirm").text("Yes, give up");
       Zepto("#dialog #cancel").text("No, I'll keep trying");
+    }
+    if (renderData.noMoreQuotes) {
+      Zepto("#dialog #cancel").hide();
+      Zepto("#dialog #confirm").show();
+      Zepto("#dialog").show();
+      Zepto("#dialog h3").text("Congratulaitons, you solved all of the quotes!");
+      Zepto("#dialog p").html("<p>Thank you for playing.</p><p><a target='_blank' href='http://codeperfectionist.com/portfolio/games/hidden-message-game/'>Stay tuned for more quote bundles and extra features</a></p>");
+      Zepto("#dialog #confirm").text("Play again?");
     }
     bundleNames = ["Starter"];
     num = (rawScope.currentQuoteIndex || 0) + 1;
