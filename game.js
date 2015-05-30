@@ -172,7 +172,7 @@ getNextQuoteIndex = function(lastSolvedBundleIndex, lastSolvedQuoteIndex) {
 };
 
 module.exports = function() {
-  var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeDownMusic, fadeInMusic, fadeUpMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancel, onConfirm, onFrameEnter, onGiveUp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, startGame, states, updateDecodeKey, updateFrame, updateLoadProgress;
+  var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeDownMusic, fadeInMusic, fadeUpMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancel, onConfirm, onFrameEnter, onGiveUp, onHelp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, startGame, states, updateDecodeKey, updateFrame, updateLoadProgress;
   CONSTANTS = {
     startingHints: 5,
     hintSetback: 20,
@@ -613,7 +613,7 @@ module.exports = function() {
         return fadeDownMusic();
       },
       onEvent: function(eventData, scope, trigger, userData) {
-        if (eventData.keyCode === 32) {
+        if (trigger === "keyPress" && eventData.keyCode === 32) {
           scope.secretMessage = void 0;
           scope.comboGroups = void 0;
           scope.decodeKey = void 0;
@@ -722,6 +722,12 @@ module.exports = function() {
       }
       scope.SFXIsPaused = !scope.SFXIsPaused;
     }
+    if (trigger === "getHelp") {
+      scope.showHelp = !scope.showHelp;
+    }
+    if (trigger === "cancel" && scope.showHelp) {
+      scope.showHelp = !scope.showHelp;
+    }
     return scope;
   };
   fetchQuote = function(userData) {
@@ -757,6 +763,10 @@ module.exports = function() {
   onMuteSFX = function(e) {
     e.preventDefault();
     return updateFrame("toggleMuteSFX", null);
+  };
+  onHelp = function(e) {
+    e.preventDefault();
+    return updateFrame("getHelp", null);
   };
   onCancel = function(e) {
     e.preventDefault();
@@ -845,9 +855,17 @@ module.exports = function() {
       Zepto("#dialog #cancel").hide();
       Zepto("#dialog #confirm").show();
       Zepto("#dialog").show();
-      Zepto("#dialog h3").text("Congratulaitons, you solved all of the quotes!");
+      Zepto("#dialog h3").text("Congratulations, you solved all of the quotes!");
       Zepto("#dialog p").html("<p>Thank you for playing.</p><p><a target='_blank' href='http://codeperfectionist.com/portfolio/games/hidden-message-game/'>Stay tuned for more quote bundles and extra features</a></p>");
       Zepto("#dialog #confirm").text("Play again?");
+    }
+    if (rawScope.showHelp) {
+      Zepto("#dialog #cancel").show();
+      Zepto("#dialog #confirm").hide();
+      Zepto("#dialog").show();
+      Zepto("#dialog h3").text("Credits");
+      Zepto("#dialog p").html("<ul>\n  <li>Game designed and built by <a target='_blank' href='http://codeperfectionist.com/about'>Jeff Schomay</a></li>\n  <li>Music by <a target='_blank' href='...'>...</a></li>\n  <li>Owl character by <a target='_blank' href='...'>...</a></li>\n  <li>Sound effects by <a target='_blank' href='https://www.freesound.org/people/ddohler/sounds/9098/'>ddohler</a>,\n  <a target='_blank' href='https://www.freesound.org/people/Horn/sounds/9744/'>Horn</a>,\n  <a target='_blank' href='https://www.freesound.org/people/NHumphrey/sounds/204466/'>NHumphrey</a>, and\n  <a target='_blank' href='https://www.freesound.org/people/lonemonk/sounds/47048/'>lonemonk</a></li>\n  <li>Special thanks to: Mark, Marcus, Zia, David, and Michele</li>\n</ul>");
+      Zepto("#dialog #cancel").text("Keep playing");
     }
     bundleNames = ["Starter"];
     num = (rawScope.currentQuoteIndex || 0) + 1;
@@ -930,6 +948,7 @@ module.exports = function() {
       $("#hint-button").on("click", onHint);
       $("#mute-music-button").on("click", onMuteMusic);
       $("#mute-sfx-button").on("click", onMuteSFX);
+      $("#help-button").on("click", onHelp);
       $("#cancel").on("click", onCancel);
       $("#confirm").on("click", onConfirm);
       return updateFrame("start");

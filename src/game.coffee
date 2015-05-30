@@ -436,7 +436,7 @@ module.exports = ->
         fadeDownMusic()
 
       onEvent: (eventData, scope, trigger, userData) ->
-        if eventData.keyCode is 32 # space bar
+        if trigger is "keyPress" and eventData.keyCode is 32 # space bar
           # reset everything
           scope.secretMessage = undefined
           scope.comboGroups = undefined
@@ -536,13 +536,22 @@ module.exports = ->
         pauseMusic()
       scope.musicIsPaused = !scope.musicIsPaused
 
-
     if trigger is "toggleMuteSFX"
       if scope.SFXIsPaused
         playSFX()
       else
         pauseSFX()
       scope.SFXIsPaused = !scope.SFXIsPaused
+
+    if trigger is "getHelp"
+      scope.showHelp = !scope.showHelp
+
+    # note: when in a state with a dialog, pressing the button on
+    # the get help dialog will also affect that state, so use
+    # cancel instead of confirm to avoid triggering anything
+    if trigger is "cancel" and scope.showHelp
+      scope.showHelp = !scope.showHelp
+
     scope
 
 
@@ -582,6 +591,10 @@ module.exports = ->
   onMuteSFX = (e) ->
     e.preventDefault()
     updateFrame "toggleMuteSFX", null
+
+  onHelp = (e) ->
+    e.preventDefault()
+    updateFrame "getHelp", null
 
   onCancel = (e) ->
     e.preventDefault()
@@ -670,14 +683,34 @@ module.exports = ->
       Zepto("#dialog #confirm").text "Yes, give up"
       Zepto("#dialog #cancel").text "No, I'll keep trying"
 
-    # no more quores dialog
+    # no more quotes dialog
     if renderData.noMoreQuotes
       Zepto("#dialog #cancel").hide()
       Zepto("#dialog #confirm").show()
       Zepto("#dialog").show()
-      Zepto("#dialog h3").text "Congratulaitons, you solved all of the quotes!"
+      Zepto("#dialog h3").text "Congratulations, you solved all of the quotes!"
       Zepto("#dialog p").html "<p>Thank you for playing.</p><p><a target='_blank' href='http://codeperfectionist.com/portfolio/games/hidden-message-game/'>Stay tuned for more quote bundles and extra features</a></p>"
       Zepto("#dialog #confirm").text "Play again?"
+
+    # get help dialog
+    if rawScope.showHelp
+      Zepto("#dialog #cancel").show()
+      Zepto("#dialog #confirm").hide()
+      Zepto("#dialog").show()
+      Zepto("#dialog h3").text "Credits"
+      Zepto("#dialog p").html """
+        <ul>
+          <li>Game designed and built by <a target='_blank' href='http://codeperfectionist.com/about'>Jeff Schomay</a></li>
+          <li>Music by <a target='_blank' href='...'>...</a></li>
+          <li>Owl character by <a target='_blank' href='...'>...</a></li>
+          <li>Sound effects by <a target='_blank' href='https://www.freesound.org/people/ddohler/sounds/9098/'>ddohler</a>,
+          <a target='_blank' href='https://www.freesound.org/people/Horn/sounds/9744/'>Horn</a>,
+          <a target='_blank' href='https://www.freesound.org/people/NHumphrey/sounds/204466/'>NHumphrey</a>, and
+          <a target='_blank' href='https://www.freesound.org/people/lonemonk/sounds/47048/'>lonemonk</a></li>
+          <li>Special thanks to: Mark, Marcus, Zia, David, and Michele</li>
+        </ul>
+        """
+      Zepto("#dialog #cancel").text "Keep playing"
 
     # user info
     bundleNames = [
@@ -753,6 +786,7 @@ module.exports = ->
       $("#hint-button").on "click", onHint
       $("#mute-music-button").on "click", onMuteMusic
       $("#mute-sfx-button").on "click", onMuteSFX
+      $("#help-button").on "click", onHelp
       $("#cancel").on "click", onCancel
       $("#confirm").on "click", onConfirm
 

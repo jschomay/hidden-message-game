@@ -67,7 +67,7 @@ body {
 #play-actions {
   position: absolute;
   left: 30px;
-  bottom: 60px;
+  bottom: 30px;
   display: none;
 }
 
@@ -100,8 +100,8 @@ body {
 
 #settings {
   position: absolute;
-  left: 25px;
-  bottom: 7px;
+  right: 30px;
+  top: 10px;
 }
 .small-link {
   cursor: pointer;
@@ -116,6 +116,9 @@ body {
 }
 #mute-sfx-button:before {
   content: "\f4ce";
+}
+#help-button:before {
+  content: "\f445";
 }
 #mute-music-button.muted {
   color: #ddd;
@@ -134,6 +137,7 @@ body {
   -moz-border-radius: 10px; 
   height: 50%;
   width: 50%;
+  overflow: auto;
   margin: auto;
   padding: 30px;
   position: absolute;
@@ -153,6 +157,13 @@ body {
 #dialog p {
   color: #666;
   font-size: 20px;
+}
+#dialog a {
+  color: #777;
+}
+#dialog ul {
+  text-align: left;
+  padding: 0 5%;
 }
 #dialog .button {
   min-width: 20%;
