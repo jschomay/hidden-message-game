@@ -142,27 +142,26 @@ body {
   left: 0;
   right: 0;
 }
-#buy-hints h3 {
+#dialog-hints h3 {
   color: #666;
   font-size: 28px;
   font-weight: bold;
 }
-#buy-hints #next-free-hint {
+#dialog #next-free-hint {
   font-weight: bold;
 }
-#buy-hints p {
+#dialog p {
   color: #666;
   font-size: 20px;
 }
-#buy-hints #cancel-buy-hints {
-  position: absolute;
-  width: 20%;
-  bottom: 20px;
+#dialog .button {
+  min-width: 20%;
   left: 0;
   right: 0;
-  margin: auto;
+  display: inline-block;
+  margin-top: 30px;
+  margin-left: 10px;
 }
-
 
 #user-info {
   display: none;
@@ -175,10 +174,5 @@ body {
 }
 #total-score {
   font-weight: bold;
-}
-
-#give-up-dialog .button {
-  display: inline-block;
-  margin-left: 10px;
 }
 

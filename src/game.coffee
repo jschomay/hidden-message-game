@@ -345,7 +345,7 @@ module.exports = ->
         fadeDownMusic()
 
       onEvent: (eventData, scope, trigger, userData) ->
-        if trigger is "confirmGiveUp"
+        if trigger is "confirm"
           playSound "giveUp"
 
           numUnsolved = R.length R.filter(R.compose(R.not, isSolved)) scope.decodeKey
@@ -359,7 +359,7 @@ module.exports = ->
 
           return ["confirmedGiveUp", scope, userData]
 
-        else if trigger is "cancelGiveUp"
+        else if trigger is "cancel"
           return ["play", scope, userData]
 
         else
@@ -439,7 +439,7 @@ module.exports = ->
         fadeDownMusic()
 
       onEvent: (eventData, scope, trigger, userData) ->
-        if trigger is "cancelBuyHints"
+        if trigger is "confirm"
           return ["play", scope, userData]
 
         return ["outOfHints", scope, userData]
@@ -528,14 +528,6 @@ module.exports = ->
     e.preventDefault()
     updateFrame "giveUp", null
 
-  onConfirmGiveUp = (e) ->
-    e.preventDefault()
-    updateFrame "confirmGiveUp", null
-
-  onCancelGiveUp = (e) ->
-    e.preventDefault()
-    updateFrame "cancelGiveUp", null
-
   onHint = (e) ->
     e.preventDefault()
     updateFrame "hint", null
@@ -548,9 +540,13 @@ module.exports = ->
     e.preventDefault()
     updateFrame "toggleMuteSFX", null
 
-  onCancelBuyHints = (e) ->
+  onCancel = (e) ->
     e.preventDefault()
-    updateFrame "cancelBuyHints", null
+    updateFrame "cancel", null
+
+  onConfirm = (e) ->
+    e.preventDefault()
+    updateFrame "confirm", null
 
 
   # drawing
@@ -607,27 +603,38 @@ module.exports = ->
     if rawScope.SFXIsPaused
       $muteSFX.addClass "muted"
 
+    # dialog box
+    Zepto("#dialog").hide()
+
     # buy hints dialog
-    # hint and give up buttons
     if buyHints
-      Zepto("#buy-hints").show()
-      Zepto("#next-free-hint").text getNextFreeHintScore userData.totalScore
-      Zepto("#points-to-go").text getNextFreeHintScore(userData.totalScore) - userData.totalScore
-    else
-      Zepto("#buy-hints").hide()
+      Zepto("#dialog #cancel").hide()
+      Zepto("#dialog #confirm").show()
+      nextHint = getNextFreeHintScore userData.totalScore
+      pointsToGo = getNextFreeHintScore(userData.totalScore) - userData.totalScore
+      Zepto("#dialog").show()
+      Zepto("#dialog h3").text "You are out of hints!"
+      Zepto("#dialog p").text "Next free hint awarded at #{nextHint} points (#{pointsToGo} points to go)"
+      Zepto("#dialog #confirm").text "OK"
 
     # give up dialog
     if giveUp
-      Zepto("#give-up-dialog").show()
-      Zepto("#give-up-cost").text giveUpCost
-    else
-      Zepto("#give-up-dialog").hide()
+      Zepto("#dialog #cancel").show()
+      Zepto("#dialog #confirm").show()
+      Zepto("#dialog").show()
+      Zepto("#dialog h3").text "Are you sure you want to give up?"
+      Zepto("#dialog p").text "You will lose #{giveUpCost} points for the remaining unsolved words."
+      Zepto("#dialog #confirm").text "Yes, give up"
+      Zepto("#dialog #cancel").text "No, I'll keep trying"
 
     # user info
     bundleNames = [
       "Starter"
     ]
-    num = userData.currentQuoteIndex
+    num = userData.currentQuoteIndex #completed quotes
+    if showPlayActions
+      # if user is playing the next quote, need to add 1 to completed quotes
+      num++
     bundleName = bundleNames[userData.currentBundleIndex]
     total = quoteBundles[userData.currentBundleIndex].length
     Zepto("#user-info").show()
@@ -694,12 +701,11 @@ module.exports = ->
       # bind inputs
       $(document).on "keydown", onKeyDown
       $("#give-up-button").on "click", onGiveUp
-      $("#cancel-give-up").on "click", onCancelGiveUp
-      $("#confirm-give-up").on "click", onConfirmGiveUp
       $("#hint-button").on "click", onHint
       $("#mute-music-button").on "click", onMuteMusic
       $("#mute-sfx-button").on "click", onMuteSFX
-      $("#cancel-buy-hints").on "click", onCancelBuyHints
+      $("#cancel").on "click", onCancel
+      $("#confirm").on "click", onConfirm
 
       fetchQuote(userData)
 

@@ -167,7 +167,7 @@ getNextQuoteIndex = function(currentBundleIndex, currentQuoteIndex) {
 };
 
 module.exports = function() {
-  var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeDownMusic, fadeInMusic, fadeUpMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancelBuyHints, onCancelGiveUp, onConfirmGiveUp, onFrameEnter, onGiveUp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, startGame, states, updateDecodeKey, updateFrame, updateLoadProgress;
+  var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeDownMusic, fadeInMusic, fadeUpMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancel, onConfirm, onFrameEnter, onGiveUp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, startGame, states, updateDecodeKey, updateFrame, updateLoadProgress;
   CONSTANTS = {
     startingHints: 5,
     hintSetback: 20,
@@ -521,7 +521,7 @@ module.exports = function() {
       },
       onEvent: function(eventData, scope, trigger, userData) {
         var nextQuote, numUnsolved;
-        if (trigger === "confirmGiveUp") {
+        if (trigger === "confirm") {
           playSound("giveUp");
           numUnsolved = R.length(R.filter(R.compose(R.not, isSolved))(scope.decodeKey));
           nextQuote = getNextQuoteIndex(userData.currentBundleIndex, userData.currentQuoteIndex);
@@ -531,7 +531,7 @@ module.exports = function() {
           userData.totalSkipped += 1;
           saveUserData(userData);
           return ["confirmedGiveUp", scope, userData];
-        } else if (trigger === "cancelGiveUp") {
+        } else if (trigger === "cancel") {
           return ["play", scope, userData];
         } else {
           return ["gaveUp", scope, userData];
@@ -614,7 +614,7 @@ module.exports = function() {
         return fadeDownMusic();
       },
       onEvent: function(eventData, scope, trigger, userData) {
-        if (trigger === "cancelBuyHints") {
+        if (trigger === "confirm") {
           return ["play", scope, userData];
         }
         return ["outOfHints", scope, userData];
@@ -695,14 +695,6 @@ module.exports = function() {
     e.preventDefault();
     return updateFrame("giveUp", null);
   };
-  onConfirmGiveUp = function(e) {
-    e.preventDefault();
-    return updateFrame("confirmGiveUp", null);
-  };
-  onCancelGiveUp = function(e) {
-    e.preventDefault();
-    return updateFrame("cancelGiveUp", null);
-  };
   onHint = function(e) {
     e.preventDefault();
     return updateFrame("hint", null);
@@ -715,9 +707,13 @@ module.exports = function() {
     e.preventDefault();
     return updateFrame("toggleMuteSFX", null);
   };
-  onCancelBuyHints = function(e) {
+  onCancel = function(e) {
     e.preventDefault();
-    return updateFrame("cancelBuyHints", null);
+    return updateFrame("cancel", null);
+  };
+  onConfirm = function(e) {
+    e.preventDefault();
+    return updateFrame("confirm", null);
   };
   buildSecretMessage = function(secretMessage) {
     var buildMarkup, statusMap;
@@ -742,7 +738,7 @@ module.exports = function() {
     return (R.reduce(buildMarkup, "<span class='word'>", secretMessage)) + "</span>";
   };
   render = function(renderData, rawScope, userData) {
-    var $feedback, $muteMusic, $muteSFX, $score, $secretMessage, bundleName, bundleNames, buyHints, feedback, giveUp, giveUpCost, match, num, score, secretMessage, showPlayActions, total;
+    var $feedback, $muteMusic, $muteSFX, $score, $secretMessage, bundleName, bundleNames, buyHints, feedback, giveUp, giveUpCost, match, nextHint, num, pointsToGo, score, secretMessage, showPlayActions, total;
     $secretMessage = Zepto("#secret-message");
     $feedback = Zepto("#feedback");
     $score = Zepto("#score");
@@ -774,21 +770,31 @@ module.exports = function() {
     if (rawScope.SFXIsPaused) {
       $muteSFX.addClass("muted");
     }
+    Zepto("#dialog").hide();
     if (buyHints) {
-      Zepto("#buy-hints").show();
-      Zepto("#next-free-hint").text(getNextFreeHintScore(userData.totalScore));
-      Zepto("#points-to-go").text(getNextFreeHintScore(userData.totalScore) - userData.totalScore);
-    } else {
-      Zepto("#buy-hints").hide();
+      Zepto("#dialog #cancel").hide();
+      Zepto("#dialog #confirm").show();
+      nextHint = getNextFreeHintScore(userData.totalScore);
+      pointsToGo = getNextFreeHintScore(userData.totalScore) - userData.totalScore;
+      Zepto("#dialog").show();
+      Zepto("#dialog h3").text("You are out of hints!");
+      Zepto("#dialog p").text("Next free hint awarded at " + nextHint + " points (" + pointsToGo + " points to go)");
+      Zepto("#dialog #confirm").text("OK");
     }
     if (giveUp) {
-      Zepto("#give-up-dialog").show();
-      Zepto("#give-up-cost").text(giveUpCost);
-    } else {
-      Zepto("#give-up-dialog").hide();
+      Zepto("#dialog #cancel").show();
+      Zepto("#dialog #confirm").show();
+      Zepto("#dialog").show();
+      Zepto("#dialog h3").text("Are you sure you want to give up?");
+      Zepto("#dialog p").text("You will lose " + giveUpCost + " points for the remaining unsolved words.");
+      Zepto("#dialog #confirm").text("Yes, give up");
+      Zepto("#dialog #cancel").text("No, I'll keep trying");
     }
     bundleNames = ["Starter"];
     num = userData.currentQuoteIndex;
+    if (showPlayActions) {
+      num++;
+    }
     bundleName = bundleNames[userData.currentBundleIndex];
     total = quoteBundles[userData.currentBundleIndex].length;
     Zepto("#user-info").show();
@@ -865,12 +871,11 @@ module.exports = function() {
       updateFrame = updateFrame.bind(updateFrame);
       $(document).on("keydown", onKeyDown);
       $("#give-up-button").on("click", onGiveUp);
-      $("#cancel-give-up").on("click", onCancelGiveUp);
-      $("#confirm-give-up").on("click", onConfirmGiveUp);
       $("#hint-button").on("click", onHint);
       $("#mute-music-button").on("click", onMuteMusic);
       $("#mute-sfx-button").on("click", onMuteSFX);
-      $("#cancel-buy-hints").on("click", onCancelBuyHints);
+      $("#cancel").on("click", onCancel);
+      $("#confirm").on("click", onConfirm);
       return fetchQuote(userData);
     });
   };
