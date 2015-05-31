@@ -355,12 +355,24 @@ module.exports = ->
         ["play", scope, userData]
 
       getRenderData: (scope) ->
+        # get progress of quote
+        removeNonLetters = (val, i) ->
+          isLetter scope.secretMessage[i]
+        statusOfJustLetters = R.filterIndexed removeNonLetters, scope.decodeKey
+
+        isFilled = (status) ->
+          status in [decodeKeyStates.REVEALED, decodeKeyStates.SOLVED, decodeKeyStates.HINTEDFILLED]
+        numberFilled = R.length R.filter isFilled, statusOfJustLetters
+
+        progress = numberFilled / statusOfJustLetters.length
+
         comboString = if scope.comboString.length then scope.comboString else null
         secretMessage: decode(scope.secretMessage, scope.decodeKey)
         feedback: comboString or scope.lastCombo  or "Type letter combos to reveal the hidden message."
         match: if scope.lastCombo then !!scope.comboString.length > 0 else null
         score: scope.score
         showPlayActions: true
+        progress: progress
 
     gaveUp:
       onEnter: ->
@@ -458,6 +470,7 @@ module.exports = ->
         feedback:  "SOLVED in #{scope.moves} moves (with #{hints} hints)!<br>Press 'Space bar' to play again."
         score: scope.score
         showPlayActions: false
+        solved: true
 
     outOfHints:
       onEnter: ->
@@ -722,6 +735,25 @@ module.exports = ->
     Zepto("#user-info").show()
     Zepto("#progress").html "Bundle: \"#{bundleName}\"<br>##{num} out of #{total}"
     Zepto("#total-score").text userData.totalScore
+
+    # owl position
+    owlWidth = Zepto("#owl").width()
+    gutter = 250
+    path = window.innerWidth - gutter - owlWidth
+    progress = renderData.progress or 0
+    offset = path * progress + gutter / 2
+    hopHeight = 10
+    moveOwl = (x, y) ->
+      Zepto("#owl").css
+        '-webkit-transform': "translate(#{x}px, -#{y}px)"
+        '-ms-transform': "translate(#{x}px, -#{y}px)"
+        'transform': "translate(#{x}px, -#{y}px)"
+    if renderData.solved
+      # jump on top of score
+      moveOwl (window.innerWidth - (owlWidth + 10)), 90
+    else
+      moveOwl offset, hopHeight
+    setTimeout (-> if not renderData.solved then moveOwl offset, 0), 70
 
 
   # load sounds

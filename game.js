@@ -528,14 +528,24 @@ module.exports = function() {
         return ["play", scope, userData];
       },
       getRenderData: function(scope) {
-        var comboString;
+        var comboString, isFilled, numberFilled, progress, removeNonLetters, statusOfJustLetters;
+        removeNonLetters = function(val, i) {
+          return isLetter(scope.secretMessage[i]);
+        };
+        statusOfJustLetters = R.filterIndexed(removeNonLetters, scope.decodeKey);
+        isFilled = function(status) {
+          return status === decodeKeyStates.REVEALED || status === decodeKeyStates.SOLVED || status === decodeKeyStates.HINTEDFILLED;
+        };
+        numberFilled = R.length(R.filter(isFilled, statusOfJustLetters));
+        progress = numberFilled / statusOfJustLetters.length;
         comboString = scope.comboString.length ? scope.comboString : null;
         return {
           secretMessage: decode(scope.secretMessage, scope.decodeKey),
           feedback: comboString || scope.lastCombo || "Type letter combos to reveal the hidden message.",
           match: scope.lastCombo ? !!scope.comboString.length > 0 : null,
           score: scope.score,
-          showPlayActions: true
+          showPlayActions: true,
+          progress: progress
         };
       }
     },
@@ -634,7 +644,8 @@ module.exports = function() {
           secretMessage: decode(scope.secretMessage, scope.decodeKey),
           feedback: "SOLVED in " + scope.moves + " moves (with " + hints + " hints)!<br>Press 'Space bar' to play again.",
           score: scope.score,
-          showPlayActions: false
+          showPlayActions: false,
+          solved: true
         };
       }
     },
@@ -799,7 +810,7 @@ module.exports = function() {
     return (R.reduce(buildMarkup, "<span class='word'>", secretMessage)) + "</span>";
   };
   render = function(renderData, rawScope, userData) {
-    var $feedback, $muteMusic, $muteSFX, $score, $secretMessage, bundleName, bundleNames, buyHints, feedback, giveUp, giveUpCost, match, nextHint, num, pointsToGo, score, secretMessage, showPlayActions, total;
+    var $feedback, $muteMusic, $muteSFX, $score, $secretMessage, bundleName, bundleNames, buyHints, feedback, giveUp, giveUpCost, gutter, hopHeight, match, moveOwl, nextHint, num, offset, owlWidth, path, pointsToGo, progress, score, secretMessage, showPlayActions, total;
     $secretMessage = Zepto("#secret-message");
     $feedback = Zepto("#feedback");
     $score = Zepto("#score");
@@ -873,7 +884,30 @@ module.exports = function() {
     total = quoteBundles[rawScope.currentBundleIndex || 0].length;
     Zepto("#user-info").show();
     Zepto("#progress").html("Bundle: \"" + bundleName + "\"<br>#" + num + " out of " + total);
-    return Zepto("#total-score").text(userData.totalScore);
+    Zepto("#total-score").text(userData.totalScore);
+    owlWidth = Zepto("#owl").width();
+    gutter = 250;
+    path = window.innerWidth - gutter - owlWidth;
+    progress = renderData.progress || 0;
+    offset = path * progress + gutter / 2;
+    hopHeight = 10;
+    moveOwl = function(x, y) {
+      return Zepto("#owl").css({
+        '-webkit-transform': "translate(" + x + "px, -" + y + "px)",
+        '-ms-transform': "translate(" + x + "px, -" + y + "px)",
+        'transform': "translate(" + x + "px, -" + y + "px)"
+      });
+    };
+    if (renderData.solved) {
+      moveOwl(window.innerWidth - (owlWidth + 10), 90);
+    } else {
+      moveOwl(offset, hopHeight);
+    }
+    return setTimeout((function() {
+      if (!renderData.solved) {
+        return moveOwl(offset, 0);
+      }
+    }), 70);
   };
   numSoundsLoaded = function(soundsLoaded) {
     return R.length(R.filter(R.compose(R.identity, R.prop("_loaded")), R.values(soundsLoaded)));

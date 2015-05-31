@@ -187,3 +187,19 @@ body {
   font-weight: bold;
 }
 
+#owl {
+  position: absolute;
+  bottom: 10px;
+  left: 0px;
+  height: 12%;
+  width: 10%;
+  background-image: url(../assets/owl.png);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: bottom left;
+  -webkit-transform: translate(140px);
+  -ms-transform: translate(140px);
+  transform: translate(140px);
+  -webkit-transition: transform .2s;
+  transition: transform .2s;
+}
