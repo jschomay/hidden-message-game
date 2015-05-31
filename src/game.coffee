@@ -641,13 +641,14 @@ module.exports = ->
   render = (renderData, rawScope, userData) ->
     $secretMessage = Zepto("#secret-message")
     $feedback = Zepto("#feedback")
+    $feedbackMessage = Zepto("#feedback #message")
     $score = Zepto("#score")
     $muteMusic = Zepto("#mute-music-button")
     $muteSFX = Zepto("#mute-sfx-button")
     {secretMessage, feedback, score, showPlayActions, match, buyHints, giveUp, giveUpCost} = renderData
 
     $secretMessage.html buildSecretMessage secretMessage
-    $feedback.html feedback # make sure only known or escaped strings go through here!
+    $feedbackMessage.html feedback # make sure only known or escaped strings go through here!
     $score.text score
     $feedback.removeClass "no-match"
     $feedback.removeClass "match"
@@ -655,6 +656,13 @@ module.exports = ->
       $feedback.addClass "match"
     if match is false
       $feedback.addClass "no-match"
+
+
+    # share
+    if renderData.solved
+      Zepto("#share").show()
+    else
+      Zepto("#share").hide()
 
     # hint and give up buttons
     if showPlayActions

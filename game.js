@@ -810,15 +810,16 @@ module.exports = function() {
     return (R.reduce(buildMarkup, "<span class='word'>", secretMessage)) + "</span>";
   };
   render = function(renderData, rawScope, userData) {
-    var $feedback, $muteMusic, $muteSFX, $score, $secretMessage, bundleName, bundleNames, buyHints, feedback, giveUp, giveUpCost, gutter, hopHeight, match, moveOwl, nextHint, num, offset, owlWidth, path, pointsToGo, progress, score, secretMessage, showPlayActions, total;
+    var $feedback, $feedbackMessage, $muteMusic, $muteSFX, $score, $secretMessage, bundleName, bundleNames, buyHints, feedback, giveUp, giveUpCost, gutter, hopHeight, match, moveOwl, nextHint, num, offset, owlWidth, path, pointsToGo, progress, score, secretMessage, showPlayActions, total;
     $secretMessage = Zepto("#secret-message");
     $feedback = Zepto("#feedback");
+    $feedbackMessage = Zepto("#feedback #message");
     $score = Zepto("#score");
     $muteMusic = Zepto("#mute-music-button");
     $muteSFX = Zepto("#mute-sfx-button");
     secretMessage = renderData.secretMessage, feedback = renderData.feedback, score = renderData.score, showPlayActions = renderData.showPlayActions, match = renderData.match, buyHints = renderData.buyHints, giveUp = renderData.giveUp, giveUpCost = renderData.giveUpCost;
     $secretMessage.html(buildSecretMessage(secretMessage));
-    $feedback.html(feedback);
+    $feedbackMessage.html(feedback);
     $score.text(score);
     $feedback.removeClass("no-match");
     $feedback.removeClass("match");
@@ -827,6 +828,11 @@ module.exports = function() {
     }
     if (match === false) {
       $feedback.addClass("no-match");
+    }
+    if (renderData.solved) {
+      Zepto("#share").show();
+    } else {
+      Zepto("#share").hide();
     }
     if (showPlayActions) {
       Zepto("#play-actions").show();

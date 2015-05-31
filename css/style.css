@@ -43,17 +43,22 @@ body {
   display: none;
 }
 #feedback {
-  font: 20px courier;
   position: relative;
-  text-align: center;
   top: 30%;
+  font: 20px courier;
+  text-align: center;
   color: #bbb;
 }
-#feedback.match {
+#feedback.match #message {
   color: #aaddaa;
 }
-#feedback.no-match {
+#feedback.no-match #message {
   color: #ddaaaa;
+}
+
+#share {
+  display: none;
+  margin-top: 20px;
 }
 
 #score {
