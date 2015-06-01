@@ -142,6 +142,56 @@
   connect();
 })();
 
+require.register("src/bundles", function(exports, require, module) {
+var getNextQuoteIndex, quoteBundles, updateProgressPerBundle;
+
+quoteBundles = [require("./bundles/starter")];
+
+updateProgressPerBundle = function(progressPerBundle, currentBundleIndex, currentQuoteIndex) {
+  var initedPreviousBundles;
+  if (!progressPerBundle) {
+    initedPreviousBundles = R.times(R.always(0), currentBundleIndex);
+    return R.append(currentQuoteIndex, initedPreviousBundles);
+  } else if (currentBundleIndex === progressPerBundle.length - 1) {
+    if (currentQuoteIndex > R.last(progressPerBundle)) {
+      return R.append(currentQuoteIndex, R.slice(0, -1, progressPerBundle));
+    } else {
+      return progressPerBundle;
+    }
+  } else if (currentBundleIndex > progressPerBundle.length - 1) {
+    return R.append(currentQuoteIndex, progressPerBundle);
+  } else {
+    return progressPerBundle;
+  }
+};
+
+getNextQuoteIndex = function(lastSolvedBundleIndex, lastSolvedQuoteIndex) {
+  if (lastSolvedQuoteIndex == null) {
+    return {
+      quoteIndex: 0,
+      bundleIndex: 0
+    };
+  } else if (lastSolvedQuoteIndex === quoteBundles[lastSolvedBundleIndex].length - 1) {
+    return {
+      quoteIndex: 0,
+      bundleIndex: quoteBundles[lastSolvedBundleIndex + 1] ? lastSolvedBundleIndex + 1 : 0
+    };
+  } else {
+    return {
+      quoteIndex: lastSolvedQuoteIndex + 1,
+      bundleIndex: lastSolvedBundleIndex
+    };
+  }
+};
+
+module.exports = {
+  quoteBundles: quoteBundles,
+  updateProgressPerBundle: updateProgressPerBundle,
+  getNextQuoteIndex: getNextQuoteIndex
+};
+
+});
+
 require.register("src/bundles/starter", function(exports, require, module) {
 module.exports = [
     {
@@ -289,28 +339,9 @@ module.exports = [
 });
 
 require.register("src/game", function(exports, require, module) {
-var getNextQuoteIndex, quoteBundles;
+var getNextQuoteIndex, quoteBundles, updateProgressPerBundle, _ref;
 
-quoteBundles = [require("./bundles/starter")];
-
-getNextQuoteIndex = function(lastSolvedBundleIndex, lastSolvedQuoteIndex) {
-  if (lastSolvedQuoteIndex == null) {
-    return {
-      quoteIndex: 0,
-      bundleIndex: 0
-    };
-  } else if (lastSolvedQuoteIndex === quoteBundles[lastSolvedBundleIndex].length - 1) {
-    return {
-      quoteIndex: 0,
-      bundleIndex: quoteBundles[lastSolvedBundleIndex + 1] ? lastSolvedBundleIndex + 1 : 0
-    };
-  } else {
-    return {
-      quoteIndex: lastSolvedQuoteIndex + 1,
-      bundleIndex: lastSolvedBundleIndex
-    };
-  }
-};
+_ref = require("./bundles"), quoteBundles = _ref.quoteBundles, getNextQuoteIndex = _ref.getNextQuoteIndex, updateProgressPerBundle = _ref.updateProgressPerBundle;
 
 module.exports = function() {
   var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeDownMusic, fadeInMusic, fadeUpMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancel, onConfirm, onFrameEnter, onGiveUp, onHelp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, startGame, states, updateDecodeKey, updateFrame, updateLoadProgress;
@@ -402,8 +433,8 @@ module.exports = function() {
       num = 1;
     }
     recur = function(arr, acc) {
-      var newArr, randomElement, _ref;
-      _ref = getRandomElement(arr), randomElement = _ref[0], newArr = _ref[1];
+      var newArr, randomElement, _ref1;
+      _ref1 = getRandomElement(arr), randomElement = _ref1[0], newArr = _ref1[1];
       acc.push(randomElement);
       if (acc.length === num) {
         return acc;
@@ -657,11 +688,11 @@ module.exports = function() {
           totalSolved = R.length(R.filter(isSolved)(scope.decodeKey));
           if (totalSolved === scope.secretMessage.length) {
             playSound("solved");
-            userData.totalSolved += 1;
             userData.totalScore += scope.score;
             userData.hintsRemaining += numFreeHintsEarned(userData.totalScore, scope.score);
             userData.lastSolvedBundleIndex = scope.currentBundleIndex;
             userData.lastSolvedQuoteIndex = scope.currentQuoteIndex;
+            userData.progressPerBundle = updateProgressPerBundle(userData.progressPerBundle, scope.currentBundleIndex, scope.currentQuoteIndex);
             saveUserData(userData);
             return ["solved", scope, userData];
           }
@@ -702,7 +733,7 @@ module.exports = function() {
           userData.lastSolvedBundleIndex = scope.currentBundleIndex;
           userData.lastSolvedQuoteIndex = scope.currentQuoteIndex;
           userData.totalScore -= numUnsolved * CONSTANTS.pointsPerLetter;
-          userData.totalSkipped += 1;
+          userData.progressPerBundle = updateProgressPerBundle(userData.progressPerBundle, scope.currentBundleIndex, scope.currentQuoteIndex);
           saveUserData(userData);
           return ["confirmedGiveUp", scope, userData];
         } else if (trigger === "cancel") {
@@ -833,8 +864,8 @@ module.exports = function() {
     }
   };
   frame = function(seed, trigger, eventData) {
-    var newScope, newState, newUserData, _ref;
-    _ref = seed.state.onEvent(eventData, seed.scope, trigger, seed.userData), newState = _ref[0], newScope = _ref[1], newUserData = _ref[2];
+    var newScope, newState, newUserData, _ref1;
+    _ref1 = seed.state.onEvent(eventData, seed.scope, trigger, seed.userData), newState = _ref1[0], newScope = _ref1[1], newUserData = _ref1[2];
     if (states[newState] !== seed.state) {
       states[newState].onEnter(newScope, newUserData);
     }
@@ -846,13 +877,13 @@ module.exports = function() {
     };
   };
   updateFrame = function(trigger, data) {
-    var scope, state, userData, _ref;
+    var scope, state, userData, _ref1;
     this.store = onFrameEnter(this.store, trigger, data);
-    _ref = frame({
+    _ref1 = frame({
       state: this.currentState,
       scope: this.store,
       userData: this.userData
-    }, trigger, data), state = _ref.state, scope = _ref.scope, userData = _ref.userData;
+    }, trigger, data), state = _ref1.state, scope = _ref1.scope, userData = _ref1.userData;
     this.currentState = state;
     this.store = scope;
     return this.userData = userData;
@@ -1140,10 +1171,9 @@ module.exports = function() {
     currentPlayerDefaults = {
       hintsRemaining: CONSTANTS.startingHints,
       totalScore: 0,
-      totalSolved: 0,
-      totalSkipped: 0,
       lastSolvedBundleIndex: void 0,
-      lastSolvedQuoteIndex: void 0
+      lastSolvedQuoteIndex: void 0,
+      progressPerBundle: void 0
     };
     currentPlayer = JSON.parse(localStorage.getItem("currentPlayer"));
     if (!currentPlayer) {

@@ -1,21 +1,5 @@
-quoteBundles = [
-  require "./bundles/starter"
-]
-
-getNextQuoteIndex = (lastSolvedBundleIndex, lastSolvedQuoteIndex) ->
-  if not lastSolvedQuoteIndex?
-    # new game
-    quoteIndex: 0
-    bundleIndex: 0
-  else if lastSolvedQuoteIndex is quoteBundles[lastSolvedBundleIndex].length - 1
-    # bundle complete, start next bundle
-    # (or start from very begining if no next bundle)
-    quoteIndex: 0
-    bundleIndex: if quoteBundles[lastSolvedBundleIndex + 1] then lastSolvedBundleIndex + 1 else 0
-  else
-    # next quote in bundle
-    quoteIndex: lastSolvedQuoteIndex + 1
-    bundleIndex: lastSolvedBundleIndex
+# quote bundles logic
+{quoteBundles, getNextQuoteIndex, updateProgressPerBundle} = require "./bundles"
 
 module.exports = ->
 
@@ -342,11 +326,16 @@ module.exports = ->
             playSound "solved"
 
 
-            userData.totalSolved += 1
             userData.totalScore += scope.score
             userData.hintsRemaining += numFreeHintsEarned userData.totalScore, scope.score
+
             userData.lastSolvedBundleIndex = scope.currentBundleIndex
             userData.lastSolvedQuoteIndex = scope.currentQuoteIndex
+
+            # save furthest progress per bundle in case user jumps to
+            # an earlier quote and wants to jump back to latest progress
+            userData.progressPerBundle = updateProgressPerBundle userData.progressPerBundle, scope.currentBundleIndex, scope.currentQuoteIndex
+
 
             saveUserData userData
 
@@ -383,10 +372,15 @@ module.exports = ->
           playSound "giveUp"
 
           numUnsolved = R.length R.filter(R.compose(R.not, isSolved)) scope.decodeKey
+
           userData.lastSolvedBundleIndex = scope.currentBundleIndex
           userData.lastSolvedQuoteIndex = scope.currentQuoteIndex
+
           userData.totalScore -= numUnsolved * CONSTANTS.pointsPerLetter
-          userData.totalSkipped += 1
+
+          # save furthest progress per bundle in case user jumps to
+          # an earlier quote and wants to jump back to latest progress
+          userData.progressPerBundle = updateProgressPerBundle userData.progressPerBundle, scope.currentBundleIndex, scope.currentQuoteIndex
 
           saveUserData userData
 
@@ -836,10 +830,9 @@ module.exports = ->
     currentPlayerDefaults =
       hintsRemaining: CONSTANTS.startingHints
       totalScore: 0
-      totalSolved: 0
-      totalSkipped: 0
       lastSolvedBundleIndex: undefined
       lastSolvedQuoteIndex: undefined
+      progressPerBundle: undefined
 
     currentPlayer = JSON.parse localStorage.getItem "currentPlayer"
 
