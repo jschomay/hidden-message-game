@@ -801,7 +801,27 @@ module.exports = ->
 
     R.reduce initializeSounds, SOUNDS, R.toPairs sounds
 
+  loadImages = (images) ->
+    loadImage = (path) ->
+      img = new Image()
+      img.src = path
+      img
+
+    loadAssets = R.map loadImage
+    loadAssets images
+
   preload = ->
+    # images will load quicker than sounds, so I wont bother with a
+    # callback when all are loaded
+    # Note that I need to hold a reference to the img objects so that
+    # the browser doesn't drop them from memory
+    keepInMemory = loadImages [
+      "assets/owl-normal.png"
+      "assets/owl-happy.png"
+      "assets/owl-sad.png"
+      "assets/owl-blink.png"
+    ]
+
     loadSounds
       keyPressMiss: "assets/key-press-miss"
       keyPressHit: ["assets/key-press-hit", volume: VOLUMES.keyPressHit]
