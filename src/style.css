@@ -147,17 +147,20 @@ body {
   left: 0;
   right: 0;
 }
-#dialog-hints h3 {
+#dialog h3 {
   color: #666;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: bold;
 }
 #dialog #next-free-hint {
   font-weight: bold;
 }
-#dialog p {
+#dialog {
   color: #666;
   font-size: 20px;
+}
+#dialog p {
+  text-align: left;
 }
 #dialog a {
   color: #777;

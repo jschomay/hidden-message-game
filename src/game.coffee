@@ -357,7 +357,7 @@ module.exports = ->
 
         comboString = if scope.comboString.length then scope.comboString else null
         secretMessage: decode(scope.secretMessage, scope.decodeKey)
-        feedback: comboString or scope.lastCombo  or "Type letter combos to reveal the hidden message."
+        feedback: comboString or scope.lastCombo  or "Type letters to begin revealing he hidden message."
         match: if scope.lastCombo then !!scope.comboString.length > 0 else null
         score: scope.score
         showPlayActions: true
@@ -685,7 +685,7 @@ module.exports = ->
       pointsToGo = getNextFreeHintScore(userData.totalScore) - userData.totalScore
       Zepto("#dialog").show()
       Zepto("#dialog h3").text "You are out of hints!"
-      Zepto("#dialog p").text "Next free hint awarded at #{nextHint} points (#{pointsToGo} points to go)"
+      Zepto("#dialog #message-content").html "Next free hint awarded at #{nextHint} points (#{pointsToGo} points to go)"
       Zepto("#dialog #confirm").text "OK"
 
     # give up dialog
@@ -694,7 +694,7 @@ module.exports = ->
       Zepto("#dialog #confirm").show()
       Zepto("#dialog").show()
       Zepto("#dialog h3").text "Are you sure you want to give up?"
-      Zepto("#dialog p").text "You will lose #{giveUpCost} points for the remaining unsolved words."
+      Zepto("#dialog #message-content").html "You will lose #{giveUpCost} points for the remaining unsolved words."
       Zepto("#dialog #confirm").text "Yes, give up"
       Zepto("#dialog #cancel").text "No, I'll keep trying"
 
@@ -704,7 +704,7 @@ module.exports = ->
       Zepto("#dialog #confirm").show()
       Zepto("#dialog").show()
       Zepto("#dialog h3").text "Congratulations, you solved all of the quotes!"
-      Zepto("#dialog p").html "<p>Thank you for playing.</p><p><a target='_blank' href='http://codeperfectionist.com/portfolio/games/hidden-message-game/'>Stay tuned for more quote bundles and extra features</a></p>"
+      Zepto("#dialog #message-content").html "<p>Thank you for playing.</p><p><a target='_blank' href='http://codeperfectionist.com/portfolio/games/hidden-message-game/'>Stay tuned for more quote bundles and extra features</a></p>"
       Zepto("#dialog #confirm").text "Play again?"
 
     # get help dialog
@@ -712,8 +712,10 @@ module.exports = ->
       Zepto("#dialog #cancel").show()
       Zepto("#dialog #confirm").hide()
       Zepto("#dialog").show()
-      Zepto("#dialog h3").text "Credits"
-      Zepto("#dialog p").html """
+      Zepto("#dialog h3").text "Help"
+      Zepto("#dialog #message-content").html """
+        <p>Stuck?  You have to reveal the secret message one letter at a time from the start of each word.  Solving some words will give clues to what letters other words start with.  Try going for shorter word first.  The words say solved only when you complete them.  You can always use a hint or give up, but it will cost you.  Good luck!</p>
+        <h3>Credits</h3>
         <ul>
           <li>Game designed and built by <a target='_blank' href='http://codeperfectionist.com/about'>Jeff Schomay</a></li>
           <li>Music by <a target='_blank' href='...'>...</a></li>

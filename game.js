@@ -713,7 +713,7 @@ module.exports = function() {
         comboString = scope.comboString.length ? scope.comboString : null;
         return {
           secretMessage: decode(scope.secretMessage, scope.decodeKey),
-          feedback: comboString || scope.lastCombo || "Type letter combos to reveal the hidden message.",
+          feedback: comboString || scope.lastCombo || "Type letters to begin revealing he hidden message.",
           match: scope.lastCombo ? !!scope.comboString.length > 0 : null,
           score: scope.score,
           showPlayActions: true,
@@ -1028,7 +1028,7 @@ module.exports = function() {
       pointsToGo = getNextFreeHintScore(userData.totalScore) - userData.totalScore;
       Zepto("#dialog").show();
       Zepto("#dialog h3").text("You are out of hints!");
-      Zepto("#dialog p").text("Next free hint awarded at " + nextHint + " points (" + pointsToGo + " points to go)");
+      Zepto("#dialog #message-content").html("Next free hint awarded at " + nextHint + " points (" + pointsToGo + " points to go)");
       Zepto("#dialog #confirm").text("OK");
     }
     if (giveUp) {
@@ -1036,7 +1036,7 @@ module.exports = function() {
       Zepto("#dialog #confirm").show();
       Zepto("#dialog").show();
       Zepto("#dialog h3").text("Are you sure you want to give up?");
-      Zepto("#dialog p").text("You will lose " + giveUpCost + " points for the remaining unsolved words.");
+      Zepto("#dialog #message-content").html("You will lose " + giveUpCost + " points for the remaining unsolved words.");
       Zepto("#dialog #confirm").text("Yes, give up");
       Zepto("#dialog #cancel").text("No, I'll keep trying");
     }
@@ -1045,15 +1045,15 @@ module.exports = function() {
       Zepto("#dialog #confirm").show();
       Zepto("#dialog").show();
       Zepto("#dialog h3").text("Congratulations, you solved all of the quotes!");
-      Zepto("#dialog p").html("<p>Thank you for playing.</p><p><a target='_blank' href='http://codeperfectionist.com/portfolio/games/hidden-message-game/'>Stay tuned for more quote bundles and extra features</a></p>");
+      Zepto("#dialog #message-content").html("<p>Thank you for playing.</p><p><a target='_blank' href='http://codeperfectionist.com/portfolio/games/hidden-message-game/'>Stay tuned for more quote bundles and extra features</a></p>");
       Zepto("#dialog #confirm").text("Play again?");
     }
     if (rawScope.showHelp) {
       Zepto("#dialog #cancel").show();
       Zepto("#dialog #confirm").hide();
       Zepto("#dialog").show();
-      Zepto("#dialog h3").text("Credits");
-      Zepto("#dialog p").html("<ul>\n  <li>Game designed and built by <a target='_blank' href='http://codeperfectionist.com/about'>Jeff Schomay</a></li>\n  <li>Music by <a target='_blank' href='...'>...</a></li>\n  <li>Owl character by <a target='_blank' href='...'>...</a></li>\n  <li>Sound effects by <a target='_blank' href='https://www.freesound.org/people/ddohler/sounds/9098/'>ddohler</a>,\n  <a target='_blank' href='https://www.freesound.org/people/Horn/sounds/9744/'>Horn</a>,\n  <a target='_blank' href='https://www.freesound.org/people/NHumphrey/sounds/204466/'>NHumphrey</a>, and\n  <a target='_blank' href='https://www.freesound.org/people/lonemonk/sounds/47048/'>lonemonk</a></li>\n  <li>Special thanks to: Mark, Marcus, Zia, David, and Michele</li>\n</ul>");
+      Zepto("#dialog h3").text("Help");
+      Zepto("#dialog #message-content").html("<p>Stuck?  You have to reveal the secret message one letter at a time from the start of each word.  Solving some words will give clues to what letters other words start with.  Try going for shorter word first.  The words say solved only when you complete them.  You can always use a hint or give up, but it will cost you.  Good luck!</p>\n<h3>Credits</h3>\n<ul>\n  <li>Game designed and built by <a target='_blank' href='http://codeperfectionist.com/about'>Jeff Schomay</a></li>\n  <li>Music by <a target='_blank' href='...'>...</a></li>\n  <li>Owl character by <a target='_blank' href='...'>...</a></li>\n  <li>Sound effects by <a target='_blank' href='https://www.freesound.org/people/ddohler/sounds/9098/'>ddohler</a>,\n  <a target='_blank' href='https://www.freesound.org/people/Horn/sounds/9744/'>Horn</a>,\n  <a target='_blank' href='https://www.freesound.org/people/NHumphrey/sounds/204466/'>NHumphrey</a>, and\n  <a target='_blank' href='https://www.freesound.org/people/lonemonk/sounds/47048/'>lonemonk</a></li>\n  <li>Special thanks to: Mark, Marcus, Zia, David, and Michele</li>\n</ul>");
       Zepto("#dialog #cancel").text("Keep playing");
     }
     bundleNames = ["Starter"];
