@@ -344,7 +344,7 @@ var getNextQuoteIndex, quoteBundles, updateProgressPerBundle, _ref;
 _ref = require("./bundles"), quoteBundles = _ref.quoteBundles, getNextQuoteIndex = _ref.getNextQuoteIndex, updateProgressPerBundle = _ref.updateProgressPerBundle;
 
 module.exports = function() {
-  var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeDownMusic, fadeInMusic, fadeUpMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancel, onConfirm, onFrameEnter, onGiveUp, onHelp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, startGame, startOwlBlink, states, updateDecodeKey, updateFrame, updateLoadProgress;
+  var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeDownMusic, fadeInMusic, fadeUpMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancel, onConfirm, onFrameEnter, onGiveUp, onHelp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, setStateClass, startGame, startOwlBlink, states, updateDecodeKey, updateFrame, updateLoadProgress;
   CONSTANTS = {
     startingHints: 5,
     hintSetback: 20,
@@ -566,7 +566,9 @@ module.exports = function() {
   };
   states = {
     start: {
-      onEnter: function() {},
+      onEnter: function() {
+        return setStateClass("start");
+      },
       onEvent: function(eventData, scope, trigger, userData) {
         if (trigger === "start") {
           return ["loading", scope, userData];
@@ -585,6 +587,7 @@ module.exports = function() {
     },
     loading: {
       onEnter: function(scope, userData) {
+        setStateClass("start");
         fadeUpMusic();
         return fetchQuote(userData);
       },
@@ -618,6 +621,7 @@ module.exports = function() {
     },
     play: {
       onEnter: function() {
+        setStateClass("play");
         return fadeUpMusic();
       },
       onEvent: function(eventData, scope, trigger, userData) {
@@ -723,6 +727,7 @@ module.exports = function() {
     },
     gaveUp: {
       onEnter: function() {
+        setStateClass("gaveUp");
         return fadeDownMusic();
       },
       onEvent: function(eventData, scope, trigger, userData) {
@@ -759,7 +764,9 @@ module.exports = function() {
       }
     },
     confirmedGiveUp: {
-      onEnter: function() {},
+      onEnter: function() {
+        return setStateClass("confirmedGiveUp");
+      },
       onEvent: function(eventData, scope, trigger, userData) {
         var nextQuote;
         if (trigger === "keyPress" && eventData.keyCode === 32) {
@@ -792,6 +799,7 @@ module.exports = function() {
     },
     solved: {
       onEnter: function() {
+        setStateClass("solved");
         return fadeDownMusic();
       },
       onEvent: function(eventData, scope, trigger, userData) {
@@ -823,6 +831,7 @@ module.exports = function() {
     },
     outOfHints: {
       onEnter: function() {
+        setStateClass("outOfHints");
         return fadeDownMusic();
       },
       onEvent: function(eventData, scope, trigger, userData) {
@@ -845,7 +854,9 @@ module.exports = function() {
       }
     },
     noMoreQuotes: {
-      onEnter: function() {},
+      onEnter: function() {
+        return setStateClass("noMoreQuotes");
+      },
       onEvent: function(eventData, scope, trigger, userData) {
         if (trigger === "confirm") {
           return ["loading", scope, userData];
@@ -1145,6 +1156,10 @@ module.exports = function() {
         }
       ]
     });
+  };
+  setStateClass = function(stateName) {
+    Zepto("body").removeClass();
+    return Zepto("body").addClass(stateName);
   };
   startOwlBlink = function() {
     var blink, openCloseEyes;

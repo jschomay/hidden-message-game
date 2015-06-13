@@ -209,3 +209,7 @@ body {
 #owl.blink {
   background-image: url(../assets/owl-blink.png);
 }
+
+body.confirmedGiveUp #owl{
+  background-image: url(../assets/owl-sad.png);
+}

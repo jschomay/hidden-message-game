@@ -200,6 +200,7 @@ module.exports = ->
   states =
     start:
       onEnter: ->
+        setStateClass "start"
 
       onEvent: (eventData, scope, trigger, userData) ->
         if trigger is "start"
@@ -215,6 +216,7 @@ module.exports = ->
 
     loading:
       onEnter: (scope, userData) ->
+        setStateClass "start"
         fadeUpMusic()
         fetchQuote(userData)
 
@@ -244,7 +246,9 @@ module.exports = ->
 
     play:
       onEnter: ->
+        setStateClass "play"
         fadeUpMusic()
+
       onEvent: (eventData, scope, trigger, userData) ->
         if trigger is "giveUp"
 
@@ -365,6 +369,7 @@ module.exports = ->
 
     gaveUp:
       onEnter: ->
+        setStateClass "gaveUp"
         fadeDownMusic()
 
       onEvent: (eventData, scope, trigger, userData) ->
@@ -408,6 +413,7 @@ module.exports = ->
 
     confirmedGiveUp:
       onEnter: ->
+        setStateClass "confirmedGiveUp"
 
       onEvent: (eventData, scope, trigger, userData) ->
         if trigger is "keyPress" and eventData.keyCode is 32 # space bar
@@ -439,6 +445,7 @@ module.exports = ->
 
     solved:
       onEnter: ->
+        setStateClass "solved"
         fadeDownMusic()
 
       onEvent: (eventData, scope, trigger, userData) ->
@@ -468,6 +475,7 @@ module.exports = ->
 
     outOfHints:
       onEnter: ->
+        setStateClass "outOfHints"
         fadeDownMusic()
 
       onEvent: (eventData, scope, trigger, userData) ->
@@ -489,6 +497,7 @@ module.exports = ->
 
     noMoreQuotes:
       onEnter: ->
+        setStateClass "noMoreQuotes"
 
       onEvent: (eventData, scope, trigger, userData) ->
         if trigger is "confirm"
@@ -804,6 +813,10 @@ module.exports = ->
           # using this instead of loop to hopefully avoid a bug in howler
           this.play()
       ]
+
+  setStateClass = (stateName) ->
+    Zepto("body").removeClass()
+    Zepto("body").addClass stateName
 
   # the owl blinking happens on a setTimeout loop outside of
   # the main state machine and rendering function, so I'm
