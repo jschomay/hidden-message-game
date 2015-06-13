@@ -193,13 +193,17 @@ body {
   bottom: 15px;
   left: 0px;
   height: 100px;
-  width: 120px;
+  width: 140px;
   background-image: url(../assets/owl-normal.png);
   background-size: contain;
   background-repeat: no-repeat;
   background-position: bottom center;
   transform: translate3d(120px, 0, 0);
-  transition: transform .2s;
+  transition: transform .2s ease-out;
   z-index: 9;
+}
+
+#owl.blink {
+  background-image: url(../assets/owl-blink.png);
 }
 

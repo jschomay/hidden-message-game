@@ -344,7 +344,7 @@ var getNextQuoteIndex, quoteBundles, updateProgressPerBundle, _ref;
 _ref = require("./bundles"), quoteBundles = _ref.quoteBundles, getNextQuoteIndex = _ref.getNextQuoteIndex, updateProgressPerBundle = _ref.updateProgressPerBundle;
 
 module.exports = function() {
-  var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeDownMusic, fadeInMusic, fadeUpMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancel, onConfirm, onFrameEnter, onGiveUp, onHelp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, startGame, states, updateDecodeKey, updateFrame, updateLoadProgress;
+  var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeDownMusic, fadeInMusic, fadeUpMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancel, onConfirm, onFrameEnter, onGiveUp, onHelp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, startGame, startOwlBlink, states, updateDecodeKey, updateFrame, updateLoadProgress;
   CONSTANTS = {
     startingHints: 5,
     hintSetback: 20,
@@ -1077,7 +1077,7 @@ module.exports = function() {
       });
     };
     if (renderData.solved) {
-      moveOwl(window.innerWidth - (owlWidth + 30), 80);
+      moveOwl(window.innerWidth - (owlWidth + 40), 80);
     } else {
       moveOwl(offset, hopHeight);
     }
@@ -1146,6 +1146,19 @@ module.exports = function() {
       ]
     });
   };
+  startOwlBlink = function() {
+    var blink, openCloseEyes;
+    openCloseEyes = function() {
+      return Zepto("#owl").toggleClass("blink");
+    };
+    blink = function() {
+      openCloseEyes();
+      setTimeout(openCloseEyes, 200);
+      return setTimeout(blink, 8000 + ((Math.random() - 0.5) * 5000));
+    };
+    setTimeout(blink, 5000);
+    return setTimeout(blink, 7000);
+  };
   startGame = function() {
     return Zepto(function($) {
       var userData;
@@ -1163,6 +1176,7 @@ module.exports = function() {
       $("#help-button").on("click", onHelp);
       $("#cancel").on("click", onCancel);
       $("#confirm").on("click", onConfirm);
+      startOwlBlink();
       return updateFrame("start");
     });
   };

@@ -752,10 +752,11 @@ module.exports = ->
         'transform': "translate3d(#{x}px, -#{y}px, 0)"
     if renderData.solved
       # jump on top of score
-      moveOwl (window.innerWidth - (owlWidth + 30)), 80
+      moveOwl (window.innerWidth - (owlWidth + 40)), 80
     else
       moveOwl offset, hopHeight
     setTimeout (-> if not renderData.solved then moveOwl offset, 0), 70
+
 
 
   # load sounds
@@ -802,6 +803,25 @@ module.exports = ->
           this.play()
       ]
 
+  # the owl blinking happens on a setTimeout loop outside of
+  # the main state machine and rendering function, so I'm
+  # putting it here even though it seems a bit out of place
+  startOwlBlink = ->
+    openCloseEyes = ->
+      Zepto("#owl").toggleClass "blink"
+
+    blink = ->
+      openCloseEyes()
+      setTimeout(openCloseEyes, 200)
+
+      # queue next blink
+      setTimeout(blink, 8000 + ((Math.random() - 0.5) * 5000))
+
+    # start two syncopated loops (after 5 seconds) for a nice random
+    # rhythm of blinking, including a "double blink" effect
+    setTimeout blink, 5000
+    setTimeout blink, 7000
+
   startGame = ->
     # make sure document is loaded before starting (it should be by now)
     Zepto ($) ->
@@ -823,6 +843,8 @@ module.exports = ->
       $("#help-button").on "click", onHelp
       $("#cancel").on "click", onCancel
       $("#confirm").on "click", onConfirm
+
+      startOwlBlink()
 
       updateFrame "start"
 
