@@ -740,19 +740,19 @@ module.exports = ->
 
     # owl position
     owlWidth = Zepto("#owl").width()
-    gutter = 250
+    gutter = 260
     path = window.innerWidth - gutter - owlWidth
     progress = renderData.progress or 0
     offset = path * progress + gutter / 2
-    hopHeight = 10
+    hopHeight = 15
     moveOwl = (x, y) ->
       Zepto("#owl").css
-        '-webkit-transform': "translate(#{x}px, -#{y}px)"
-        '-ms-transform': "translate(#{x}px, -#{y}px)"
-        'transform': "translate(#{x}px, -#{y}px)"
+        '-webkit-transform': "translate3d(#{x}px, -#{y}px, 0)"
+        '-ms-transform': "translate3d(#{x}px, -#{y}px, 0)"
+        'transform': "translate3d(#{x}px, -#{y}px, 0)"
     if renderData.solved
       # jump on top of score
-      moveOwl (window.innerWidth - (owlWidth + 10)), 90
+      moveOwl (window.innerWidth - (owlWidth + 30)), 80
     else
       moveOwl offset, hopHeight
     setTimeout (-> if not renderData.solved then moveOwl offset, 0), 70

@@ -82,8 +82,6 @@ body {
   color: #fff;
   font-size: 20px;
   border-radius: 6px;
-  -webkit-border-radius: 6px; 
-  -moz-border-radius: 6px; 
   margin-top: 20px;
   text-align: center;
   cursor: pointer;
@@ -138,8 +136,6 @@ body {
   text-align: center;
   border: 2px solid #999;
   border-radius: 10px;
-  -webkit-border-radius: 10px; 
-  -moz-border-radius: 10px; 
   height: 50%;
   width: 50%;
   overflow: auto;
@@ -194,17 +190,15 @@ body {
 
 #owl {
   position: absolute;
-  bottom: 10px;
+  bottom: 15px;
   left: 0px;
-  height: 12%;
-  width: 10%;
-  background-image: url(../assets/owl.png);
+  height: 100px;
+  width: 120px;
+  background-image: url(../assets/owl-normal.png);
   background-size: contain;
   background-repeat: no-repeat;
-  background-position: bottom left;
-  -webkit-transform: translate(140px);
-  -ms-transform: translate(140px);
-  transform: translate(140px);
-  -webkit-transition: transform .2s;
+  background-position: bottom center;
+  transform: translate3d(120px, 0, 0);
   transition: transform .2s;
+  z-index: 9;
 }
