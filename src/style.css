@@ -210,6 +210,10 @@ body {
   background-image: url(../assets/owl-blink.png);
 }
 
+body.solved #owl{
+  background-image: url(../assets/owl-happy.png);
+}
+
 body.confirmedGiveUp #owl{
   background-image: url(../assets/owl-sad.png);
 }
