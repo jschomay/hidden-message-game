@@ -13,7 +13,7 @@ module.exports = ->
   # sound constants and utils (using howler.js)
   SOUNDS = {}
   VOLUMES =
-    backgroundMusic: 0.1
+    backgroundMusic: 0.5
     keyPressHit: 0.9
 
   playSound = (key) ->

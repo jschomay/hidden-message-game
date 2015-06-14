@@ -353,7 +353,7 @@ module.exports = function() {
   };
   SOUNDS = {};
   VOLUMES = {
-    backgroundMusic: 0.1,
+    backgroundMusic: 0.5,
     keyPressHit: 0.9
   };
   playSound = function(key) {
