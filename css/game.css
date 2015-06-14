@@ -6,8 +6,7 @@ body {
   background-image: url(../assets/paper-texture.jpg);
   padding: 0;
   margin: 0;
-  /* font-family: Helvetica; */
-  font-family: 'Averia Libre', cursive;
+  font-family: 'Averia Libre', Helvetica;
 }
 #secret-message {
   width: 80%;
@@ -141,7 +140,7 @@ body {
 #dialog h3 {
   margin-top: 0;
   color: #777;
-  font-family: 'Cabin Sketch';
+  font-family: 'Cabin Sketch', Helvetica;
   font-size: 44px;
   font-weight: bold;
 }
