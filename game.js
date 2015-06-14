@@ -625,7 +625,7 @@ module.exports = function() {
         return fadeUpMusic();
       },
       onEvent: function(eventData, scope, trigger, userData) {
-        var char, elementsToReveal, existingSolved, hiddenChars, hintAllowance, indexedDecodeKey, indexesToReaveal, isMatch, newUnsolvedComboGroups, oneOrOneTenth, playKeySounds, potentialCombo, totalSolved, unsolvedComboGroups, wordComplete;
+        var char, elementsToReveal, existingSolved, hiddenChars, hintAllowance, indexedDecodeKey, indexesToReaveal, isMatch, newScore, newUnsolvedComboGroups, oneOrOneTenth, playKeySounds, potentialCombo, totalSolved, unsolvedComboGroups, wordComplete;
         if (trigger === "giveUp") {
           return ["gaveUp", scope, userData];
         }
@@ -644,9 +644,10 @@ module.exports = function() {
           hintAllowance = oneOrOneTenth(hiddenChars.length);
           elementsToReveal = getRandomElements(hiddenChars, hintAllowance);
           indexesToReaveal = R.map(R.prop("index"), elementsToReveal);
+          newScore = scope.score - CONSTANTS.hintSetback < 0 ? 0 : scope.score - CONSTANTS.hintSetback;
           scope.decodeKey = setIndexes(decodeKeyStates.HINTED, scope.decodeKey, indexesToReaveal);
           scope.hints += 1;
-          scope.score -= CONSTANTS.hintSetback;
+          scope.score = newScore;
           userData.hintsRemaining -= 1;
           saveUserData(userData);
           playKeySounds = function(repeatTimes, playCount) {

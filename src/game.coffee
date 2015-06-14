@@ -271,9 +271,10 @@ module.exports = ->
           elementsToReveal = getRandomElements hiddenChars, hintAllowance
           indexesToReaveal = R.map R.prop("index"), elementsToReveal
 
+          newScore = if scope.score - CONSTANTS.hintSetback < 0 then 0 else scope.score - CONSTANTS.hintSetback
           scope.decodeKey = setIndexes decodeKeyStates.HINTED, scope.decodeKey, indexesToReaveal
           scope.hints += 1
-          scope.score -= CONSTANTS.hintSetback
+          scope.score = newScore
 
           userData.hintsRemaining -= 1
 
