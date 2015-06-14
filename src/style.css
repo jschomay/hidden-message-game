@@ -6,7 +6,7 @@ body {
   background-image: url(../assets/paper-texture.jpg);
   padding: 0;
   margin: 0;
-  font-family: Helvetica;
+  font-family: 'Averia Libre', Helvetica;
 }
 #secret-message {
   width: 80%;
@@ -66,7 +66,7 @@ body {
   position: absolute;
   bottom: 30px;
   right: 60px;
-  color: #ccc;
+  color: #777;
 }
 
 #play-actions {
@@ -78,27 +78,16 @@ body {
 
 .button {
   padding: 14px 10px;
-  background: #bbb;
-  color: #fff;
-  font-size: 20px;
-  border-radius: 6px;
-  margin-top: 20px;
-  text-align: center;
-  cursor: pointer;
-}
-.button:hover {
-  background: #aaa;
-}
-.button.secondary {
-  background: #eee;
+  background: #fff;
   border: 1px solid #ddd;
-  color: #bbb;
-  font-size: 14px;
-  padding-top: 10px;
-  padding-bottom: 10px;
-}
-.button.secondary:hover {
-  background: #eaeaea;
+  text-align: center;
+  font-weight: 700;
+  color: black;
+  font-size: 18px;
+  margin-top: 20px;
+  cursor: pointer;
+  background: #777;
+  color: #eee;
 }
 
 #settings {
@@ -133,34 +122,34 @@ body {
 .dialog {
   display: none;
   background: #eee;
-  text-align: center;
   border: 2px solid #999;
-  border-radius: 10px;
-  height: 50%;
-  width: 50%;
+  text-align: center;
+  color: #666;
+  font-size: 20px;
+  height: 35%;
+  width: 60%;
   overflow: auto;
   margin: auto;
-  padding: 30px;
+  padding: 50px 50px;
   position: absolute;
   top: 0;
-  bottom: 0;
+  bottom: 100px;
   left: 0;
   right: 0;
 }
 #dialog h3 {
-  color: #666;
-  font-size: 24px;
+  margin-top: 0;
+  color: #777;
+  font-family: 'Cabin Sketch', Helvetica;
+  font-size: 44px;
   font-weight: bold;
 }
 #dialog #next-free-hint {
   font-weight: bold;
 }
-#dialog {
-  color: #666;
-  font-size: 20px;
-}
 #dialog p {
-  text-align: left;
+  text-align: justify;
+  padding-bottom: 20px;
 }
 #dialog a {
   color: #777;
@@ -174,7 +163,7 @@ body {
   left: 0;
   right: 0;
   display: inline-block;
-  margin-top: 30px;
+  margin-top: 50px;
   margin-left: 10px;
 }
 

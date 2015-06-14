@@ -727,8 +727,8 @@ module.exports = ->
         <h3>Credits</h3>
         <ul>
           <li>Game designed and built by <a target='_blank' href='http://codeperfectionist.com/about'>Jeff Schomay</a></li>
-          <li>Music by <a target='_blank' href='...'>...</a></li>
-          <li>Owl character by <a target='_blank' href='...'>...</a></li>
+          <li>Music by Jamison Rivera
+          <li>Owl character by <a target='_blank' href='http://sherony.com'>Sherony Lock</a></li>
           <li>Sound effects by <a target='_blank' href='https://www.freesound.org/people/ddohler/sounds/9098/'>ddohler</a>,
           <a target='_blank' href='https://www.freesound.org/people/Horn/sounds/9744/'>Horn</a>,
           <a target='_blank' href='https://www.freesound.org/people/NHumphrey/sounds/204466/'>NHumphrey</a>, and
