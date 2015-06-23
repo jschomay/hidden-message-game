@@ -339,9 +339,11 @@ module.exports = [
 });
 
 require.register("src/game", function(exports, require, module) {
-var getNextQuoteIndex, quoteBundles, updateProgressPerBundle, _ref;
+var getNextQuoteIndex, persist, quoteBundles, updateProgressPerBundle, _ref;
 
 _ref = require("./bundles"), quoteBundles = _ref.quoteBundles, getNextQuoteIndex = _ref.getNextQuoteIndex, updateProgressPerBundle = _ref.updateProgressPerBundle;
+
+persist = require("./persist");
 
 module.exports = function() {
   var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeDownMusic, fadeInMusic, fadeUpMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadImages, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancel, onConfirm, onFrameEnter, onGiveUp, onHelp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, setStateClass, startGame, startOwlBlink, states, updateDecodeKey, updateFrame, updateLoadProgress;
@@ -1218,16 +1220,28 @@ module.exports = function() {
       lastSolvedQuoteIndex: void 0,
       progressPerBundle: void 0
     };
-    currentPlayer = JSON.parse(localStorage.getItem("currentPlayer"));
+    currentPlayer = persist.load();
     if (!currentPlayer) {
       saveUserData(currentPlayerDefaults);
     }
     return R.merge(currentPlayerDefaults, currentPlayer);
   };
   saveUserData = function(userData) {
-    return localStorage.setItem("currentPlayer", JSON.stringify(userData));
+    return persist.save(userData);
   };
   return preload();
+};
+
+});
+
+require.register("src/persist", function(exports, require, module) {
+module.exports = {
+  save: function(data) {
+    return localStorage.setItem("currentPlayer", JSON.stringify(data));
+  },
+  load: function() {
+    return JSON.parse(localStorage.getItem("currentPlayer"));
+  }
 };
 
 });

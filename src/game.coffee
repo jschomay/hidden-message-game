@@ -1,5 +1,6 @@
 # quote bundles logic
 {quoteBundles, getNextQuoteIndex, updateProgressPerBundle} = require "./bundles"
+persist = require "./persist"
 
 module.exports = ->
 
@@ -892,7 +893,7 @@ module.exports = ->
       lastSolvedQuoteIndex: undefined
       progressPerBundle: undefined
 
-    currentPlayer = JSON.parse localStorage.getItem "currentPlayer"
+    currentPlayer = persist.load()
 
     if not currentPlayer
       saveUserData currentPlayerDefaults
@@ -901,7 +902,7 @@ module.exports = ->
     R.merge currentPlayerDefaults, currentPlayer
 
   saveUserData = (userData) ->
-    localStorage.setItem "currentPlayer", JSON.stringify userData
+    persist.save userData
 
 
   # kick off game
