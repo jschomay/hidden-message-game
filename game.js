@@ -1237,10 +1237,19 @@ module.exports = function() {
 require.register("src/persist", function(exports, require, module) {
 module.exports = {
   save: function(data) {
-    return localStorage.setItem("currentPlayer", JSON.stringify(data));
+    try {
+      return localStorage.setItem("currentPlayer", JSON.stringify(data));
+    } catch (_error) {
+      return console.error("Unable to save to local storage, your progress won't be saved :(");
+    }
   },
   load: function() {
-    return JSON.parse(localStorage.getItem("currentPlayer"));
+    try {
+      return JSON.parse(localStorage.getItem("currentPlayer"));
+    } catch (_error) {
+      console.error("Unable to read from local storage, you'll have to start from the beginning.");
+      return {};
+    }
   }
 };
 
