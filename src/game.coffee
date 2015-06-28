@@ -470,7 +470,7 @@ module.exports = ->
       getRenderData: (scope) ->
         hints = if scope.hints > 1 then scope.hints else "no"
         secretMessage: decode(scope.secretMessage, scope.decodeKey)
-        feedback:  "SOLVED in #{scope.moves} moves (with #{hints} hints)!<br>Press 'Space bar' to play again."
+        feedback:  "SOLVED in #{scope.moves} moves!<br>Press 'Space bar' to play again."
         score: scope.score
         showPlayActions: false
         solved: true
@@ -589,8 +589,9 @@ module.exports = ->
     , 0
 
   onKeyDown = (e) ->
-    if e.keyCode is 8 #backspace
-      # don't want the browser to go back
+    if e.keyCode in [8, 32, 9, 37, 38, 39, 40] #backspace, space, tab, arrow keys
+      # don't want the browser to go back or scroll (if not full screen)
+      # or tab to next link
       e.preventDefault()
     updateFrame "keyPress", e
 
@@ -753,7 +754,7 @@ module.exports = ->
 
     # owl position
     owlWidth = Zepto("#owl").width()
-    gutter = 260
+    gutter = 200
     path = window.innerWidth - gutter - owlWidth
     progress = renderData.progress or 0
     offset = path * progress + gutter / 2
@@ -765,7 +766,7 @@ module.exports = ->
         'transform': "translate3d(#{x}px, -#{y}px, 0)"
     if renderData.solved
       # jump on top of score
-      moveOwl (window.innerWidth - (owlWidth + 40)), 80
+      moveOwl (window.innerWidth - (owlWidth + 10)), 70
     else
       moveOwl offset, hopHeight
     setTimeout (-> if not renderData.solved then moveOwl offset, 0), 70

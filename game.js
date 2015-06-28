@@ -158,16 +158,16 @@ module.exports = [
     },
     {
         "_id": {
-            "$oid": "554fb2980a061f9afcba2b6c"
+            "$oid": "554fb52e0a061f9afcba2b74"
         },
-        "quote": "Today is the tomorrow you worried about yesterday.",
+        "quote": "That's one small step for man, one giant leap for mankind.",
         "bundle": "starter"
     },
     {
         "_id": {
-            "$oid": "554fb52e0a061f9afcba2b74"
+            "$oid": "554fb40c0a061f9afcba2b6f"
         },
-        "quote": "That's one small step for man, one giant leap for mankind.",
+        "quote": "Do... or do not. There is no try. Only do.",
         "bundle": "starter"
     },
     {
@@ -189,6 +189,13 @@ module.exports = [
             "$oid": "554fc398720a9ad00b7fa94b"
         },
         "quote": "If you choose not to decide, you still have made a choice.",
+        "bundle": "starter"
+    },
+    {
+        "_id": {
+            "$oid": "554fb2980a061f9afcba2b6c"
+        },
+        "quote": "Today is the tomorrow you worried about yesterday.",
         "bundle": "starter"
     },
     {
@@ -224,13 +231,6 @@ module.exports = [
             "$oid": "554fb89e0a061f9afcba2b77"
         },
         "quote": "Life is what happens to you while you’re busy making other plans.",
-        "bundle": "starter"
-    },
-    {
-        "_id": {
-            "$oid": "554fb40c0a061f9afcba2b6f"
-        },
-        "quote": "You teach best what you most need to learn.",
         "bundle": "starter"
     },
     {
@@ -773,7 +773,7 @@ module.exports = function() {
         hints = scope.hints > 1 ? scope.hints : "no";
         return {
           secretMessage: decode(scope.secretMessage, scope.decodeKey),
-          feedback: "SOLVED in " + scope.moves + " moves (with " + hints + " hints)!<br>Press 'Space bar' to play again.",
+          feedback: "SOLVED in " + scope.moves + " moves!<br>Press 'Space bar' to play again.",
           score: scope.score,
           showPlayActions: false,
           solved: true
@@ -888,7 +888,8 @@ module.exports = function() {
     }, 0);
   };
   onKeyDown = function(e) {
-    if (e.keyCode === 8) {
+    var _ref1;
+    if ((_ref1 = e.keyCode) === 8 || _ref1 === 32 || _ref1 === 9 || _ref1 === 37 || _ref1 === 38 || _ref1 === 39 || _ref1 === 40) {
       e.preventDefault();
     }
     return updateFrame("keyPress", e);
@@ -1026,7 +1027,7 @@ module.exports = function() {
     Zepto("#progress").html("Bundle: \"" + bundleName + "\"<br>#" + num + " out of " + total);
     Zepto("#total-score").text(userData.totalScore);
     owlWidth = Zepto("#owl").width();
-    gutter = 260;
+    gutter = 200;
     path = window.innerWidth - gutter - owlWidth;
     progress = renderData.progress || 0;
     offset = path * progress + gutter / 2;
@@ -1039,7 +1040,7 @@ module.exports = function() {
       });
     };
     if (renderData.solved) {
-      moveOwl(window.innerWidth - (owlWidth + 40), 80);
+      moveOwl(window.innerWidth - (owlWidth + 10), 70);
     } else {
       moveOwl(offset, hopHeight);
     }
