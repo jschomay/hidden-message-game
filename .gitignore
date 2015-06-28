@@ -27,3 +27,9 @@ tmp/
 
 # Bower stuff.
 bower_components
+
+# compiled files (in master)
+game.js
+vendor.js
+css/game.css
+*.map

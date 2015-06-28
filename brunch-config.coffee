@@ -2,11 +2,12 @@ exports.config =
   # See http://brunch.io/#documentation for docs.
   paths:
     public: './'
-    watched: ['src']
+    watched: ['src', 'vendor']
   files:
     javascripts:
       joinTo:
         'game.js': /^src/
+        'vendor.js': /^vendor/
     stylesheets:
       joinTo: 'css/game.css'
     templates:
