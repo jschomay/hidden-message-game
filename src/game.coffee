@@ -753,7 +753,7 @@ module.exports = ->
 
     # owl position
     owlWidth = Zepto("#owl").width()
-    gutter = 260
+    gutter = 200
     path = window.innerWidth - gutter - owlWidth
     progress = renderData.progress or 0
     offset = path * progress + gutter / 2
@@ -765,7 +765,7 @@ module.exports = ->
         'transform': "translate3d(#{x}px, -#{y}px, 0)"
     if renderData.solved
       # jump on top of score
-      moveOwl (window.innerWidth - (owlWidth + 40)), 80
+      moveOwl (window.innerWidth - (owlWidth + 10)), 70
     else
       moveOwl offset, hopHeight
     setTimeout (-> if not renderData.solved then moveOwl offset, 0), 70

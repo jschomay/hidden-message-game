@@ -62,10 +62,13 @@ body {
 }
 
 #score {
+  width: 100px;
+  text-align: center;
   font-size: 60px;
+  line-height: 60px;
   position: absolute;
   bottom: 30px;
-  right: 60px;
+  right: 30px;
   color: #777;
 }
 
@@ -77,14 +80,14 @@ body {
 }
 
 .button {
-  padding: 14px 10px;
+  padding: 8px;
   background: #fff;
   border: 1px solid #ddd;
   text-align: center;
   font-weight: 700;
   color: black;
   font-size: 18px;
-  margin-top: 20px;
+  margin-top: 10px;
   cursor: pointer;
   background: #777;
   color: #eee;
@@ -190,7 +193,7 @@ body {
   background-size: contain;
   background-repeat: no-repeat;
   background-position: bottom center;
-  transform: translate3d(120px, 0, 0);
+  transform: translate3d(100px, 0, 0);
   transition: transform .2s ease-out;
   z-index: 9;
 }
@@ -205,4 +208,14 @@ body.solved #owl{
 
 body.confirmedGiveUp #owl{
   background-image: url(../assets/owl-sad.png);
+}
+
+
+
+/* Media queries */
+
+@media (max-width: 1000px) {
+  #secret-message {
+    width: 90%;
+  }
 }
