@@ -588,8 +588,9 @@ module.exports = ->
     , 0
 
   onKeyDown = (e) ->
-    if e.keyCode is 8 #backspace
-      # don't want the browser to go back
+    if e.keyCode in [8, 32, 9, 37, 38, 39, 40] #backspace, space, tab, arrow keys
+      # don't want the browser to go back or scroll (if not full screen)
+      # or tab to next link
       e.preventDefault()
     updateFrame "keyPress", e
 
