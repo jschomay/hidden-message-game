@@ -469,7 +469,7 @@ module.exports = ->
       getRenderData: (scope) ->
         hints = if scope.hints > 1 then scope.hints else "no"
         secretMessage: decode(scope.secretMessage, scope.decodeKey)
-        feedback:  "SOLVED in #{scope.moves} moves (with #{hints} hints)!<br>Press 'Space bar' to play again."
+        feedback:  "SOLVED in #{scope.moves} moves!<br>Press 'Space bar' to play again."
         score: scope.score
         showPlayActions: false
         solved: true
