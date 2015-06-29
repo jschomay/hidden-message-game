@@ -1141,13 +1141,7 @@ module.exports = function() {
   };
   startGame = function() {
     return Zepto(function($) {
-      var userData;
       fadeInMusic();
-      updateFrame.currentState = states.start;
-      updateFrame.store = {};
-      userData = getUserData();
-      updateFrame.userData = userData;
-      updateFrame = updateFrame.bind(updateFrame);
       $(document).on("keydown", onKeyDown);
       $("#give-up-button").on("click", onGiveUp);
       $("#hint-button").on("click", onHint);
@@ -1157,11 +1151,17 @@ module.exports = function() {
       $("#cancel").on("click", onCancel);
       $("#confirm").on("click", onConfirm);
       startOwlBlink();
-      return updateFrame("start");
+      return getUserData(function(userData) {
+        updateFrame.userData = userData;
+        updateFrame.currentState = states.start;
+        updateFrame.store = {};
+        updateFrame = updateFrame.bind(updateFrame);
+        return updateFrame("start");
+      });
     });
   };
-  getUserData = function() {
-    var currentPlayer, currentPlayerDefaults;
+  getUserData = function(cb) {
+    var currentPlayerDefaults;
     currentPlayerDefaults = {
       hintsRemaining: CONSTANTS.startingHints,
       totalScore: 0,
@@ -1169,11 +1169,17 @@ module.exports = function() {
       lastSolvedQuoteIndex: void 0,
       progressPerBundle: void 0
     };
-    currentPlayer = persist.load();
-    if (!currentPlayer) {
-      saveUserData(currentPlayerDefaults);
-    }
-    return R.merge(currentPlayerDefaults, currentPlayer);
+    return persist.load().then(function(currentPlayer) {
+      if (!currentPlayer) {
+        saveUserData(currentPlayerDefaults);
+        return cb(currentPlayerDefaults);
+      } else {
+        return cb(R.merge(currentPlayerDefaults, currentPlayer.toJSON()));
+      }
+    }, function(error) {
+      console.error("Error loading user data:", error);
+      return cb(currentPlayerDefaults);
+    });
   };
   saveUserData = function(userData) {
     return persist.save(userData);
@@ -1184,20 +1190,73 @@ module.exports = function() {
 });
 
 require.register("src/persist", function(exports, require, module) {
+var Player, kongregate, savedPlayer, testParse, userId;
+
+kongregate = parent.kongregate;
+
+Parse.initialize("iul0cVOM5mJWAj1HHBa158cpMoyEQ2wWxSK3Go9O", "pbFnYPVaSunEmgjI8qTKqkW8nHKoB6Xor1DtOWpD");
+
+userId = void 0;
+
+testParse = false;
+
+if (!kongregate) {
+  if (testParse) {
+    userId = ("testUser" + (Math.random() * 1000)).split(".")[0];
+  }
+} else {
+  if (!kongregate.services.isGuest()) {
+    userId = kongregate.services.getUserId();
+  } else {
+    kongregate.services.addEventListener("login", function() {
+      return userId = kongregate.services.getUserId();
+    });
+  }
+}
+
+Player = Parse.Object.extend("KongregatePlayer");
+
+savedPlayer = void 0;
+
 module.exports = {
   save: function(data) {
-    try {
-      return localStorage.setItem("currentPlayer", JSON.stringify(data));
-    } catch (_error) {
-      return console.error("Unable to save to local storage, your progress won't be saved :(");
+    return !userId;
+    if (!savedPlayer) {
+      savedPlayer = new Player();
+      savedPlayer.set("userId", userId);
+      return savedPlayer.save(data).then(function(player) {
+        return true;
+      }, function(error) {
+        return console.error(error);
+      });
+    } else {
+      return savedPlayer.save(data).then(function(player) {
+        return true;
+      }, function(error) {
+        return console.error(error);
+      });
     }
   },
   load: function() {
-    try {
-      return JSON.parse(localStorage.getItem("currentPlayer"));
-    } catch (_error) {
-      console.error("Unable to read from local storage, you'll have to start from the beginning.");
-      return {};
+    var playerPromise, query;
+    if (userId) {
+      query = new Parse.Query(Player);
+      query.equalTo("userId", userId);
+      playerPromise = query.first();
+      playerPromise.then(function(player) {
+        if (player) {
+          return savedPlayer = player;
+        }
+      }, function(error) {
+        return console.error(error);
+      });
+      return playerPromise;
+    } else {
+      return {
+        then: function(cb) {
+          return cb(void 0);
+        }
+      };
     }
   }
 };

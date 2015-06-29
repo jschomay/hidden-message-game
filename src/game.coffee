@@ -865,13 +865,6 @@ module.exports = ->
     Zepto ($) ->
       fadeInMusic()
 
-      # initialize main loop with starting state
-      updateFrame.currentState = states.start
-      updateFrame.store = {}
-      userData = getUserData()
-      updateFrame.userData = userData
-      updateFrame = updateFrame.bind updateFrame
-
       # bind inputs
       $(document).on "keydown", onKeyDown
       $("#give-up-button").on "click", onGiveUp
@@ -884,9 +877,16 @@ module.exports = ->
 
       startOwlBlink()
 
-      updateFrame "start"
+      getUserData (userData) ->
+        # initialize main loop with starting state
+        updateFrame.userData = userData
+        updateFrame.currentState = states.start
+        updateFrame.store = {}
+        updateFrame = updateFrame.bind updateFrame
 
-  getUserData = ->
+        updateFrame "start"
+
+  getUserData = (cb) ->
     currentPlayerDefaults =
       hintsRemaining: CONSTANTS.startingHints
       totalScore: 0
@@ -894,13 +894,16 @@ module.exports = ->
       lastSolvedQuoteIndex: undefined
       progressPerBundle: undefined
 
-    currentPlayer = persist.load()
-
-    if not currentPlayer
-      saveUserData currentPlayerDefaults
-
-    # merge to update persisted data schema
-    R.merge currentPlayerDefaults, currentPlayer
+    persist.load().then (currentPlayer) ->
+      if not currentPlayer
+        saveUserData currentPlayerDefaults
+        cb currentPlayerDefaults
+      else
+        # merge to update persisted data schema
+        cb R.merge currentPlayerDefaults, currentPlayer.toJSON()
+    , (error) ->
+      console.error "Error loading user data:", error
+      cb currentPlayerDefaults
 
   saveUserData = (userData) ->
     persist.save userData
