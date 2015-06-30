@@ -520,10 +520,31 @@ module.exports = function() {
         return setStateClass("start");
       },
       onEvent: function(eventData, scope, trigger, userData) {
-        if (trigger === "start") {
-          return ["loading", scope, userData];
+        if (trigger === "gameReady") {
+          return ["loadingUser", scope, userData];
         } else {
           return ["start", scope, userData];
+        }
+      },
+      getRenderData: function() {
+        return {
+          secretMessage: [],
+          feedback: "LOADING...",
+          score: "",
+          showPlayActions: false
+        };
+      }
+    },
+    loadingUser: {
+      onEnter: function(scope, userData) {
+        setStateClass("loadingUser");
+        return getUserData(userData);
+      },
+      onEvent: function(eventData, scope, trigger, userData) {
+        if (trigger === "userLoaded") {
+          return ["loading", scope, eventData];
+        } else {
+          return ["loadingUser", scope, userData];
         }
       },
       getRenderData: function() {
@@ -850,6 +871,10 @@ module.exports = function() {
     this.store = scope;
     return this.userData = userData;
   };
+  updateFrame.userData = {};
+  updateFrame.store = {};
+  updateFrame.currentState = states.start;
+  updateFrame = updateFrame.bind(updateFrame);
   onFrameEnter = function(scope, trigger, eventData) {
     if (trigger === "toggleMuteMusic") {
       if (scope.musicIsPaused) {
@@ -1151,17 +1176,11 @@ module.exports = function() {
       $("#cancel").on("click", onCancel);
       $("#confirm").on("click", onConfirm);
       startOwlBlink();
-      return getUserData(function(userData) {
-        updateFrame.userData = userData;
-        updateFrame.currentState = states.start;
-        updateFrame.store = {};
-        updateFrame = updateFrame.bind(updateFrame);
-        return updateFrame("start");
-      });
+      return updateFrame("gameReady");
     });
   };
-  getUserData = function(cb) {
-    var currentPlayerDefaults;
+  getUserData = function(progress) {
+    var currentPlayerDefaults, hasProgress, userData;
     currentPlayerDefaults = {
       hintsRemaining: CONSTANTS.startingHints,
       totalScore: 0,
@@ -1169,16 +1188,18 @@ module.exports = function() {
       lastSolvedQuoteIndex: void 0,
       progressPerBundle: void 0
     };
+    hasProgress = R.values(progress).length;
+    userData = hasProgress ? progress : currentPlayerDefaults;
     return persist.load().then(function(currentPlayer) {
       if (!currentPlayer) {
-        saveUserData(currentPlayerDefaults);
-        return cb(currentPlayerDefaults);
+        saveUserData(userData);
+        return updateFrame("userLoaded", userData);
       } else {
-        return cb(R.merge(currentPlayerDefaults, currentPlayer.toJSON()));
+        return updateFrame("userLoaded", R.merge(userData, currentPlayer.toJSON()));
       }
     }, function(error) {
       console.error("Error loading user data:", error);
-      return cb(currentPlayerDefaults);
+      return updateFrame("userLoaded", userData);
     });
   };
   saveUserData = function(userData) {
@@ -1190,29 +1211,27 @@ module.exports = function() {
 });
 
 require.register("src/persist", function(exports, require, module) {
-var Player, kongregate, savedPlayer, testParse, userId;
+var Player, getUserId, kongregate, savedPlayer;
 
 kongregate = parent.kongregate;
 
 Parse.initialize("iul0cVOM5mJWAj1HHBa158cpMoyEQ2wWxSK3Go9O", "pbFnYPVaSunEmgjI8qTKqkW8nHKoB6Xor1DtOWpD");
 
-userId = void 0;
-
-testParse = false;
-
-if (!kongregate) {
-  if (testParse) {
-    userId = ("testUser" + (Math.random() * 1000)).split(".")[0];
-  }
-} else {
-  if (!kongregate.services.isGuest()) {
-    userId = kongregate.services.getUserId();
+getUserId = function() {
+  var mockUserId, userId;
+  mockUserId = false;
+  if (!kongregate) {
+    if (mockUserId) {
+      return "mockUser";
+    }
   } else {
-    kongregate.services.addEventListener("login", function() {
+    if (!kongregate.services.isGuest()) {
       return userId = kongregate.services.getUserId();
-    });
+    } else {
+      return void 0;
+    }
   }
-}
+};
 
 Player = Parse.Object.extend("KongregatePlayer");
 
@@ -1220,7 +1239,11 @@ savedPlayer = void 0;
 
 module.exports = {
   save: function(data) {
-    return !userId;
+    var userId;
+    userId = getUserId();
+    if (!userId) {
+      return;
+    }
     if (!savedPlayer) {
       savedPlayer = new Player();
       savedPlayer.set("userId", userId);
@@ -1238,7 +1261,8 @@ module.exports = {
     }
   },
   load: function() {
-    var playerPromise, query;
+    var immediate, playerPromise, query, userId;
+    userId = getUserId();
     if (userId) {
       query = new Parse.Query(Player);
       query.equalTo("userId", userId);
@@ -1252,11 +1276,11 @@ module.exports = {
       });
       return playerPromise;
     } else {
-      return {
-        then: function(cb) {
-          return cb(void 0);
-        }
-      };
+      immediate = new Parse.Promise();
+      setTimeout((function() {
+        return immediate.resolve();
+      }), 0);
+      return immediate;
     }
   }
 };

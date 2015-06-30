@@ -204,10 +204,27 @@ module.exports = ->
         setStateClass "start"
 
       onEvent: (eventData, scope, trigger, userData) ->
-        if trigger is "start"
-          ["loading", scope, userData]
+        if trigger is "gameReady"
+          ["loadingUser", scope, userData]
         else
           ["start", scope, userData]
+
+      getRenderData: ->
+        secretMessage: []
+        feedback: "LOADING..."
+        score: ""
+        showPlayActions: false
+
+    loadingUser:
+      onEnter: (scope, userData) ->
+        setStateClass "loadingUser"
+        getUserData(userData)
+
+      onEvent: (eventData, scope, trigger, userData) ->
+        if trigger is "userLoaded"
+          return ["loading", scope, eventData]
+        else
+          return ["loadingUser", scope, userData]
 
       getRenderData: ->
         secretMessage: []
@@ -544,6 +561,11 @@ module.exports = ->
     @store = scope
     @userData = userData
 
+  updateFrame.userData = {}
+  updateFrame.store = {}
+  updateFrame.currentState = states.start
+  updateFrame = updateFrame.bind updateFrame
+
 
   # code to run on every frame regardless of which state is active
   onFrameEnter = (scope, trigger, eventData) ->
@@ -877,16 +899,10 @@ module.exports = ->
 
       startOwlBlink()
 
-      getUserData (userData) ->
-        # initialize main loop with starting state
-        updateFrame.userData = userData
-        updateFrame.currentState = states.start
-        updateFrame.store = {}
-        updateFrame = updateFrame.bind updateFrame
+      updateFrame "gameReady"
 
-        updateFrame "start"
 
-  getUserData = (cb) ->
+  getUserData = (progress) ->
     currentPlayerDefaults =
       hintsRemaining: CONSTANTS.startingHints
       totalScore: 0
@@ -894,16 +910,19 @@ module.exports = ->
       lastSolvedQuoteIndex: undefined
       progressPerBundle: undefined
 
+    hasProgress = R.values(progress).length
+    userData = if hasProgress then progress else currentPlayerDefaults
+
     persist.load().then (currentPlayer) ->
       if not currentPlayer
-        saveUserData currentPlayerDefaults
-        cb currentPlayerDefaults
+        saveUserData userData
+        updateFrame "userLoaded", userData
       else
         # merge to update persisted data schema
-        cb R.merge currentPlayerDefaults, currentPlayer.toJSON()
+        updateFrame "userLoaded", R.merge userData, currentPlayer.toJSON()
     , (error) ->
       console.error "Error loading user data:", error
-      cb currentPlayerDefaults
+      updateFrame "userLoaded", userData
 
   saveUserData = (userData) ->
     persist.save userData
