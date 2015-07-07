@@ -14,7 +14,7 @@ module.exports = ->
   # sound constants and utils (using howler.js)
   SOUNDS = {}
   VOLUMES =
-    backgroundMusic: 0.5
+    backgroundMusic: 1.0
     keyPressHit: 0.9
 
   playSound = (key) ->
@@ -33,12 +33,6 @@ module.exports = ->
     R.forEach ((sound) -> sound.volume(0)), R.values getSFX()
   fadeInMusic = ->
     getMusic().fadeIn VOLUMES.backgroundMusic, 2000
-  fadeDownMusic = ->
-    volume = getMusic()._volume
-    getMusic().fade volume, VOLUMES.backgroundMusic * 1 / 10, 700
-  fadeUpMusic = ->
-    volume = getMusic()._volume
-    getMusic().fade volume, VOLUMES.backgroundMusic, 1500
 
   decodeKeyStates =
     HIDDEN: 0
@@ -235,7 +229,6 @@ module.exports = ->
     loading:
       onEnter: (scope, userData) ->
         setStateClass "start"
-        fadeUpMusic()
         fetchQuote(userData)
 
       onEvent: (eventData, scope, trigger, userData) ->
@@ -265,7 +258,6 @@ module.exports = ->
     play:
       onEnter: ->
         setStateClass "play"
-        fadeUpMusic()
 
       onEvent: (eventData, scope, trigger, userData) ->
         if trigger is "giveUp"
@@ -389,7 +381,6 @@ module.exports = ->
     gaveUp:
       onEnter: ->
         setStateClass "gaveUp"
-        fadeDownMusic()
 
       onEvent: (eventData, scope, trigger, userData) ->
         if trigger is "confirm"
@@ -465,7 +456,6 @@ module.exports = ->
     solved:
       onEnter: ->
         setStateClass "solved"
-        fadeDownMusic()
 
       onEvent: (eventData, scope, trigger, userData) ->
         if trigger is "keyPress" and eventData.keyCode is 32 # space bar
@@ -495,7 +485,6 @@ module.exports = ->
     outOfHints:
       onEnter: ->
         setStateClass "outOfHints"
-        fadeDownMusic()
 
       onEvent: (eventData, scope, trigger, userData) ->
         if trigger is "confirm"
@@ -748,7 +737,7 @@ module.exports = ->
       Zepto("#dialog").show()
       Zepto("#dialog h3").text "Help"
       Zepto("#dialog #message-content").html """
-        <p>Stuck?  You have to reveal the secret message one letter at a time from the start of each word.  Solving some words will give clues to what letters other words start with.  Try going for shorter word first.  The words say solved only when you complete them.  You can always use a hint or give up, but it will cost you.  Good luck!</p>
+        <p>Stuck?  You must reveal the secret message one letter at a time, from the start of each word.  Solving each word will give you a clue to which letters other words start with.  Try going for shorter word first.  The words stay solved only when you complete them.  You can always use a hint or give up, but it will cost you.  Good luck!</p>
         <h3>Credits</h3>
         <ul>
           <li>Game designed and built by <a target='_blank' href='http://codeperfectionist.com/about'>Jeff Schomay</a></li>
@@ -852,7 +841,7 @@ module.exports = ->
       keyPressHit: ["assets/key-press-hit", volume: VOLUMES.keyPressHit]
       giveUp: "assets/give-up"
       solved: "assets/solved"
-      backgroundMusic: ["assets/background-music",
+      backgroundMusic: ["assets/background-music-long",
         volume: VOLUMES.backgroundMusic,
         onend: ->
           # using this instead of loop to hopefully avoid a bug in howler
@@ -886,6 +875,17 @@ module.exports = ->
     # make sure document is loaded before starting (it should be by now)
     Zepto ($) ->
       fadeInMusic()
+
+      #set up share links
+      $('.popup').click ->
+        width = 575
+        height = 400
+        left = ($(window).width()  - width)  / 2
+        top = ($(window).height() - height) / 2
+        url = this.href
+        opts = "status=1,width=#{width},height=#{height},top=#{top},left=#{left}"
+        window.open(url, 'Share', opts)
+        false
 
       # bind inputs
       $(document).on "keydown", onKeyDown

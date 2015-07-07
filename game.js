@@ -294,7 +294,7 @@ _ref = require("./bundles"), quoteBundles = _ref.quoteBundles, getNextQuoteIndex
 persist = require("./persist");
 
 module.exports = function() {
-  var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeDownMusic, fadeInMusic, fadeUpMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadImages, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancel, onConfirm, onFrameEnter, onGiveUp, onHelp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, setStateClass, startGame, startOwlBlink, states, updateDecodeKey, updateFrame, updateLoadProgress;
+  var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeInMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadImages, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancel, onConfirm, onFrameEnter, onGiveUp, onHelp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, setStateClass, startGame, startOwlBlink, states, updateDecodeKey, updateFrame, updateLoadProgress;
   CONSTANTS = {
     startingHints: 5,
     hintSetback: 20,
@@ -303,7 +303,7 @@ module.exports = function() {
   };
   SOUNDS = {};
   VOLUMES = {
-    backgroundMusic: 0.5,
+    backgroundMusic: 1.0,
     keyPressHit: 0.9
   };
   playSound = function(key) {
@@ -333,16 +333,6 @@ module.exports = function() {
   };
   fadeInMusic = function() {
     return getMusic().fadeIn(VOLUMES.backgroundMusic, 2000);
-  };
-  fadeDownMusic = function() {
-    var volume;
-    volume = getMusic()._volume;
-    return getMusic().fade(volume, VOLUMES.backgroundMusic * 1 / 10, 700);
-  };
-  fadeUpMusic = function() {
-    var volume;
-    volume = getMusic()._volume;
-    return getMusic().fade(volume, VOLUMES.backgroundMusic, 1500);
   };
   decodeKeyStates = {
     HIDDEN: 0,
@@ -559,7 +549,6 @@ module.exports = function() {
     loading: {
       onEnter: function(scope, userData) {
         setStateClass("start");
-        fadeUpMusic();
         return fetchQuote(userData);
       },
       onEvent: function(eventData, scope, trigger, userData) {
@@ -592,8 +581,7 @@ module.exports = function() {
     },
     play: {
       onEnter: function() {
-        setStateClass("play");
-        return fadeUpMusic();
+        return setStateClass("play");
       },
       onEvent: function(eventData, scope, trigger, userData) {
         var char, elementsToReveal, existingSolved, hiddenChars, hintAllowance, indexedDecodeKey, indexesToReaveal, isMatch, newScore, newUnsolvedComboGroups, oneOrOneTenth, playKeySounds, potentialCombo, totalSolved, unsolvedComboGroups, wordComplete;
@@ -699,8 +687,7 @@ module.exports = function() {
     },
     gaveUp: {
       onEnter: function() {
-        setStateClass("gaveUp");
-        return fadeDownMusic();
+        return setStateClass("gaveUp");
       },
       onEvent: function(eventData, scope, trigger, userData) {
         var numUnsolved;
@@ -771,8 +758,7 @@ module.exports = function() {
     },
     solved: {
       onEnter: function() {
-        setStateClass("solved");
-        return fadeDownMusic();
+        return setStateClass("solved");
       },
       onEvent: function(eventData, scope, trigger, userData) {
         if (trigger === "keyPress" && eventData.keyCode === 32) {
@@ -803,8 +789,7 @@ module.exports = function() {
     },
     outOfHints: {
       onEnter: function() {
-        setStateClass("outOfHints");
-        return fadeDownMusic();
+        return setStateClass("outOfHints");
       },
       onEvent: function(eventData, scope, trigger, userData) {
         if (trigger === "confirm") {
@@ -1041,7 +1026,7 @@ module.exports = function() {
       Zepto("#dialog #confirm").hide();
       Zepto("#dialog").show();
       Zepto("#dialog h3").text("Help");
-      Zepto("#dialog #message-content").html("<p>Stuck?  You have to reveal the secret message one letter at a time from the start of each word.  Solving some words will give clues to what letters other words start with.  Try going for shorter word first.  The words say solved only when you complete them.  You can always use a hint or give up, but it will cost you.  Good luck!</p>\n<h3>Credits</h3>\n<ul>\n  <li>Game designed and built by <a target='_blank' href='http://codeperfectionist.com/about'>Jeff Schomay</a></li>\n  <li>Music by Jamison Rivera\n  <li>Owl character by <a target='_blank' href='http://sherony.com'>Sherony Lock</a></li>\n  <li>Sound effects by <a target='_blank' href='https://www.freesound.org/people/ddohler/sounds/9098/'>ddohler</a>,\n  <a target='_blank' href='https://www.freesound.org/people/Horn/sounds/9744/'>Horn</a>,\n  <a target='_blank' href='https://www.freesound.org/people/NHumphrey/sounds/204466/'>NHumphrey</a>, and\n  <a target='_blank' href='https://www.freesound.org/people/lonemonk/sounds/47048/'>lonemonk</a></li>\n  <li>Special thanks to: Mark, Marcus, Zia, David, and Michele</li>\n</ul>");
+      Zepto("#dialog #message-content").html("<p>Stuck?  You must reveal the secret message one letter at a time, from the start of each word.  Solving each word will give you a clue to which letters other words start with.  Try going for shorter word first.  The words stay solved only when you complete them.  You can always use a hint or give up, but it will cost you.  Good luck!</p>\n<h3>Credits</h3>\n<ul>\n  <li>Game designed and built by <a target='_blank' href='http://codeperfectionist.com/about'>Jeff Schomay</a></li>\n  <li>Music by Jamison Rivera\n  <li>Owl character by <a target='_blank' href='http://sherony.com'>Sherony Lock</a></li>\n  <li>Sound effects by <a target='_blank' href='https://www.freesound.org/people/ddohler/sounds/9098/'>ddohler</a>,\n  <a target='_blank' href='https://www.freesound.org/people/Horn/sounds/9744/'>Horn</a>,\n  <a target='_blank' href='https://www.freesound.org/people/NHumphrey/sounds/204466/'>NHumphrey</a>, and\n  <a target='_blank' href='https://www.freesound.org/people/lonemonk/sounds/47048/'>lonemonk</a></li>\n  <li>Special thanks to: Mark, Marcus, Zia, David, and Michele</li>\n</ul>");
       Zepto("#dialog #cancel").text("Keep playing");
     }
     bundleNames = ["Starter"];
@@ -1138,7 +1123,7 @@ module.exports = function() {
       giveUp: "assets/give-up",
       solved: "assets/solved",
       backgroundMusic: [
-        "assets/background-music", {
+        "assets/background-music-long", {
           volume: VOLUMES.backgroundMusic,
           onend: function() {
             return this.play();
@@ -1167,6 +1152,17 @@ module.exports = function() {
   startGame = function() {
     return Zepto(function($) {
       fadeInMusic();
+      $('.popup').click(function() {
+        var height, left, opts, top, url, width;
+        width = 575;
+        height = 400;
+        left = ($(window).width() - width) / 2;
+        top = ($(window).height() - height) / 2;
+        url = this.href;
+        opts = "status=1,width=" + width + ",height=" + height + ",top=" + top + ",left=" + left;
+        window.open(url, 'Share', opts);
+        return false;
+      });
       $(document).on("keydown", onKeyDown);
       $("#give-up-button").on("click", onGiveUp);
       $("#hint-button").on("click", onHint);
