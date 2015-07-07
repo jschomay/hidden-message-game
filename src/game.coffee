@@ -714,7 +714,7 @@ module.exports = ->
       Zepto("#dialog").show()
       Zepto("#dialog h3").text "Help"
       Zepto("#dialog #message-content").html """
-        <p>Stuck?  You have to reveal the secret message one letter at a time from the start of each word.  Solving some words will give clues to what letters other words start with.  Try going for shorter word first.  The words say solved only when you complete them.  You can always use a hint or give up, but it will cost you.  Good luck!</p>
+        <p>Stuck?  You must reveal the secret message one letter at a time, from the start of each word.  Solving each word will give you a clue to which letters other words start with.  Try going for shorter word first.  The words stay solved only when you complete them.  You can always use a hint or give up, but it will cost you.  Good luck!</p>
         <h3>Credits</h3>
         <ul>
           <li>Game designed and built by <a target='_blank' href='http://codeperfectionist.com/about'>Jeff Schomay</a></li>
