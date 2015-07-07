@@ -62,9 +62,13 @@ body {
 }
 #share a {
   font-size: 30px;
+  margin: 0;
 }
 .share-twitter:after {
   content: "\f243";
+}
+.share-facebook:after {
+  content: "\f231";
 }
 
 #score {
