@@ -287,14 +287,16 @@ module.exports = [
 });
 
 require.register("src/game", function(exports, require, module) {
-var getNextQuoteIndex, persist, quoteBundles, updateProgressPerBundle, _ref;
+var getNextQuoteIndex, kongregate, persist, quoteBundles, updateProgressPerBundle, _ref;
+
+kongregate = parent.kongregate;
 
 _ref = require("./bundles"), quoteBundles = _ref.quoteBundles, getNextQuoteIndex = _ref.getNextQuoteIndex, updateProgressPerBundle = _ref.updateProgressPerBundle;
 
 persist = require("./persist");
 
 module.exports = function() {
-  var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeInMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadImages, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancel, onConfirm, onFrameEnter, onGiveUp, onHelp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, setStateClass, startGame, startOwlBlink, states, updateDecodeKey, updateFrame, updateLoadProgress;
+  var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeInMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadImages, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancel, onConfirm, onFrameEnter, onGiveUp, onHelp, onHint, onKeyDown, onKongregateLogin, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, setStateClass, startGame, startOwlBlink, states, updateDecodeKey, updateFrame, updateLoadProgress;
   CONSTANTS = {
     startingHints: 5,
     hintSetback: 20,
@@ -548,7 +550,7 @@ module.exports = function() {
     },
     loading: {
       onEnter: function(scope, userData) {
-        setStateClass("start");
+        setStateClass("loading");
         return fetchQuote(userData);
       },
       onEvent: function(eventData, scope, trigger, userData) {
@@ -845,13 +847,13 @@ module.exports = function() {
     };
   };
   updateFrame = function(trigger, data) {
-    var scope, state, userData, _ref1;
-    this.store = onFrameEnter(this.store, trigger, data);
-    _ref1 = frame({
+    var scope, state, userData, _ref1, _ref2;
+    _ref1 = onFrameEnter(this.store, this.currentState, trigger, data, this.userData), this.store = _ref1[0], this.currentState = _ref1[1], this.userData = _ref1[2];
+    _ref2 = frame({
       state: this.currentState,
       scope: this.store,
       userData: this.userData
-    }, trigger, data), state = _ref1.state, scope = _ref1.scope, userData = _ref1.userData;
+    }, trigger, data), state = _ref2.state, scope = _ref2.scope, userData = _ref2.userData;
     this.currentState = state;
     this.store = scope;
     return this.userData = userData;
@@ -860,7 +862,7 @@ module.exports = function() {
   updateFrame.store = {};
   updateFrame.currentState = states.start;
   updateFrame = updateFrame.bind(updateFrame);
-  onFrameEnter = function(scope, trigger, eventData) {
+  onFrameEnter = function(scope, state, trigger, eventData, userData) {
     if (trigger === "toggleMuteMusic") {
       if (scope.musicIsPaused) {
         playMusic();
@@ -883,7 +885,11 @@ module.exports = function() {
     if (trigger === "cancel" && scope.showHelp) {
       scope.showHelp = !scope.showHelp;
     }
-    return scope;
+    if (trigger === "loggedIn") {
+      state = states.loadingUser;
+      getUserData(userData);
+    }
+    return [scope, state, userData];
   };
   fetchQuote = function(userData) {
     var message, nextQuote;
@@ -931,6 +937,9 @@ module.exports = function() {
   onConfirm = function(e) {
     e.preventDefault();
     return updateFrame("confirm", null);
+  };
+  onKongregateLogin = function(e) {
+    return updateFrame("loggedIn", null);
   };
   buildSecretMessage = function(secretMessage) {
     var buildMarkup, statusMap;
@@ -1171,6 +1180,9 @@ module.exports = function() {
       $("#help-button").on("click", onHelp);
       $("#cancel").on("click", onCancel);
       $("#confirm").on("click", onConfirm);
+      if (kongregate != null) {
+        kongregate.services.addEventListener("login", onKongregateLogin);
+      }
       startOwlBlink();
       return updateFrame("gameReady");
     });

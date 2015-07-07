@@ -1,3 +1,5 @@
+kongregate = parent.kongregate
+
 # quote bundles logic
 {quoteBundles, getNextQuoteIndex, updateProgressPerBundle} = require "./bundles"
 persist = require "./persist"
@@ -228,7 +230,7 @@ module.exports = ->
 
     loading:
       onEnter: (scope, userData) ->
-        setStateClass "start"
+        setStateClass "loading"
         fetchQuote(userData)
 
       onEvent: (eventData, scope, trigger, userData) ->
@@ -544,7 +546,8 @@ module.exports = ->
   # In an FRP style, this could be done by folding over events instead.
   # It is called by all game events with the event trigger and event data.
   updateFrame = (trigger, data) ->
-    @store = onFrameEnter @store, trigger, data
+    # "before all" - a chance to change the store and state
+    [@store, @currentState, @userData] = onFrameEnter @store, @currentState, trigger, data, @userData
     {state, scope, userData} = frame {state: @currentState, scope: @store, userData: @userData}, trigger, data
     @currentState = state
     @store = scope
@@ -557,7 +560,7 @@ module.exports = ->
 
 
   # code to run on every frame regardless of which state is active
-  onFrameEnter = (scope, trigger, eventData) ->
+  onFrameEnter = (scope, state, trigger, eventData, userData) ->
     if trigger is "toggleMuteMusic"
       if scope.musicIsPaused
         playMusic()
@@ -581,7 +584,11 @@ module.exports = ->
     if trigger is "cancel" and scope.showHelp
       scope.showHelp = !scope.showHelp
 
-    scope
+    if trigger is "loggedIn"
+      state = states.loadingUser
+      getUserData(userData)
+
+    [scope, state, userData]
 
 
 
@@ -633,6 +640,9 @@ module.exports = ->
   onConfirm = (e) ->
     e.preventDefault()
     updateFrame "confirm", null
+
+  onKongregateLogin = (e) ->
+    updateFrame "loggedIn", null
 
 
   # drawing
@@ -896,6 +906,9 @@ module.exports = ->
       $("#help-button").on "click", onHelp
       $("#cancel").on "click", onCancel
       $("#confirm").on "click", onConfirm
+
+      #bind kongregate login event
+      kongregate?.services.addEventListener "login", onKongregateLogin
 
       startOwlBlink()
 
