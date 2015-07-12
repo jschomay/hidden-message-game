@@ -5,9 +5,9 @@ module.exports = ->
 
   # constants
   CONSTANTS =
-    startingHints: 5
-    hintSetback: 20
-    pointsForFreeHint: 150
+    startingHints: 3
+    hintSetback: 40
+    pointsForFreeHint: 200
     pointsPerLetter: 5
 
   # sound constants and utils (using howler.js)
