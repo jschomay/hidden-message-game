@@ -451,7 +451,11 @@ module.exports = ->
           scope.hints = undefined
           scope.lastCombo = undefined
 
-          return ["loading", scope, userData]
+          nextQuote = getNextQuoteIndex(userData.lastSolvedBundleIndex, userData.lastSolvedQuoteIndex)
+          if nextQuote.quoteIndex is 0 and nextQuote.bundleIndex is 0
+            return ["noMoreQuotes", scope, userData]
+          else
+            return ["loading", scope, userData]
 
         else
           return ["solved", scope, userData]
