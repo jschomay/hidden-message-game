@@ -115,14 +115,14 @@
         "_id": {
             "$oid": "554fc1230a061f9afcba2b7f"
         },
-        "quote": "Two things are infinite: the universe and human stupidity; and I'm not sure about the the universe.",
+        "quote": "Two things are infinite: the universe and human stupidity; and I'm not sure about the universe.",
         "bundle": "starter"
     },
     {
         "_id": {
             "$oid": "554fb4420a061f9afcba2b70"
         },
-        "quote": "You're almost to the end of the starter pack!  Good job, keep going.",
+        "quote": "You're almost to the end of the starter bundle!  Good job, keep going.",
         "bundle": "starter"
     },
     {
