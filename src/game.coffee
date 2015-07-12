@@ -724,7 +724,7 @@ module.exports = ->
           <a target='_blank' href='https://www.freesound.org/people/Horn/sounds/9744/'>Horn</a>,
           <a target='_blank' href='https://www.freesound.org/people/NHumphrey/sounds/204466/'>NHumphrey</a>, and
           <a target='_blank' href='https://www.freesound.org/people/lonemonk/sounds/47048/'>lonemonk</a></li>
-          <li>Special thanks to: Mark, Marcus, Zia, David, and Michele</li>
+          <li>Special thanks to: Mark, Marcus, Zia, David, Joey, Molly and Michele</li>
         </ul>
         """
       Zepto("#dialog #cancel").text "Keep playing"
