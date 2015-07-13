@@ -1,5 +1,10 @@
 quoteBundles = [
   require "./bundles/starter"
+  require "./bundles/quotes2"
+]
+bundleNames = [
+  "Starter"
+  "Quotes #2"
 ]
 
 updateProgressPerBundle = (progressPerBundle, currentBundleIndex, currentQuoteIndex) ->
@@ -39,6 +44,7 @@ getNextQuoteIndex = (lastSolvedBundleIndex, lastSolvedQuoteIndex) ->
 
 module.exports = {
   quoteBundles
+  bundleNames
   updateProgressPerBundle
   getNextQuoteIndex
 }

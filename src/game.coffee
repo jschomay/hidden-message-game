@@ -1,5 +1,5 @@
 # quote bundles logic
-{quoteBundles, getNextQuoteIndex, updateProgressPerBundle} = require "./bundles"
+{quoteBundles, bundleNames, getNextQuoteIndex, updateProgressPerBundle} = require "./bundles"
 
 module.exports = ->
 
@@ -734,9 +734,6 @@ module.exports = ->
       Zepto("#dialog #cancel").text "Keep playing"
 
     # user info
-    bundleNames = [
-      "Starter"
-    ]
     num = (rawScope.currentQuoteIndex or 0) + 1
     bundleName = bundleNames[rawScope.currentBundleIndex or 0]
     total = quoteBundles[rawScope.currentBundleIndex or 0].length
