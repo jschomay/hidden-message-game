@@ -1,5 +1,12 @@
 # quote bundles logic
-{quoteBundles, bundleNames, getNextQuoteIndex, updateProgressPerBundle} = require "./bundles"
+{
+  quoteBundles
+  bundleNames
+  getNextQuoteIndex
+  updateProgressPerBundle
+  noMoreQuotes
+  bundleCompleted
+} = require "./bundles"
 
 module.exports = ->
 
@@ -420,9 +427,10 @@ module.exports = ->
           scope.hints = undefined
           scope.lastCombo = undefined
 
-          nextQuote = getNextQuoteIndex(userData.lastSolvedBundleIndex, userData.lastSolvedQuoteIndex)
-          if nextQuote.quoteIndex is 0 and nextQuote.bundleIndex is 0
+          if noMoreQuotes(userData.lastSolvedBundleIndex, userData.lastSolvedQuoteIndex)
             return ["noMoreQuotes", scope, userData]
+          else if bundleCompleted(userData.lastSolvedBundleIndex, userData.lastSolvedQuoteIndex)
+            return ["bundleCompleted", scope, userData]
           else
             return ["loading", scope, userData]
 
@@ -451,9 +459,10 @@ module.exports = ->
           scope.hints = undefined
           scope.lastCombo = undefined
 
-          nextQuote = getNextQuoteIndex(userData.lastSolvedBundleIndex, userData.lastSolvedQuoteIndex)
-          if nextQuote.quoteIndex is 0 and nextQuote.bundleIndex is 0
+          if noMoreQuotes(userData.lastSolvedBundleIndex, userData.lastSolvedQuoteIndex)
             return ["noMoreQuotes", scope, userData]
+          else if bundleCompleted(userData.lastSolvedBundleIndex, userData.lastSolvedQuoteIndex)
+            return ["bundleCompleted", scope, userData]
           else
             return ["loading", scope, userData]
 
@@ -504,6 +513,23 @@ module.exports = ->
         feedback: ""
         showPlayActions: false
         noMoreQuotes: true
+
+
+    bundleCompleted:
+      onEnter: ->
+        setStateClass "bundleCompleted"
+
+      onEvent: (eventData, scope, trigger, userData) ->
+        if trigger is "confirm"
+          return ["loading", scope, userData]
+        else
+          return ["bundleCompleted", scope, userData]
+
+      getRenderData: (scope) ->
+        secretMessage: ""
+        feedback: ""
+        showPlayActions: false
+        bundleCompleted: true
 
 
   # MAIN LOOP
@@ -707,9 +733,20 @@ module.exports = ->
       Zepto("#dialog #cancel").hide()
       Zepto("#dialog #confirm").show()
       Zepto("#dialog").show()
-      Zepto("#dialog h3").text "Congratulations, you solved all of the quotes!"
+      Zepto("#dialog h3").text "You solved all of the quotes!"
       Zepto("#dialog #message-content").html "<p>Thank you for playing.</p><p><a target='_blank' href='http://codeperfectionist.com/portfolio/games/hidden-message-game/'>Stay tuned for more quote bundles and extra features</a></p>"
       Zepto("#dialog #confirm").text "Play again?"
+
+    # bundle completed dialog
+    bundleName = bundleNames[rawScope.currentBundleIndex or 0]
+    nextBundleName = bundleNames[(rawScope.currentBundleIndex or 0) + 1]
+    if renderData.bundleCompleted
+      Zepto("#dialog #cancel").hide()
+      Zepto("#dialog #confirm").show()
+      Zepto("#dialog").show()
+      Zepto("#dialog h3").text "Congratulations, you finished the \"#{bundleName}\" bundle!"
+      Zepto("#dialog #message-content").html "You've unlocked the \"#{nextBundleName}\" bundle."
+      Zepto("#dialog #confirm").text "Play next bundle"
 
     # get help dialog
     if rawScope.showHelp

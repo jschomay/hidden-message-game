@@ -41,10 +41,19 @@ getNextQuoteIndex = (lastSolvedBundleIndex, lastSolvedQuoteIndex) ->
     quoteIndex: lastSolvedQuoteIndex + 1
     bundleIndex: lastSolvedBundleIndex
 
+noMoreQuotes = (lastSolvedBundleIndex, lastSolvedQuoteIndex) ->
+  nextQuote = getNextQuoteIndex(lastSolvedBundleIndex, lastSolvedQuoteIndex)
+  return nextQuote.quoteIndex is 0 and nextQuote.bundleIndex is 0
+
+bundleCompleted = (lastSolvedBundleIndex, lastSolvedQuoteIndex) ->
+  nextQuote = getNextQuoteIndex(lastSolvedBundleIndex, lastSolvedQuoteIndex)
+  return nextQuote.quoteIndex is 0
 
 module.exports = {
   quoteBundles
   bundleNames
   updateProgressPerBundle
   getNextQuoteIndex
+  noMoreQuotes
+  bundleCompleted
 }
