@@ -381,7 +381,7 @@ module.exports = ->
 
         comboString = if scope.comboString.length then scope.comboString else null
         secretMessage: decode(scope.secretMessage, scope.decodeKey)
-        feedback: comboString or scope.lastCombo  or "Type letters to begin revealing he hidden message."
+        feedback: comboString or scope.lastCombo  or "Type letters to begin revealing the hidden message."
         match: if scope.lastCombo then !!scope.comboString.length > 0 else null
         score: scope.score
         showPlayActions: true
