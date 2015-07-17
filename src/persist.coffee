@@ -1,5 +1,8 @@
 kongregate = parent.kongregate
-Parse.initialize("iul0cVOM5mJWAj1HHBa158cpMoyEQ2wWxSK3Go9O", "pbFnYPVaSunEmgjI8qTKqkW8nHKoB6Xor1DtOWpD");
+try
+  Parse.initialize("iul0cVOM5mJWAj1HHBa158cpMoyEQ2wWxSK3Go9O", "pbFnYPVaSunEmgjI8qTKqkW8nHKoB6Xor1DtOWpD");
+catch e
+  console.log "problem setting up parse", e
 
 getUserId = ->
   mockUserId = false # toggle to test locally
