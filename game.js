@@ -91,9 +91,11 @@
   globals.require.brunch = true;
 })();
 require.register("src/bundles", function(exports, require, module) {
-var getNextQuoteIndex, quoteBundles, updateProgressPerBundle;
+var bundleCompleted, bundleNames, getNextQuoteIndex, noMoreQuotes, quoteBundles, updateProgressPerBundle;
 
-quoteBundles = [require("./bundles/starter")];
+quoteBundles = [require("./bundles/starter"), require("./bundles/quotes2")];
+
+bundleNames = ["Starter", "Quotes #2"];
 
 updateProgressPerBundle = function(progressPerBundle, currentBundleIndex, currentQuoteIndex) {
   var initedPreviousBundles;
@@ -132,12 +134,103 @@ getNextQuoteIndex = function(lastSolvedBundleIndex, lastSolvedQuoteIndex) {
   }
 };
 
-module.exports = {
-  quoteBundles: quoteBundles,
-  updateProgressPerBundle: updateProgressPerBundle,
-  getNextQuoteIndex: getNextQuoteIndex
+noMoreQuotes = function(lastSolvedBundleIndex, lastSolvedQuoteIndex) {
+  var nextQuote;
+  nextQuote = getNextQuoteIndex(lastSolvedBundleIndex, lastSolvedQuoteIndex);
+  return nextQuote.quoteIndex === 0 && nextQuote.bundleIndex === 0;
 };
 
+bundleCompleted = function(lastSolvedBundleIndex, lastSolvedQuoteIndex) {
+  var nextQuote;
+  nextQuote = getNextQuoteIndex(lastSolvedBundleIndex, lastSolvedQuoteIndex);
+  return nextQuote.quoteIndex === 0;
+};
+
+module.exports = {
+  quoteBundles: quoteBundles,
+  bundleNames: bundleNames,
+  updateProgressPerBundle: updateProgressPerBundle,
+  getNextQuoteIndex: getNextQuoteIndex,
+  noMoreQuotes: noMoreQuotes,
+  bundleCompleted: bundleCompleted
+};
+
+});
+
+require.register("src/bundles/quotes2", function(exports, require, module) {
+module.exports = [
+    {
+        "_id": {
+            "$oid": "554fbba30a061f9afcba2b7c"
+        },
+        "quote": "If a tree falls in a forest and no one is around to hear it, does it make a sound?",
+        "bundle": "quotes2"
+    },
+    {
+        "_id": {
+            "$oid": "554fb8670a061f9afcba2b76"
+        },
+        "quote": "You miss 100% of the shots you don’t take.",
+        "bundle": "quotes2"
+    },
+    {
+        "_id": {
+            "$oid": "554fb89e0a061f9afcba2b77"
+        },
+        "quote": "Life is what happens to you while you’re busy making other plans.",
+        "bundle": "quotes2"
+    },
+    {
+        "_id": {
+            "$oid": "554fbad40a061f9afcba2b7a"
+        },
+        "quote": "If all you have is a hammer, everything looks like a nail.",
+        "bundle": "quotes2"
+    },
+    {
+        "_id": {
+            "$oid": "554fb64d0a061f9afcba2b75"
+        },
+        "quote": "Be the change you wish to see in the world.",
+        "bundle": "quotes2"
+    },
+    {
+        "_id": {
+            "$oid": "554fb4ab0a061f9afcba2b73"
+        },
+        "quote": "Obstacles are what you see when you take your eyes off your goal.",
+        "bundle": "quotes2"
+    },
+    {
+        "_id": {
+            "$oid": "554fbbe40a061f9afcba2b7d"
+        },
+        "quote": "Never try to teach a pig to sing; it wastes your time and it annoys the pig.",
+        "bundle": "quotes2"
+    },
+    {
+        "_id": {
+            "$oid": "554fc1230a061f9afcba2b7f"
+        },
+        "quote": "Two things are infinite: the universe and human stupidity; and I'm not sure about the universe.",
+        "bundle": "quotes2"
+    },
+    {
+        "_id": {
+            "$oid": "554fbd090a061f9afcba2b7e"
+        },
+        "quote": "Did you know: Two thirds of the people on earth have never seen snow?",
+        "bundle": "quotes2"
+    },
+    {
+        "_id": {
+            "$oid": "554fba310a061f9afcba2b78"
+        },
+        "quote": "My Mama always said, \"Life was like a box of chocolates; you never know what you're gonna get.\"",
+        "bundle": "quotes2"
+    }
+]
+;
 });
 
 require.register("src/bundles/starter", function(exports, require, module) {
@@ -200,9 +293,9 @@ module.exports = [
     },
     {
         "_id": {
-            "$oid": "554fbba30a061f9afcba2b7c"
+            "$oid": "554fb4420a061f9afcba2b70"
         },
-        "quote": "If a tree falls in a forest and no one is around to hear it, does it make a sound?",
+        "quote": "You're almost to the end of the starter bundle!  Good job, keep going.",
         "bundle": "starter"
     },
     {
@@ -211,96 +304,26 @@ module.exports = [
         },
         "quote": "Do not underestimate the power of the Force.",
         "bundle": "starter"
-    },
-    {
-        "_id": {
-            "$oid": "554fb64d0a061f9afcba2b75"
-        },
-        "quote": "Be the change you wish to see in the world.",
-        "bundle": "starter"
-    },
-    {
-        "_id": {
-            "$oid": "554fb8670a061f9afcba2b76"
-        },
-        "quote": "You miss 100% of the shots you don’t take.",
-        "bundle": "starter"
-    },
-    {
-        "_id": {
-            "$oid": "554fb89e0a061f9afcba2b77"
-        },
-        "quote": "Life is what happens to you while you’re busy making other plans.",
-        "bundle": "starter"
-    },
-    {
-        "_id": {
-            "$oid": "554fbad40a061f9afcba2b7a"
-        },
-        "quote": "If all you have is a hammer, everything looks like a nail.",
-        "bundle": "starter"
-    },
-    {
-        "_id": {
-            "$oid": "554fb4ab0a061f9afcba2b73"
-        },
-        "quote": "Obstacles are what you see when you take your eyes off your goal.",
-        "bundle": "starter"
-    },
-    {
-        "_id": {
-            "$oid": "554fbbe40a061f9afcba2b7d"
-        },
-        "quote": "Never try to teach a pig to sing; it wastes your time and it annoys the pig.",
-        "bundle": "starter"
-    },
-    {
-        "_id": {
-            "$oid": "554fc1230a061f9afcba2b7f"
-        },
-        "quote": "Two things are infinite: the universe and human stupidity; and I'm not sure about the the universe.",
-        "bundle": "starter"
-    },
-    {
-        "_id": {
-            "$oid": "554fb4420a061f9afcba2b70"
-        },
-        "quote": "You're almost to the end of the starter pack!  Good job, keep going.",
-        "bundle": "starter"
-    },
-    {
-        "_id": {
-            "$oid": "554fbd090a061f9afcba2b7e"
-        },
-        "quote": "Did you know: Two thirds of the people on earth have never seen snow?",
-        "bundle": "starter"
-    },
-    {
-        "_id": {
-            "$oid": "554fba310a061f9afcba2b78"
-        },
-        "quote": "My Mama always said, \"Life was like a box of chocolates; you never know what you're gonna get.\"",
-        "bundle": "starter"
     }
 ]
 ;
 });
 
 require.register("src/game", function(exports, require, module) {
-var getNextQuoteIndex, kongregate, persist, quoteBundles, updateProgressPerBundle, _ref;
+var bundleCompleted, bundleNames, getNextQuoteIndex, kongregate, noMoreQuotes, persist, quoteBundles, updateProgressPerBundle, _ref;
 
 kongregate = parent.kongregate;
 
-_ref = require("./bundles"), quoteBundles = _ref.quoteBundles, getNextQuoteIndex = _ref.getNextQuoteIndex, updateProgressPerBundle = _ref.updateProgressPerBundle;
+_ref = require("./bundles"), quoteBundles = _ref.quoteBundles, bundleNames = _ref.bundleNames, getNextQuoteIndex = _ref.getNextQuoteIndex, updateProgressPerBundle = _ref.updateProgressPerBundle, noMoreQuotes = _ref.noMoreQuotes, bundleCompleted = _ref.bundleCompleted;
 
 persist = require("./persist");
 
 module.exports = function() {
   var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeInMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadImages, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancel, onConfirm, onFrameEnter, onGiveUp, onHelp, onHint, onKeyDown, onKongregateLogin, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, setStateClass, startGame, startOwlBlink, states, updateDecodeKey, updateFrame, updateLoadProgress;
   CONSTANTS = {
-    startingHints: 5,
-    hintSetback: 20,
-    pointsForFreeHint: 150,
+    startingHints: 3,
+    hintSetback: 40,
+    pointsForFreeHint: 200,
     pointsPerLetter: 5
   };
   SOUNDS = {};
@@ -679,7 +702,7 @@ module.exports = function() {
         comboString = scope.comboString.length ? scope.comboString : null;
         return {
           secretMessage: decode(scope.secretMessage, scope.decodeKey),
-          feedback: comboString || scope.lastCombo || "Type letters to begin revealing he hidden message.",
+          feedback: comboString || scope.lastCombo || "Type letters to begin revealing the hidden message.",
           match: scope.lastCombo ? !!scope.comboString.length > 0 : null,
           score: scope.score,
           showPlayActions: true,
@@ -729,7 +752,6 @@ module.exports = function() {
         return setStateClass("confirmedGiveUp");
       },
       onEvent: function(eventData, scope, trigger, userData) {
-        var nextQuote;
         if (trigger === "keyPress" && eventData.keyCode === 32) {
           scope.secretMessage = void 0;
           scope.comboGroups = void 0;
@@ -739,9 +761,10 @@ module.exports = function() {
           scope.moves = void 0;
           scope.hints = void 0;
           scope.lastCombo = void 0;
-          nextQuote = getNextQuoteIndex(userData.lastSolvedBundleIndex, userData.lastSolvedQuoteIndex);
-          if (nextQuote.quoteIndex === 0 && nextQuote.bundleIndex === 0) {
+          if (noMoreQuotes(userData.lastSolvedBundleIndex, userData.lastSolvedQuoteIndex)) {
             return ["noMoreQuotes", scope, userData];
+          } else if (bundleCompleted(userData.lastSolvedBundleIndex, userData.lastSolvedQuoteIndex)) {
+            return ["bundleCompleted", scope, userData];
           } else {
             return ["loading", scope, userData];
           }
@@ -754,7 +777,8 @@ module.exports = function() {
           secretMessage: decode(scope.secretMessage, R.map(R.always(decodeKeyStates.SOLVED), scope.decodeKey)),
           feedback: "You gave up!<br>Press 'Space bar' to play again.",
           score: 0,
-          showPlayActions: false
+          showPlayActions: false,
+          showLogInLink: kongregate != null ? kongregate.services.isGuest() : void 0
         };
       }
     },
@@ -772,7 +796,13 @@ module.exports = function() {
           scope.moves = void 0;
           scope.hints = void 0;
           scope.lastCombo = void 0;
-          return ["loading", scope, userData];
+          if (noMoreQuotes(userData.lastSolvedBundleIndex, userData.lastSolvedQuoteIndex)) {
+            return ["noMoreQuotes", scope, userData];
+          } else if (bundleCompleted(userData.lastSolvedBundleIndex, userData.lastSolvedQuoteIndex)) {
+            return ["bundleCompleted", scope, userData];
+          } else {
+            return ["loading", scope, userData];
+          }
         } else {
           return ["solved", scope, userData];
         }
@@ -785,7 +815,8 @@ module.exports = function() {
           feedback: "SOLVED in " + scope.moves + " moves!<br>Press 'Space bar' to play again.",
           score: scope.score,
           showPlayActions: false,
-          solved: true
+          solved: true,
+          showLogInLink: kongregate != null ? kongregate.services.isGuest() : void 0
         };
       }
     },
@@ -829,6 +860,26 @@ module.exports = function() {
           feedback: "",
           showPlayActions: false,
           noMoreQuotes: true
+        };
+      }
+    },
+    bundleCompleted: {
+      onEnter: function() {
+        return setStateClass("bundleCompleted");
+      },
+      onEvent: function(eventData, scope, trigger, userData) {
+        if (trigger === "confirm") {
+          return ["loading", scope, userData];
+        } else {
+          return ["bundleCompleted", scope, userData];
+        }
+      },
+      getRenderData: function(scope) {
+        return {
+          secretMessage: "",
+          feedback: "",
+          showPlayActions: false,
+          bundleCompleted: true
         };
       }
     }
@@ -964,7 +1015,7 @@ module.exports = function() {
     return (R.reduce(buildMarkup, "<span class='word'>", secretMessage)) + "</span>";
   };
   render = function(renderData, rawScope, userData) {
-    var $feedback, $feedbackMessage, $muteMusic, $muteSFX, $score, $secretMessage, bundleName, bundleNames, buyHints, feedback, giveUp, giveUpCost, gutter, hopHeight, match, moveOwl, nextHint, num, offset, owlWidth, path, pointsToGo, progress, score, secretMessage, showPlayActions, total;
+    var $feedback, $feedbackMessage, $muteMusic, $muteSFX, $score, $secretMessage, bundleName, buyHints, feedback, giveUp, giveUpCost, gutter, hopHeight, match, moveOwl, nextBundleName, nextHint, num, offset, owlWidth, path, pointsToGo, progress, score, secretMessage, showPlayActions, total;
     $secretMessage = Zepto("#secret-message");
     $feedback = Zepto("#feedback");
     $feedbackMessage = Zepto("#feedback #message");
@@ -982,6 +1033,11 @@ module.exports = function() {
     }
     if (match === false) {
       $feedback.addClass("no-match");
+    }
+    if (renderData.showLogInLink) {
+      Zepto("#feedback .login-link").show();
+    } else {
+      Zepto("#feedback .login-link").hide();
     }
     if (renderData.solved) {
       Zepto("#share").show();
@@ -1026,25 +1082,39 @@ module.exports = function() {
       Zepto("#dialog #cancel").hide();
       Zepto("#dialog #confirm").show();
       Zepto("#dialog").show();
-      Zepto("#dialog h3").text("Congratulations, you solved all of the quotes!");
+      Zepto("#dialog h3").text("You solved all of the quotes!");
       Zepto("#dialog #message-content").html("<p>Thank you for playing.</p><p><a target='_blank' href='http://codeperfectionist.com/portfolio/games/hidden-message-game/'>Stay tuned for more quote bundles and extra features</a></p>");
       Zepto("#dialog #confirm").text("Play again?");
+    }
+    bundleName = bundleNames[rawScope.currentBundleIndex || 0];
+    nextBundleName = bundleNames[(rawScope.currentBundleIndex || 0) + 1];
+    if (renderData.bundleCompleted) {
+      Zepto("#dialog #cancel").hide();
+      Zepto("#dialog #confirm").show();
+      Zepto("#dialog").show();
+      Zepto("#dialog h3").text("Congratulations, you finished the \"" + bundleName + "\" bundle!");
+      Zepto("#dialog #message-content").html("You've unlocked the \"" + nextBundleName + "\" bundle.");
+      Zepto("#dialog #confirm").text("Play next bundle");
     }
     if (rawScope.showHelp) {
       Zepto("#dialog #cancel").show();
       Zepto("#dialog #confirm").hide();
       Zepto("#dialog").show();
       Zepto("#dialog h3").text("Help");
-      Zepto("#dialog #message-content").html("<p>Stuck?  You must reveal the secret message one letter at a time, from the start of each word.  Solving each word will give you a clue to which letters other words start with.  Try going for shorter word first.  The words stay solved only when you complete them.  You can always use a hint or give up, but it will cost you.  Good luck!</p>\n<h3>Credits</h3>\n<ul>\n  <li>Game designed and built by <a target='_blank' href='http://codeperfectionist.com/about'>Jeff Schomay</a></li>\n  <li>Music by Jamison Rivera\n  <li>Owl character by <a target='_blank' href='http://sherony.com'>Sherony Lock</a></li>\n  <li>Sound effects by <a target='_blank' href='https://www.freesound.org/people/ddohler/sounds/9098/'>ddohler</a>,\n  <a target='_blank' href='https://www.freesound.org/people/Horn/sounds/9744/'>Horn</a>,\n  <a target='_blank' href='https://www.freesound.org/people/NHumphrey/sounds/204466/'>NHumphrey</a>, and\n  <a target='_blank' href='https://www.freesound.org/people/lonemonk/sounds/47048/'>lonemonk</a></li>\n  <li>Special thanks to: Mark, Marcus, Zia, David, and Michele</li>\n</ul>");
+      Zepto("#dialog #message-content").html("<p>Stuck?  You must reveal the secret message one letter at a time, from the start of each word.  Solving each word will give you a clue to which letters other words start with.  Try going for shorter word first.  The words stay solved only when you complete them.  You can always use a hint or give up, but it will cost you.  Good luck!</p>\n<h3>Credits</h3>\n<ul>\n  <li>Game designed and built by <a target='_blank' href='http://codeperfectionist.com/about'>Jeff Schomay</a></li>\n  <li>Music by Jamison Rivera\n  <li>Owl character by <a target='_blank' href='http://sherony.com'>Sherony Lock</a></li>\n  <li>Sound effects by <a target='_blank' href='https://www.freesound.org/people/ddohler/sounds/9098/'>ddohler</a>,\n  <a target='_blank' href='https://www.freesound.org/people/Horn/sounds/9744/'>Horn</a>,\n  <a target='_blank' href='https://www.freesound.org/people/NHumphrey/sounds/204466/'>NHumphrey</a>, and\n  <a target='_blank' href='https://www.freesound.org/people/lonemonk/sounds/47048/'>lonemonk</a></li>\n  <li>Special thanks to: Mark, Marcus, Zia, David, Joey, Molly and Michele</li>\n</ul>");
       Zepto("#dialog #cancel").text("Keep playing");
     }
-    bundleNames = ["Starter"];
     num = (rawScope.currentQuoteIndex || 0) + 1;
     bundleName = bundleNames[rawScope.currentBundleIndex || 0];
     total = quoteBundles[rawScope.currentBundleIndex || 0].length;
     Zepto("#user-info").show();
     Zepto("#progress").html("Bundle: \"" + bundleName + "\"<br>#" + num + " out of " + total);
     Zepto("#total-score").text(userData.totalScore);
+    if (kongregate != null ? kongregate.services.isGuest() : void 0) {
+      Zepto("#user-info .login-link").show();
+    } else {
+      Zepto("#user-info .login-link").hide();
+    }
     owlWidth = Zepto("#owl").width();
     gutter = 200;
     path = window.innerWidth - gutter - owlWidth;
@@ -1180,6 +1250,9 @@ module.exports = function() {
       $("#help-button").on("click", onHelp);
       $("#cancel").on("click", onCancel);
       $("#confirm").on("click", onConfirm);
+      $(".login-link").on("click", function() {
+        return kongregate != null ? kongregate.services.showSignInBox() : void 0;
+      });
       if (kongregate != null) {
         kongregate.services.addEventListener("login", onKongregateLogin);
       }

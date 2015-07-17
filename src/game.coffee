@@ -462,6 +462,7 @@ module.exports = ->
         feedback: "You gave up!<br>Press 'Space bar' to play again."
         score: 0
         showPlayActions: false
+        showLogInLink: kongregate?.services.isGuest()
 
     solved:
       onEnter: ->
@@ -496,6 +497,7 @@ module.exports = ->
         score: scope.score
         showPlayActions: false
         solved: true
+        showLogInLink: kongregate?.services.isGuest()
 
     outOfHints:
       onEnter: ->
@@ -714,6 +716,12 @@ module.exports = ->
     if match is false
       $feedback.addClass "no-match"
 
+    # renderData.showLogInLink only set at end of round if isGuest
+    if renderData.showLogInLink
+      Zepto("#feedback .login-link").show()
+    else
+      Zepto("#feedback .login-link").hide()
+
 
     # share
     if renderData.solved
@@ -810,6 +818,10 @@ module.exports = ->
     Zepto("#user-info").show()
     Zepto("#progress").html "Bundle: \"#{bundleName}\"<br>##{num} out of #{total}"
     Zepto("#total-score").text userData.totalScore
+    if kongregate?.services.isGuest()
+      Zepto("#user-info .login-link").show()
+    else
+      Zepto("#user-info .login-link").hide()
 
     # owl position
     owlWidth = Zepto("#owl").width()
@@ -945,7 +957,10 @@ module.exports = ->
       $("#cancel").on "click", onCancel
       $("#confirm").on "click", onConfirm
 
-      #bind kongregate login event
+      # bind kongregate login modal
+      $(".login-link").on "click", -> kongregate?.services.showSignInBox()
+
+      # bind kongregate login event
       kongregate?.services.addEventListener "login", onKongregateLogin
 
       startOwlBlink()

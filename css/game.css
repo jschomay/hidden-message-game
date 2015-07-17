@@ -8,6 +8,10 @@ body {
   margin: 0;
   font-family: 'Averia Libre', Helvetica;
 }
+#load-font {
+  visibility: hidden;
+  font-family: 'Cabin Sketch', Helvetica;
+}
 #secret-message {
   width: 80%;
   position: relative;
@@ -192,6 +196,12 @@ body {
 }
 #total-score {
   font-weight: bold;
+}
+.login-link {
+  display: none;
+  font-size: 90%;
+  cursor: pointer;
+  text-decoration: underline;
 }
 
 #owl {
