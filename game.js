@@ -1321,7 +1321,7 @@ savedPlayer = void 0;
 module.exports = {
   save: function(data) {
     var userId;
-    userId = getUserId();
+    userId = "" + getUserId();
     if (!userId) {
       return;
     }
@@ -1343,7 +1343,7 @@ module.exports = {
   },
   load: function() {
     var immediate, playerPromise, query, userId;
-    userId = getUserId();
+    userId = "" + getUserId();
     if (userId) {
       query = new Parse.Query(Player);
       query.equalTo("userId", userId);

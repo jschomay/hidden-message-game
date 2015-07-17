@@ -19,7 +19,7 @@ savedPlayer = undefined
 
 module.exports =
   save: (data) ->
-    userId = getUserId()
+    userId = "" + getUserId() # note it is coerced to string
     return if not userId
 
     if not savedPlayer
@@ -34,7 +34,7 @@ module.exports =
       , (error) -> console.error error
 
   load: ->
-    userId = getUserId()
+    userId = "" + getUserId() # note it is coerced to string
     if userId
       query = new Parse.Query(Player)
       query.equalTo "userId", userId
