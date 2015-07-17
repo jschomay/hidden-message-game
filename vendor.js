@@ -3643,7 +3643,9 @@ if (parseInt(ws + '08') !== 8 || parseInt(ws + '0x16') !== 22) {
     async: false,
   };
 
-  var hasLocalStorage = (typeof localStorage !== 'undefined');
+  // EDIT: testing localStorage in iframe causes error!
+  // var hasLocalStorage = (typeof localStorage !== 'undefined');
+  hasLocalStorage = false;
   if (hasLocalStorage) {
     try {
       localStorage.setItem('supported', true);

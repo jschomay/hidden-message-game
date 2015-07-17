@@ -1292,16 +1292,11 @@ module.exports = function() {
 });
 
 require.register("src/persist", function(exports, require, module) {
-var Player, e, getUserId, kongregate, savedPlayer;
+var Player, getUserId, kongregate, savedPlayer;
 
 kongregate = parent.kongregate;
 
-try {
-  Parse.initialize("iul0cVOM5mJWAj1HHBa158cpMoyEQ2wWxSK3Go9O", "pbFnYPVaSunEmgjI8qTKqkW8nHKoB6Xor1DtOWpD");
-} catch (_error) {
-  e = _error;
-  console.log("problem setting up parse", e);
-}
+Parse.initialize("iul0cVOM5mJWAj1HHBa158cpMoyEQ2wWxSK3Go9O", "pbFnYPVaSunEmgjI8qTKqkW8nHKoB6Xor1DtOWpD");
 
 getUserId = function() {
   var mockUserId, userId;
