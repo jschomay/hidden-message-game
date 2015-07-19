@@ -222,13 +222,29 @@ module.exports = ->
 
       onEvent: (eventData, scope, trigger, userData) ->
         if trigger is "quoteLoaded"
+          giveHints = (indexes, decodeKey) ->
+            setAsHinted = (i) ->
+              decodeKey[i] = decodeKeyStates.HINTED
+            R.forEach setAsHinted, indexes
+
           secretMessage = eventData.message
+          decodeKey = R.map hideLetters, secretMessage
+          # help the user out on first levels
+          if not userData.progressPerBundle
+            # 1st round
+            giveHints [10, 28, 38, 60], decodeKey
+          else if userData.progressPerBundle[0] is 0
+            # 2nd round
+            giveHints [3, 4], decodeKey
+          else if userData.progressPerBundle[0] is 1
+            # 3rd round
+            giveHints [17], decodeKey
           # initialize game data with secret message
           scope.secretMessage = secretMessage
           scope.currentBundleIndex = eventData.bundleIndex
           scope.currentQuoteIndex = eventData.quoteIndex
           scope.comboGroups = sentanceToWords secretMessage
-          scope.decodeKey = R.map hideLetters, secretMessage
+          scope.decodeKey = decodeKey
           scope.comboString = ""
           scope.score = R.filter(isLetter, secretMessage).length * CONSTANTS.pointsPerLetter
           scope.moves = 0
