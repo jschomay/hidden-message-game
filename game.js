@@ -577,14 +577,29 @@ module.exports = function() {
         return fetchQuote(userData);
       },
       onEvent: function(eventData, scope, trigger, userData) {
-        var secretMessage;
+        var decodeKey, giveHints, secretMessage;
         if (trigger === "quoteLoaded") {
+          giveHints = function(indexes, decodeKey) {
+            var setAsHinted;
+            setAsHinted = function(i) {
+              return decodeKey[i] = decodeKeyStates.HINTED;
+            };
+            return R.forEach(setAsHinted, indexes);
+          };
           secretMessage = eventData.message;
+          decodeKey = R.map(hideLetters, secretMessage);
+          if (!userData.progressPerBundle) {
+            giveHints([10, 28, 38, 60], decodeKey);
+          } else if (userData.progressPerBundle[0] === 0) {
+            giveHints([3, 4], decodeKey);
+          } else if (userData.progressPerBundle[0] === 1) {
+            giveHints([17], decodeKey);
+          }
           scope.secretMessage = secretMessage;
           scope.currentBundleIndex = eventData.bundleIndex;
           scope.currentQuoteIndex = eventData.quoteIndex;
           scope.comboGroups = sentanceToWords(secretMessage);
-          scope.decodeKey = R.map(hideLetters, secretMessage);
+          scope.decodeKey = decodeKey;
           scope.comboString = "";
           scope.score = R.filter(isLetter, secretMessage).length * CONSTANTS.pointsPerLetter;
           scope.moves = 0;
