@@ -1000,8 +1000,14 @@ module.exports = ->
         saveUserData userData
         updateFrame "userLoaded", userData
       else
+        playerData = currentPlayer.toJSON()
+        plays = playerData.plays or 0
+        playerData.plays = plays + 1
+        # update play count
+        saveUserData playerData
+
         # merge to update persisted data schema
-        updateFrame "userLoaded", R.merge userData, currentPlayer.toJSON()
+        updateFrame "userLoaded", R.merge userData, playerData
     , (error) ->
       console.error "Error loading user data:", error
       updateFrame "userLoaded", userData
