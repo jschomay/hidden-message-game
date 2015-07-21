@@ -19,12 +19,12 @@ savedPlayer = undefined
 
 module.exports =
   save: (data) ->
-    userId = "" + getUserId() # note it is coerced to string
+    userId = getUserId()
     return if not userId
 
     if not savedPlayer
       savedPlayer = new Player()
-      savedPlayer.set "userId", userId
+      savedPlayer.set "userId", "" + userId # note it is coerced to string
       savedPlayer.save(data).then (player) ->
         true
       , (error) -> console.error error
@@ -34,10 +34,10 @@ module.exports =
       , (error) -> console.error error
 
   load: ->
-    userId = "" + getUserId() # note it is coerced to string
+    userId = getUserId()
     if userId
       query = new Parse.Query(Player)
-      query.equalTo "userId", userId
+      query.equalTo "userId", "" + userId
       # return possible user as promise
       playerPromise = query.first()
       playerPromise.then (player) ->

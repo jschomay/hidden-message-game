@@ -1336,13 +1336,13 @@ savedPlayer = void 0;
 module.exports = {
   save: function(data) {
     var userId;
-    userId = "" + getUserId();
+    userId = getUserId();
     if (!userId) {
       return;
     }
     if (!savedPlayer) {
       savedPlayer = new Player();
-      savedPlayer.set("userId", userId);
+      savedPlayer.set("userId", "" + userId);
       return savedPlayer.save(data).then(function(player) {
         return true;
       }, function(error) {
@@ -1358,10 +1358,10 @@ module.exports = {
   },
   load: function() {
     var immediate, playerPromise, query, userId;
-    userId = "" + getUserId();
+    userId = getUserId();
     if (userId) {
       query = new Parse.Query(Player);
-      query.equalTo("userId", userId);
+      query.equalTo("userId", "" + userId);
       playerPromise = query.first();
       playerPromise.then(function(player) {
         if (player) {
