@@ -10,6 +10,7 @@ kongregate = parent.kongregate
   bundleCompleted
 } = require "./bundles"
 persist = require "./persist"
+submitStats = require "./stats"
 
 module.exports = ->
 
@@ -377,6 +378,7 @@ module.exports = ->
             userData.progressPerBundle = updateProgressPerBundle userData.progressPerBundle, scope.currentBundleIndex, scope.currentQuoteIndex
 
 
+            submitStats userData
             saveUserData userData
 
             return ["solved", scope, userData]
@@ -422,6 +424,7 @@ module.exports = ->
           # an earlier quote and wants to jump back to latest progress
           userData.progressPerBundle = updateProgressPerBundle userData.progressPerBundle, scope.currentBundleIndex, scope.currentQuoteIndex
 
+          submitStats userData
           saveUserData userData
 
           return ["confirmedGiveUp", scope, userData]
