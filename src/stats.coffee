@@ -10,15 +10,15 @@ module.exports = (userData) ->
   sumProgress = (acc, bundleProgress) ->
     acc + bundleProgress + 1
   numCompletedQuotes = R.reduce sumProgress, 0, userData.progressPerBundle
-  kongregate.stats.submit("NumCompletedQuotes ", numCompletedQuotes)
+  kongregate.stats.submit("NumCompletedQuotes", numCompletedQuotes)
 
   bundleWasCompleted = bundleCompleted(userData.lastSolvedBundleIndex, userData.lastSolvedQuoteIndex)
 
   # Quotes2BundleCompleted (replace)
   if bundleWasCompleted and userData.progressPerBundle.length is 2
-    kongregate.stats.submit("Quotes2BundleCompleted ", 1)
+    kongregate.stats.submit("Quotes2BundleCompleted", 1)
 
   # StarterBundleComplete (replace)
   if bundleWasCompleted and userData.progressPerBundle.length is 1
-    kongregate.stats.submit("StarterBundleComplete ", 1)
+    kongregate.stats.submit("StarterBundleComplete", 1)
 
