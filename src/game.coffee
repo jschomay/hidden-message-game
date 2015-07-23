@@ -249,6 +249,7 @@ module.exports = ->
             R.forEach setAsHinted, indexes
 
           secretMessage = eventData.message
+          source = eventData.source
           decodeKey = R.map hideLetters, secretMessage
           # help the user out on first levels
           if not userData.progressPerBundle
@@ -262,6 +263,7 @@ module.exports = ->
             giveHints [17], decodeKey
           # initialize game data with secret message
           scope.secretMessage = secretMessage
+          scope.source = source
           scope.currentBundleIndex = eventData.bundleIndex
           scope.currentQuoteIndex = eventData.quoteIndex
           scope.comboGroups = sentanceToWords secretMessage
@@ -458,6 +460,7 @@ module.exports = ->
 
           # reset everything
           scope.secretMessage = undefined
+          scope.source = undefined
           scope.comboGroups = undefined
           scope.decodeKey = undefined
           scope.comboString = undefined
@@ -478,6 +481,8 @@ module.exports = ->
 
       getRenderData: (scope) ->
         secretMessage: decode(scope.secretMessage, R.map( R.always(decodeKeyStates.SOLVED), scope.decodeKey))
+        source: scope.source
+        gaveUp: true
         feedback: "You gave up!<br>Press 'Space bar' to play again."
         score: 0
         showPlayActions: false
@@ -491,6 +496,7 @@ module.exports = ->
         if trigger is "keyPress" and eventData.keyCode is 32 # space bar
           # reset everything
           scope.secretMessage = undefined
+          scope.source = undefined
           scope.comboGroups = undefined
           scope.decodeKey = undefined
           scope.comboString = undefined
@@ -512,6 +518,7 @@ module.exports = ->
       getRenderData: (scope) ->
         hints = if scope.hints > 1 then scope.hints else "no"
         secretMessage: decode(scope.secretMessage, scope.decodeKey)
+        source: scope.source
         feedback:  "SOLVED in #{scope.moves} moves!<br>Press 'Space bar' to play again."
         score: scope.score
         showPlayActions: false
@@ -649,10 +656,12 @@ module.exports = ->
   fetchQuote = (userData) ->
     nextQuote = getNextQuoteIndex userData.lastSolvedBundleIndex, userData.lastSolvedQuoteIndex
     message = quoteBundles[nextQuote.bundleIndex][nextQuote.quoteIndex].quote
+    source = quoteBundles[nextQuote.bundleIndex][nextQuote.quoteIndex].source
     # need to make this async to go through the state machine properly
     setTimeout ->
       updateFrame "quoteLoaded",
         message: message
+        source: source
         bundleIndex: nextQuote.bundleIndex
         quoteIndex: nextQuote.quoteIndex
     , 0
@@ -718,12 +727,13 @@ module.exports = ->
 
   render = (renderData, rawScope, userData) ->
     $secretMessage = Zepto("#secret-message")
+    $source = Zepto("#source")
     $feedback = Zepto("#feedback")
     $feedbackMessage = Zepto("#feedback #message")
     $score = Zepto("#score")
     $muteMusic = Zepto("#mute-music-button")
     $muteSFX = Zepto("#mute-sfx-button")
-    {secretMessage, feedback, score, showPlayActions, match, buyHints, giveUp, giveUpCost} = renderData
+    {secretMessage, source, feedback, score, showPlayActions, match, buyHints, giveUp, giveUpCost} = renderData
 
     $secretMessage.html buildSecretMessage secretMessage
     $feedbackMessage.html feedback # make sure only known or escaped strings go through here!
@@ -735,12 +745,16 @@ module.exports = ->
     if match is false
       $feedback.addClass "no-match"
 
+    $source.hide()
+    if renderData.solved or renderData.gaveUp
+      $source.show()
+      $source.text source or "Unknown"
+
     # renderData.showLogInLink only set at end of round if isGuest
     if renderData.showLogInLink
       Zepto("#feedback .login-link").show()
     else
       Zepto("#feedback .login-link").hide()
-
 
     # share
     if renderData.solved
@@ -794,7 +808,7 @@ module.exports = ->
       Zepto("#dialog #confirm").show()
       Zepto("#dialog").show()
       Zepto("#dialog h3").text "You solved all of the quotes!"
-      Zepto("#dialog #message-content").html "<p>Thank you for playing.</p><p><a target='_blank' href='http://codeperfectionist.com/portfolio/games/hidden-message-game/'>Stay tuned for more quote bundles and extra features</a></p>"
+      Zepto("#dialog #message-content").html "<p>Thank you for playing. Check back for more quote bundles. If you enjoyed playing, please tell a friend!</p>"
       Zepto("#dialog #confirm").text "Play again?"
 
     # bundle completed dialog
