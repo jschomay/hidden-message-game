@@ -808,7 +808,7 @@ module.exports = ->
       Zepto("#dialog #confirm").show()
       Zepto("#dialog").show()
       Zepto("#dialog h3").text "You solved all of the quotes!"
-      Zepto("#dialog #message-content").html "<p>Thank you for playing.</p><p><a target='_blank' href='http://codeperfectionist.com/portfolio/games/hidden-message-game/'>Stay tuned for more quote bundles and extra features</a></p>"
+      Zepto("#dialog #message-content").html "<p>Thank you for playing. Check back for more quote bundles. If you enjoyed playing, please tell a friend!</p>"
       Zepto("#dialog #confirm").text "Play again?"
 
     # bundle completed dialog
