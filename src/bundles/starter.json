@@ -1,72 +1,42 @@
 [
     {
-        "_id": {
-            "$oid": "554fba3e0a061f9afcba2b79"
-        },
         "quote": "Happiness isn't having what you want, it's wanting what you have.",
-        "bundle": "starter"
+        "source": "Very old proverb"
     },
     {
-        "_id": {
-            "$oid": "554fbb780a061f9afcba2b7b"
-        },
         "quote": "He who laughs last, laughs longest.",
-        "bundle": "starter"
+        "source": "Common idiom originating from an old English play"
     },
     {
-        "_id": {
-            "$oid": "554fb52e0a061f9afcba2b74"
-        },
         "quote": "That's one small step for man, one giant leap for mankind.",
-        "bundle": "starter"
+        "source": "Neil Armstrong upon first ever lunar landing"
     },
     {
-        "_id": {
-            "$oid": "554fb40c0a061f9afcba2b6f"
-        },
         "quote": "Do... or do not. There is no try. Only do.",
-        "bundle": "starter"
+        "source": "Yoda in \"Star Wars: Episode V - The Empire Strikes Back\""
     },
     {
-        "_id": {
-            "$oid": "554fb2c60a061f9afcba2b6d"
-        },
         "quote": "Talk sense to a fool and he calls you foolish.",
-        "bundle": "starter"
+        "source": "Euripides, Greek tragic dramatist (484 BC - 406 BC)"
     },
     {
-        "_id": {
-            "$oid": "554fb4880a061f9afcba2b72"
-        },
         "quote": "80% of success is just showing up.",
-        "bundle": "starter"
+        "source": "Woody Allen"
     },
     {
-        "_id": {
-            "$oid": "554fc398720a9ad00b7fa94b"
-        },
         "quote": "If you choose not to decide, you still have made a choice.",
-        "bundle": "starter"
+        "source": "\"Freewill\" lyrics by Rush"
     },
     {
-        "_id": {
-            "$oid": "554fb2980a061f9afcba2b6c"
-        },
         "quote": "Today is the tomorrow you worried about yesterday.",
-        "bundle": "starter"
+        "source": "Dale Carnegie, self-improvement author"
     },
     {
-        "_id": {
-            "$oid": "554fb4420a061f9afcba2b70"
-        },
         "quote": "You're almost to the end of the starter bundle!  Good job, keep going.",
-        "bundle": "starter"
+        "source": "Surprise!  Hi from the game's author.  How meta."
     },
     {
-        "_id": {
-            "$oid": "554fb46b0a061f9afcba2b71"
-        },
         "quote": "Do not underestimate the power of the Force.",
-        "bundle": "starter"
+        "source": "Slight misquote of Darth Vader from Star Wars"
     }
 ]
