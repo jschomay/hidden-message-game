@@ -19,6 +19,19 @@ body {
   top: 20%;
   text-align: center;
 }
+#source {
+  display: none;
+  font: 20px courier;
+  color: #555;
+  width: 80%;
+  position: relative;
+  margin: auto;
+  top: 25%;
+  text-align: center;
+}
+#source:before {
+  content: "-- ";
+}
 .word {
   margin-right: 27px;
   display: inline-block;
