@@ -1,10 +1,12 @@
 quoteBundles = [
   require "./bundles/starter"
   require "./bundles/quotes2"
+  require "./bundles/jokes"
 ]
 bundleNames = [
   "Starter"
   "Quotes #2"
+  "Jokes"
 ]
 
 updateProgressPerBundle = (progressPerBundle, currentBundleIndex, currentQuoteIndex) ->
