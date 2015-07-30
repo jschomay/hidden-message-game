@@ -3,7 +3,7 @@ Parse.initialize("iul0cVOM5mJWAj1HHBa158cpMoyEQ2wWxSK3Go9O", "pbFnYPVaSunEmgjI8q
 {bundleNames, getNextQuoteIndex} = require "./bundles"
 
 module.exports = (eventName, scope = {}, userData = {}, dimensions = {}) ->
-  dimensions.platform = "direct"
+  dimensions.platform = "kongregate"
   if userData.lastSolvedBundleIndex
     nextQuote = getNextQuoteIndex userData.lastSolvedBundleIndex, userData.lastSolvedQuoteIndex
     round = "#{bundleNames[nextQuote.bundleIndex]}-#{(nextQuote.quoteIndex)+ 1}"
