@@ -972,6 +972,8 @@ module.exports = ->
     setTimeout blink, 7000
 
   startGame = ->
+    console.log "api:", kongregate; window._k = kongregate # temp (to see what the js kongregate api has)
+
     # make sure document is loaded before starting (it should be by now)
     Zepto ($) ->
       fadeInMusic()
