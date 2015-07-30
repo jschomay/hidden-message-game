@@ -11,6 +11,7 @@ kongregate = parent.kongregate
 } = require "./bundles"
 persist = require "./persist"
 submitStats = require "./stats"
+track = require "./analytics"
 
 module.exports = ->
 
@@ -294,7 +295,10 @@ module.exports = ->
 
         if trigger is "hint"
           if userData.hintsRemaining <= 0
+            track "outOfHints"
             return ["outOfHints", scope, userData]
+
+          track "useHint", scope, userData
 
           # get random 1/10th of remaining unsolved letters permanently filled in
           # cuts your score in half each time
@@ -413,6 +417,9 @@ module.exports = ->
 
       onEvent: (eventData, scope, trigger, userData) ->
         if trigger is "confirm"
+
+          track "giveUp", scope, userData
+
           playSound "giveUp"
 
           numUnsolved = R.length R.filter(R.compose(R.not, isSolved)) scope.decodeKey
@@ -965,6 +972,8 @@ module.exports = ->
     setTimeout blink, 7000
 
   startGame = ->
+    console.log "api:", kongregate; window._k = kongregate # temp (to see what the js kongregate api has)
+
     # make sure document is loaded before starting (it should be by now)
     Zepto ($) ->
       fadeInMusic()
@@ -978,6 +987,9 @@ module.exports = ->
         url = this.href
         opts = "status=1,width=#{width},height=#{height},top=#{top},left=#{left}"
         window.open(url, 'Share', opts)
+
+        shareType = if /twitter/.test(this.href) then "tweet" else "facebook"
+        track shareType
         false
 
       # bind inputs
