@@ -12,16 +12,16 @@
     "test": "brunch test"
   },
   "dependencies": {
-    "javascript-brunch": ">= 1.0 < 1.8",
+    "auto-reload-brunch": ">= 1.0 < 1.8",
+    "clean-css-brunch": ">= 1.0 < 1.8",
     "coffee-script-brunch": "1.7",
     "css-brunch": ">= 1.0 < 1.8",
+    "express": "^4.13.3",
+    "javascript-brunch": ">= 1.0 < 1.8",
     "json-brunch": ">= 1.0 < 1.8",
-    "uglify-js-brunch": ">= 1.0 < 1.8",
-    "clean-css-brunch": ">= 1.0 < 1.8",
     "postcss-brunch": "^0.4.x",
-    "auto-reload-brunch": ">= 1.0 < 1.8"
+    "ramda": "^0.14.0",
+    "uglify-js-brunch": ">= 1.0 < 1.8"
   },
-  "devDependencies": {
-    "ramda": "^0.14.0"
-  }
+  "devDependencies": {}
 }
