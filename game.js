@@ -334,7 +334,7 @@ persist = require("./persist");
 track = require("./analytics");
 
 module.exports = function() {
-  var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeInMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadImages, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancel, onConfirm, onFrameEnter, onGiveUp, onHelp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, setStateClass, startGame, startOwlBlink, states, updateDecodeKey, updateFrame, updateLoadProgress;
+  var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeInMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadImages, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancel, onConfirm, onFbLogin, onFrameEnter, onGiveUp, onHelp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, setStateClass, startGame, startOwlBlink, states, updateDecodeKey, updateFrame, updateLoadProgress;
   CONSTANTS = {
     startingHints: 3,
     hintSetback: 40,
@@ -815,7 +815,8 @@ module.exports = function() {
           gaveUp: true,
           feedback: "You gave up!<br>Press 'Space bar' to play again.",
           score: 0,
-          showPlayActions: false
+          showPlayActions: false,
+          showLogInLink: persist.getUserId() == null
         };
       }
     },
@@ -854,7 +855,8 @@ module.exports = function() {
           feedback: "SOLVED in " + scope.moves + " moves!<br>Press 'Space bar' to play again.",
           score: scope.score,
           showPlayActions: false,
-          solved: true
+          solved: true,
+          showLogInLink: persist.getUserId() == null
         };
       }
     },
@@ -974,6 +976,10 @@ module.exports = function() {
     if (trigger === "cancel" && scope.showHelp) {
       scope.showHelp = !scope.showHelp;
     }
+    if (trigger === "loggedIn") {
+      state = states.loadingUser;
+      getUserData(userData);
+    }
     return [scope, state, userData];
   };
   fetchQuote = function(userData) {
@@ -1025,6 +1031,9 @@ module.exports = function() {
     e.preventDefault();
     return updateFrame("confirm", null);
   };
+  onFbLogin = function(e) {
+    return updateFrame("loggedIn", null);
+  };
   buildSecretMessage = function(secretMessage) {
     var buildMarkup, statusMap;
     statusMap = R.invertObj(decodeKeyStates);
@@ -1072,6 +1081,11 @@ module.exports = function() {
     if (renderData.solved || renderData.gaveUp) {
       $source.show();
       $source.text(source || "Unknown");
+    }
+    if (renderData.showLogInLink) {
+      Zepto("#feedback .login-link").show();
+    } else {
+      Zepto("#feedback .login-link").hide();
     }
     if (renderData.solved) {
       Zepto("#share").show();
@@ -1144,6 +1158,11 @@ module.exports = function() {
     Zepto("#user-info").show();
     Zepto("#progress").html("Bundle: \"" + bundleName + "\"<br>#" + num + " out of " + total);
     Zepto("#total-score").text(userData.totalScore);
+    if (persist.getUserId() == null) {
+      Zepto("#user-info .login-link").show();
+    } else {
+      Zepto("#user-info .login-link").hide();
+    }
     owlWidth = Zepto("#owl").width();
     gutter = 200;
     path = window.innerWidth - gutter - owlWidth;
@@ -1281,6 +1300,12 @@ module.exports = function() {
       $("#help-button").on("click", onHelp);
       $("#cancel").on("click", onCancel);
       $("#confirm").on("click", onConfirm);
+      $(".login-link").on("click", function() {
+        return FB.login(function(response) {
+          persist.setUserId(response);
+          return onFbLogin();
+        });
+      });
       startOwlBlink();
       return updateFrame("gameReady");
     });
@@ -1322,13 +1347,11 @@ module.exports = function() {
 });
 
 require.register("src/persist", function(exports, require, module) {
-var Player, getUserId, savedPlayer;
+var Player, savedPlayer, userId;
 
 Parse.initialize("iul0cVOM5mJWAj1HHBa158cpMoyEQ2wWxSK3Go9O", "pbFnYPVaSunEmgjI8qTKqkW8nHKoB6Xor1DtOWpD");
 
-getUserId = function() {
-  return window.facebookId || void 0;
-};
+userId = void 0;
 
 Player = Parse.Object.extend("FacebookPlayer");
 
@@ -1336,8 +1359,7 @@ savedPlayer = void 0;
 
 module.exports = {
   save: function(data) {
-    var userId;
-    userId = getUserId();
+    userId = userId;
     if (!userId) {
       return;
     }
@@ -1358,8 +1380,8 @@ module.exports = {
     }
   },
   load: function() {
-    var immediate, playerPromise, query, userId;
-    userId = getUserId();
+    var immediate, playerPromise, query;
+    userId = userId;
     if (userId) {
       query = new Parse.Query(Player);
       query.equalTo("userId", "" + userId);
@@ -1379,6 +1401,16 @@ module.exports = {
       }), 0);
       return immediate;
     }
+  },
+  setUserId: function(response) {
+    console.log('setUserId', response);
+    if (response.status !== 'connected') {
+      return;
+    }
+    return userId = response.authResponse.userID;
+  },
+  getUserId: function() {
+    return userId;
   }
 };
 

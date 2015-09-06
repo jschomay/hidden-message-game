@@ -488,6 +488,7 @@ module.exports = ->
         feedback: "You gave up!<br>Press 'Space bar' to play again."
         score: 0
         showPlayActions: false
+        showLogInLink: not persist.getUserId()?
 
     solved:
       onEnter: ->
@@ -524,6 +525,7 @@ module.exports = ->
         score: scope.score
         showPlayActions: false
         solved: true
+        showLogInLink: not persist.getUserId()?
 
     outOfHints:
       onEnter: ->
@@ -642,6 +644,10 @@ module.exports = ->
     if trigger is "cancel" and scope.showHelp
       scope.showHelp = !scope.showHelp
 
+    if trigger is "loggedIn"
+      state = states.loadingUser
+      getUserData(userData)
+
     [scope, state, userData]
 
 
@@ -697,6 +703,9 @@ module.exports = ->
     e.preventDefault()
     updateFrame "confirm", null
 
+  onFbLogin = (e) ->
+    updateFrame "loggedIn", null
+
 
   # drawing
 
@@ -742,6 +751,12 @@ module.exports = ->
     if renderData.solved or renderData.gaveUp
       $source.show()
       $source.text source or "Unknown"
+
+    # renderData.showLogInLink only set at end of round if isGuest
+    if renderData.showLogInLink
+      Zepto("#feedback .login-link").show()
+    else
+      Zepto("#feedback .login-link").hide()
 
     # share
     if renderData.solved
@@ -838,6 +853,10 @@ module.exports = ->
     Zepto("#user-info").show()
     Zepto("#progress").html "Bundle: \"#{bundleName}\"<br>##{num} out of #{total}"
     Zepto("#total-score").text userData.totalScore
+    if not persist.getUserId()?
+      Zepto("#user-info .login-link").show()
+    else
+      Zepto("#user-info .login-link").hide()
 
     # owl position
     owlWidth = Zepto("#owl").width()
@@ -975,6 +994,12 @@ module.exports = ->
       $("#help-button").on "click", onHelp
       $("#cancel").on "click", onCancel
       $("#confirm").on "click", onConfirm
+
+      # bind FB login modal
+      $(".login-link").on "click", ->
+        FB.login (response) ->
+          persist.setUserId response
+          onFbLogin()
 
       startOwlBlink()
 

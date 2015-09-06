@@ -210,6 +210,12 @@ body {
 #total-score {
   font-weight: bold;
 }
+.login-link {
+  display: none;
+  font-size: 90%;
+  cursor: pointer;
+  text-decoration: underline;
+}
 
 #owl {
   position: absolute;

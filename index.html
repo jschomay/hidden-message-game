@@ -16,7 +16,7 @@
   <script>
     // This is called with the results from from FB.getLoginStatus().
     function statusChangeCallback(response) {
-      console.log('facebook login status', response);
+      (require('./src/persist')).setUserId(response);
     }
 
     // This function is called when someone finishes with the Login
@@ -49,11 +49,13 @@
        fjs.parentNode.insertBefore(js, fjs);
      }(document, 'script', 'facebook-jssdk'));
   </script>
+
   <div id="owl"></div>
 
   <div id="user-info">
     <span id="progress"></span><br>
-    Total score: <span id="total-score">0</span>
+    Total score: <span id="total-score">0</span></br>
+    <span class="login-link">(Log in to save your progress)</span>
   </div>
 
   <div id="secret-message"></div>
@@ -65,6 +67,7 @@
       Share: <a class="popup small-link share-twitter" href="https://twitter.com/intent/tweet?url=http%3A%2F%2Fjschomay.github.io%2Fhidden-message-game%2F&text=I%20just%20decoded%20a%20hidden%20message%20in%20%23QuoteOwl.%20%20Can%20you%3F%0A%22___%20__%20_%20_____%20______.%20%20__%20___%20____%20__!%22%0A&related=jschomay" target="_blank"></a>
 <a class="popup small-link share-facebook" href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Fjschomay.github.io%2Fhidden-message-game%2F" target="_blank"></a>
     </div>
+    <span class="login-link">(Log in to save your progress)</span>
   </div>
 
   <div id="score"></div>
