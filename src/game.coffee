@@ -7,6 +7,7 @@
   noMoreQuotes
   bundleCompleted
 } = require "./bundles"
+persist = require "./persist"
 track = require "./analytics"
 
 module.exports = ->
@@ -205,8 +206,8 @@ module.exports = ->
         setStateClass "start"
 
       onEvent: (eventData, scope, trigger, userData) ->
-        if trigger is "start"
-          ["loading", scope, userData]
+        if trigger is "gameReady"
+          ["loadingUser", scope, userData]
         else
           ["start", scope, userData]
 
@@ -216,9 +217,26 @@ module.exports = ->
         score: ""
         showPlayActions: false
 
+    loadingUser:
+      onEnter: (scope, userData) ->
+        setStateClass "loadingUser"
+        getUserData(userData)
+
+      onEvent: (eventData, scope, trigger, userData) ->
+        if trigger is "userLoaded"
+          return ["loading", scope, eventData]
+        else
+          return ["loadingUser", scope, userData]
+
+      getRenderData: ->
+        secretMessage: []
+        feedback: "LOADING..."
+        score: ""
+        showPlayActions: false
+
     loading:
       onEnter: (scope, userData) ->
-        setStateClass "start"
+        setStateClass "loading"
         fetchQuote(userData)
 
       onEvent: (eventData, scope, trigger, userData) ->
@@ -586,15 +604,21 @@ module.exports = ->
   # In an FRP style, this could be done by folding over events instead.
   # It is called by all game events with the event trigger and event data.
   updateFrame = (trigger, data) ->
-    @store = onFrameEnter @store, trigger, data
+    # "before all" - a chance to change the store and state
+    [@store, @currentState, @userData] = onFrameEnter @store, @currentState, trigger, data, @userData
     {state, scope, userData} = frame {state: @currentState, scope: @store, userData: @userData}, trigger, data
     @currentState = state
     @store = scope
     @userData = userData
 
+  updateFrame.userData = {}
+  updateFrame.store = {}
+  updateFrame.currentState = states.start
+  updateFrame = updateFrame.bind updateFrame
+
 
   # code to run on every frame regardless of which state is active
-  onFrameEnter = (scope, trigger, eventData) ->
+  onFrameEnter = (scope, state, trigger, eventData, userData) ->
     if trigger is "toggleMuteMusic"
       if scope.musicIsPaused
         playMusic()
@@ -618,7 +642,7 @@ module.exports = ->
     if trigger is "cancel" and scope.showHelp
       scope.showHelp = !scope.showHelp
 
-    scope
+    [scope, state, userData]
 
 
 
@@ -942,13 +966,6 @@ module.exports = ->
         track shareType
         false
 
-      # initialize main loop with starting state
-      updateFrame.currentState = states.start
-      updateFrame.store = {}
-      userData = getUserData()
-      updateFrame.userData = userData
-      updateFrame = updateFrame.bind updateFrame
-
       # bind inputs
       $(document).on "keydown", onKeyDown
       $("#give-up-button").on "click", onGiveUp
@@ -961,9 +978,10 @@ module.exports = ->
 
       startOwlBlink()
 
-      updateFrame "start"
+      updateFrame "gameReady"
 
-  getUserData = ->
+
+  getUserData = (progress) ->
     currentPlayerDefaults =
       hintsRemaining: CONSTANTS.startingHints
       totalScore: 0
@@ -971,16 +989,28 @@ module.exports = ->
       lastSolvedQuoteIndex: undefined
       progressPerBundle: undefined
 
-    currentPlayer = JSON.parse localStorage.getItem "currentPlayer"
+    hasProgress = R.values(progress).length
+    userData = if hasProgress then progress else currentPlayerDefaults
 
-    if not currentPlayer
-      saveUserData currentPlayerDefaults
+    persist.load().then (currentPlayer) ->
+      if not currentPlayer
+        saveUserData userData
+        updateFrame "userLoaded", userData
+      else
+        playerData = currentPlayer.toJSON()
+        plays = playerData.plays or 0
+        playerData.plays = plays + 1
+        # update play count
+        saveUserData playerData
 
-    # merge to update persisted data schema
-    R.merge currentPlayerDefaults, currentPlayer
+        # merge to update persisted data schema
+        updateFrame "userLoaded", R.merge userData, playerData
+    , (error) ->
+      console.error "Error loading user data:", error
+      updateFrame "userLoaded", userData
 
   saveUserData = (userData) ->
-    localStorage.setItem "currentPlayer", JSON.stringify userData
+    persist.save userData
 
 
   # kick off game

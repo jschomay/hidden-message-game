@@ -325,9 +325,11 @@ module.exports = [
 });
 
 require.register("src/game", function(exports, require, module) {
-var bundleCompleted, bundleNames, getNextQuoteIndex, noMoreQuotes, quoteBundles, track, updateProgressPerBundle, _ref;
+var bundleCompleted, bundleNames, getNextQuoteIndex, noMoreQuotes, persist, quoteBundles, track, updateProgressPerBundle, _ref;
 
 _ref = require("./bundles"), quoteBundles = _ref.quoteBundles, bundleNames = _ref.bundleNames, getNextQuoteIndex = _ref.getNextQuoteIndex, updateProgressPerBundle = _ref.updateProgressPerBundle, noMoreQuotes = _ref.noMoreQuotes, bundleCompleted = _ref.bundleCompleted;
+
+persist = require("./persist");
 
 track = require("./analytics");
 
@@ -548,8 +550,8 @@ module.exports = function() {
         return setStateClass("start");
       },
       onEvent: function(eventData, scope, trigger, userData) {
-        if (trigger === "start") {
-          return ["loading", scope, userData];
+        if (trigger === "gameReady") {
+          return ["loadingUser", scope, userData];
         } else {
           return ["start", scope, userData];
         }
@@ -563,9 +565,30 @@ module.exports = function() {
         };
       }
     },
+    loadingUser: {
+      onEnter: function(scope, userData) {
+        setStateClass("loadingUser");
+        return getUserData(userData);
+      },
+      onEvent: function(eventData, scope, trigger, userData) {
+        if (trigger === "userLoaded") {
+          return ["loading", scope, eventData];
+        } else {
+          return ["loadingUser", scope, userData];
+        }
+      },
+      getRenderData: function() {
+        return {
+          secretMessage: [],
+          feedback: "LOADING...",
+          score: "",
+          showPlayActions: false
+        };
+      }
+    },
     loading: {
       onEnter: function(scope, userData) {
-        setStateClass("start");
+        setStateClass("loading");
         return fetchQuote(userData);
       },
       onEvent: function(eventData, scope, trigger, userData) {
@@ -913,18 +936,22 @@ module.exports = function() {
     };
   };
   updateFrame = function(trigger, data) {
-    var scope, state, userData, _ref1;
-    this.store = onFrameEnter(this.store, trigger, data);
-    _ref1 = frame({
+    var scope, state, userData, _ref1, _ref2;
+    _ref1 = onFrameEnter(this.store, this.currentState, trigger, data, this.userData), this.store = _ref1[0], this.currentState = _ref1[1], this.userData = _ref1[2];
+    _ref2 = frame({
       state: this.currentState,
       scope: this.store,
       userData: this.userData
-    }, trigger, data), state = _ref1.state, scope = _ref1.scope, userData = _ref1.userData;
+    }, trigger, data), state = _ref2.state, scope = _ref2.scope, userData = _ref2.userData;
     this.currentState = state;
     this.store = scope;
     return this.userData = userData;
   };
-  onFrameEnter = function(scope, trigger, eventData) {
+  updateFrame.userData = {};
+  updateFrame.store = {};
+  updateFrame.currentState = states.start;
+  updateFrame = updateFrame.bind(updateFrame);
+  onFrameEnter = function(scope, state, trigger, eventData, userData) {
     if (trigger === "toggleMuteMusic") {
       if (scope.musicIsPaused) {
         playMusic();
@@ -947,7 +974,7 @@ module.exports = function() {
     if (trigger === "cancel" && scope.showHelp) {
       scope.showHelp = !scope.showHelp;
     }
-    return scope;
+    return [scope, state, userData];
   };
   fetchQuote = function(userData) {
     var message, nextQuote, source;
@@ -1232,7 +1259,6 @@ module.exports = function() {
   };
   startGame = function() {
     return Zepto(function($) {
-      var userData;
       fadeInMusic();
       $('.popup').click(function() {
         var height, left, opts, shareType, top, url, width;
@@ -1247,11 +1273,6 @@ module.exports = function() {
         track(shareType);
         return false;
       });
-      updateFrame.currentState = states.start;
-      updateFrame.store = {};
-      userData = getUserData();
-      updateFrame.userData = userData;
-      updateFrame = updateFrame.bind(updateFrame);
       $(document).on("keydown", onKeyDown);
       $("#give-up-button").on("click", onGiveUp);
       $("#hint-button").on("click", onHint);
@@ -1261,11 +1282,11 @@ module.exports = function() {
       $("#cancel").on("click", onCancel);
       $("#confirm").on("click", onConfirm);
       startOwlBlink();
-      return updateFrame("start");
+      return updateFrame("gameReady");
     });
   };
-  getUserData = function() {
-    var currentPlayer, currentPlayerDefaults;
+  getUserData = function(progress) {
+    var currentPlayerDefaults, hasProgress, userData;
     currentPlayerDefaults = {
       hintsRemaining: CONSTANTS.startingHints,
       totalScore: 0,
@@ -1273,16 +1294,92 @@ module.exports = function() {
       lastSolvedQuoteIndex: void 0,
       progressPerBundle: void 0
     };
-    currentPlayer = JSON.parse(localStorage.getItem("currentPlayer"));
-    if (!currentPlayer) {
-      saveUserData(currentPlayerDefaults);
-    }
-    return R.merge(currentPlayerDefaults, currentPlayer);
+    hasProgress = R.values(progress).length;
+    userData = hasProgress ? progress : currentPlayerDefaults;
+    return persist.load().then(function(currentPlayer) {
+      var playerData, plays;
+      if (!currentPlayer) {
+        saveUserData(userData);
+        return updateFrame("userLoaded", userData);
+      } else {
+        playerData = currentPlayer.toJSON();
+        plays = playerData.plays || 0;
+        playerData.plays = plays + 1;
+        saveUserData(playerData);
+        return updateFrame("userLoaded", R.merge(userData, playerData));
+      }
+    }, function(error) {
+      console.error("Error loading user data:", error);
+      return updateFrame("userLoaded", userData);
+    });
   };
   saveUserData = function(userData) {
-    return localStorage.setItem("currentPlayer", JSON.stringify(userData));
+    return persist.save(userData);
   };
   return preload();
+};
+
+});
+
+require.register("src/persist", function(exports, require, module) {
+var Player, getUserId, savedPlayer;
+
+Parse.initialize("iul0cVOM5mJWAj1HHBa158cpMoyEQ2wWxSK3Go9O", "pbFnYPVaSunEmgjI8qTKqkW8nHKoB6Xor1DtOWpD");
+
+getUserId = function() {
+  return window.facebookId || void 0;
+};
+
+Player = Parse.Object.extend("FacebookPlayer");
+
+savedPlayer = void 0;
+
+module.exports = {
+  save: function(data) {
+    var userId;
+    userId = getUserId();
+    if (!userId) {
+      return;
+    }
+    if (!savedPlayer) {
+      savedPlayer = new Player();
+      savedPlayer.set("userId", "" + userId);
+      return savedPlayer.save(data).then(function(player) {
+        return true;
+      }, function(error) {
+        return console.error(error);
+      });
+    } else {
+      return savedPlayer.save(data).then(function(player) {
+        return true;
+      }, function(error) {
+        return console.error(error);
+      });
+    }
+  },
+  load: function() {
+    var immediate, playerPromise, query, userId;
+    userId = getUserId();
+    if (userId) {
+      query = new Parse.Query(Player);
+      query.equalTo("userId", "" + userId);
+      playerPromise = query.first();
+      playerPromise.then(function(player) {
+        if (player) {
+          return savedPlayer = player;
+        }
+      }, function(error) {
+        return console.error(error);
+      });
+      return playerPromise;
+    } else {
+      immediate = new Parse.Promise();
+      setTimeout((function() {
+        return immediate.resolve();
+      }), 0);
+      return immediate;
+    }
+  }
 };
 
 });
