@@ -703,8 +703,10 @@ module.exports = ->
     e.preventDefault()
     updateFrame "confirm", null
 
-  onFbLogin = (e) ->
-    updateFrame "loggedIn", null
+  onLogin = (e) ->
+    FB.login (response) ->
+      persist.setUserId response
+      updateFrame "loggedIn"
 
 
   # drawing
@@ -985,6 +987,8 @@ module.exports = ->
         track shareType
         false
 
+      startOwlBlink()
+
       # bind inputs
       $(document).on "keydown", onKeyDown
       $("#give-up-button").on "click", onGiveUp
@@ -994,16 +998,11 @@ module.exports = ->
       $("#help-button").on "click", onHelp
       $("#cancel").on "click", onCancel
       $("#confirm").on "click", onConfirm
+      $(".login-link").on "click", onLogin
 
-      # bind FB login modal
-      $(".login-link").on "click", ->
-        FB.login (response) ->
-          persist.setUserId response
-          onFbLogin()
-
-      startOwlBlink()
-
-      updateFrame "gameReady"
+      # start the game
+      persist.waitForUserStatus().then ->
+        updateFrame "gameReady"
 
 
   getUserData = (progress) ->

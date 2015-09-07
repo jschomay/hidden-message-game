@@ -14,20 +14,6 @@
 </head>
 <body>
   <script>
-    // This is called with the results from from FB.getLoginStatus().
-    function statusChangeCallback(response) {
-      (require('./src/persist')).setUserId(response);
-    }
-
-    // This function is called when someone finishes with the Login
-    // Button.  See the onlogin handler attached to it in the sample
-    // code below.
-    function checkLoginState() {
-      FB.getLoginStatus(function(response) {
-        statusChangeCallback(response);
-      });
-    }
-
     window.fbAsyncInit = function() {
       FB.init({
         appId      : '818413578278389',
@@ -35,10 +21,8 @@
         version    : 'v2.4'
       });
 
-      // ADD ADDITIONAL FACEBOOK CODE HERE
-      FB.getLoginStatus(function(response) {
-        statusChangeCallback(response);
-      });
+      // kick off initial login status call
+      FB.getLoginStatus( (require('./src/persist')).setUserStatus );
     };
 
     (function(d, s, id){

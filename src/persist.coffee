@@ -1,11 +1,12 @@
 Parse.initialize("iul0cVOM5mJWAj1HHBa158cpMoyEQ2wWxSK3Go9O", "pbFnYPVaSunEmgjI8qTKqkW8nHKoB6Xor1DtOWpD");
 
 userId = undefined
+userStatusPromise = new Parse.Promise()
 
 Player = Parse.Object.extend("FacebookPlayer")
 savedPlayer = undefined
 
-module.exports =
+api = module.exports =
   save: (data) ->
     userId = userId
     return if not userId
@@ -40,9 +41,13 @@ module.exports =
       return immediate
 
   setUserId: (response) ->
-    console.log 'setUserId', response
     return if response.status isnt 'connected'
-
     userId = response.authResponse.userID
+
+  setUserStatus: (response) ->
+    api.setUserId response
+    userStatusPromise.resolve response
+
+  waitForUserStatus: -> userStatusPromise
 
   getUserId: -> userId

@@ -334,7 +334,7 @@ persist = require("./persist");
 track = require("./analytics");
 
 module.exports = function() {
-  var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeInMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadImages, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancel, onConfirm, onFbLogin, onFrameEnter, onGiveUp, onHelp, onHint, onKeyDown, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, setStateClass, startGame, startOwlBlink, states, updateDecodeKey, updateFrame, updateLoadProgress;
+  var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeInMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadImages, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancel, onConfirm, onFrameEnter, onGiveUp, onHelp, onHint, onKeyDown, onLogin, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, setStateClass, startGame, startOwlBlink, states, updateDecodeKey, updateFrame, updateLoadProgress;
   CONSTANTS = {
     startingHints: 3,
     hintSetback: 40,
@@ -1031,8 +1031,11 @@ module.exports = function() {
     e.preventDefault();
     return updateFrame("confirm", null);
   };
-  onFbLogin = function(e) {
-    return updateFrame("loggedIn", null);
+  onLogin = function(e) {
+    return FB.login(function(response) {
+      persist.setUserId(response);
+      return updateFrame("loggedIn");
+    });
   };
   buildSecretMessage = function(secretMessage) {
     var buildMarkup, statusMap;
@@ -1292,6 +1295,7 @@ module.exports = function() {
         track(shareType);
         return false;
       });
+      startOwlBlink();
       $(document).on("keydown", onKeyDown);
       $("#give-up-button").on("click", onGiveUp);
       $("#hint-button").on("click", onHint);
@@ -1300,14 +1304,10 @@ module.exports = function() {
       $("#help-button").on("click", onHelp);
       $("#cancel").on("click", onCancel);
       $("#confirm").on("click", onConfirm);
-      $(".login-link").on("click", function() {
-        return FB.login(function(response) {
-          persist.setUserId(response);
-          return onFbLogin();
-        });
+      $(".login-link").on("click", onLogin);
+      return persist.waitForUserStatus().then(function() {
+        return updateFrame("gameReady");
       });
-      startOwlBlink();
-      return updateFrame("gameReady");
     });
   };
   getUserData = function(progress) {
@@ -1347,17 +1347,19 @@ module.exports = function() {
 });
 
 require.register("src/persist", function(exports, require, module) {
-var Player, savedPlayer, userId;
+var Player, api, savedPlayer, userId, userStatusPromise;
 
 Parse.initialize("iul0cVOM5mJWAj1HHBa158cpMoyEQ2wWxSK3Go9O", "pbFnYPVaSunEmgjI8qTKqkW8nHKoB6Xor1DtOWpD");
 
 userId = void 0;
 
+userStatusPromise = new Parse.Promise();
+
 Player = Parse.Object.extend("FacebookPlayer");
 
 savedPlayer = void 0;
 
-module.exports = {
+api = module.exports = {
   save: function(data) {
     userId = userId;
     if (!userId) {
@@ -1403,11 +1405,17 @@ module.exports = {
     }
   },
   setUserId: function(response) {
-    console.log('setUserId', response);
     if (response.status !== 'connected') {
       return;
     }
     return userId = response.authResponse.userID;
+  },
+  setUserStatus: function(response) {
+    api.setUserId(response);
+    return userStatusPromise.resolve(response);
+  },
+  waitForUserStatus: function() {
+    return userStatusPromise;
   },
   getUserId: function() {
     return userId;
