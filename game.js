@@ -108,7 +108,7 @@ module.exports = function(eventName, scope, userData, dimensions) {
   if (dimensions == null) {
     dimensions = {};
   }
-  dimensions.platform = "direct";
+  dimensions.platform = "facebook";
   if (userData.lastSolvedBundleIndex) {
     nextQuote = getNextQuoteIndex(userData.lastSolvedBundleIndex, userData.lastSolvedQuoteIndex);
     round = "" + bundleNames[nextQuote.bundleIndex] + "-" + (nextQuote.quoteIndex + 1);
