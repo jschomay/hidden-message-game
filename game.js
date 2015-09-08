@@ -334,7 +334,7 @@ persist = require("./persist");
 track = require("./analytics");
 
 module.exports = function() {
-  var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeInMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadImages, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancel, onConfirm, onFrameEnter, onGiveUp, onHelp, onHint, onKeyDown, onLogin, onMuteMusic, onMuteSFX, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, setStateClass, startGame, startOwlBlink, states, updateDecodeKey, updateFrame, updateLoadProgress;
+  var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeInMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadImages, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancel, onConfirm, onFrameEnter, onGiveUp, onHelp, onHint, onKeyDown, onLogin, onMuteMusic, onMuteSFX, onShare, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, setStateClass, startGame, startOwlBlink, states, updateDecodeKey, updateFrame, updateLoadProgress;
   CONSTANTS = {
     startingHints: 3,
     hintSetback: 40,
@@ -938,21 +938,21 @@ module.exports = function() {
     };
   };
   updateFrame = function(trigger, data) {
-    var scope, state, userData, _ref1, _ref2;
-    _ref1 = onFrameEnter(this.store, this.currentState, trigger, data, this.userData), this.store = _ref1[0], this.currentState = _ref1[1], this.userData = _ref1[2];
+    var scope, self, state, userData, _ref1, _ref2;
+    self = updateFrame;
+    _ref1 = onFrameEnter(self.store, self.currentState, trigger, data, self.userData), self.store = _ref1[0], self.currentState = _ref1[1], self.userData = _ref1[2];
     _ref2 = frame({
-      state: this.currentState,
-      scope: this.store,
-      userData: this.userData
+      state: self.currentState,
+      scope: self.store,
+      userData: self.userData
     }, trigger, data), state = _ref2.state, scope = _ref2.scope, userData = _ref2.userData;
-    this.currentState = state;
-    this.store = scope;
-    return this.userData = userData;
+    self.currentState = state;
+    self.store = scope;
+    return self.userData = userData;
   };
   updateFrame.userData = {};
   updateFrame.store = {};
   updateFrame.currentState = states.start;
-  updateFrame = updateFrame.bind(updateFrame);
   onFrameEnter = function(scope, state, trigger, eventData, userData) {
     if (trigger === "toggleMuteMusic") {
       if (scope.musicIsPaused) {
@@ -1031,6 +1031,23 @@ module.exports = function() {
     e.preventDefault();
     return updateFrame("confirm", null);
   };
+  onShare = function(e) {
+    var bundleName, hiddenQuote, moves, quoteNumber;
+    hiddenQuote = updateFrame.store.secretMessage.replace(/[a-zA-Z]/ig, '_');
+    bundleName = bundleNames[updateFrame.store.currentBundleIndex];
+    quoteNumber = updateFrame.store.currentQuoteIndex + 1;
+    moves = updateFrame.store.moves;
+    return FB.ui({
+      method: 'feed',
+      caption: "" + bundleName + " bundle #" + quoteNumber,
+      description: "\"" + hiddenQuote + "\"",
+      picture: 'http://jschomay.github.io/hidden-message-game/assets/owl-happy.png',
+      link: "https://apps.facebook.com/quote-decoder/?fb_source=feed",
+      name: "I just decoded this quote in " + moves + " moves, can you?"
+    }, function() {
+      return track('share');
+    });
+  };
   onLogin = function(e) {
     return FB.login(function(response) {
       persist.setUserId(response);
@@ -1091,9 +1108,9 @@ module.exports = function() {
       Zepto("#feedback .login-link").hide();
     }
     if (renderData.solved) {
-      Zepto("#share").show();
+      Zepto("#social").show();
     } else {
-      Zepto("#share").hide();
+      Zepto("#social").hide();
     }
     if (showPlayActions) {
       Zepto("#play-actions").show();
@@ -1282,19 +1299,6 @@ module.exports = function() {
   startGame = function() {
     return Zepto(function($) {
       fadeInMusic();
-      $('.popup').click(function() {
-        var height, left, opts, shareType, top, url, width;
-        width = 575;
-        height = 400;
-        left = ($(window).width() - width) / 2;
-        top = ($(window).height() - height) / 2;
-        url = this.href;
-        opts = "status=1,width=" + width + ",height=" + height + ",top=" + top + ",left=" + left;
-        window.open(url, 'Share', opts);
-        shareType = /twitter/.test(this.href) ? "tweet" : "facebook";
-        track(shareType);
-        return false;
-      });
       startOwlBlink();
       $(document).on("keydown", onKeyDown);
       $("#give-up-button").on("click", onGiveUp);
@@ -1304,6 +1308,7 @@ module.exports = function() {
       $("#help-button").on("click", onHelp);
       $("#cancel").on("click", onCancel);
       $("#confirm").on("click", onConfirm);
+      $("#share").on("click", onShare);
       $(".login-link").on("click", onLogin);
       return persist.waitForUserStatus().then(function() {
         return updateFrame("gameReady");

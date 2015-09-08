@@ -606,17 +606,17 @@ module.exports = ->
   # In an FRP style, this could be done by folding over events instead.
   # It is called by all game events with the event trigger and event data.
   updateFrame = (trigger, data) ->
+    self = updateFrame
     # "before all" - a chance to change the store and state
-    [@store, @currentState, @userData] = onFrameEnter @store, @currentState, trigger, data, @userData
-    {state, scope, userData} = frame {state: @currentState, scope: @store, userData: @userData}, trigger, data
-    @currentState = state
-    @store = scope
-    @userData = userData
+    [self.store, self.currentState, self.userData] = onFrameEnter self.store, self.currentState, trigger, data, self.userData
+    {state, scope, userData} = frame {state: self.currentState, scope: self.store, userData: self.userData}, trigger, data
+    self.currentState = state
+    self.store = scope
+    self.userData = userData
 
   updateFrame.userData = {}
   updateFrame.store = {}
   updateFrame.currentState = states.start
-  updateFrame = updateFrame.bind updateFrame
 
 
   # code to run on every frame regardless of which state is active
@@ -703,6 +703,20 @@ module.exports = ->
     e.preventDefault()
     updateFrame "confirm", null
 
+  onShare = (e) ->
+    hiddenQuote = updateFrame.store.secretMessage.replace(/[a-zA-Z]/ig, '_')
+    bundleName = bundleNames[updateFrame.store.currentBundleIndex ]
+    quoteNumber = updateFrame.store.currentQuoteIndex + 1
+    moves = updateFrame.store.moves
+    FB.ui
+      method: 'feed'
+      caption: "#{bundleName} bundle ##{quoteNumber}"
+      description: "\"#{hiddenQuote}\""
+      picture: 'http://jschomay.github.io/hidden-message-game/assets/owl-happy.png'
+      link: "https://apps.facebook.com/quote-decoder/?fb_source=feed"
+      name: "I just decoded this quote in #{moves} moves, can you?"
+    , -> track 'share'
+
   onLogin = (e) ->
     FB.login (response) ->
       persist.setUserId response
@@ -760,11 +774,11 @@ module.exports = ->
     else
       Zepto("#feedback .login-link").hide()
 
-    # share
+    # social
     if renderData.solved
-      Zepto("#share").show()
+      Zepto("#social").show()
     else
-      Zepto("#share").hide()
+      Zepto("#social").hide()
 
     # hint and give up buttons
     if showPlayActions
@@ -973,20 +987,6 @@ module.exports = ->
     Zepto ($) ->
       fadeInMusic()
 
-      #set up share links
-      $('.popup').click ->
-        width = 575
-        height = 400
-        left = ($(window).width()  - width)  / 2
-        top = ($(window).height() - height) / 2
-        url = this.href
-        opts = "status=1,width=#{width},height=#{height},top=#{top},left=#{left}"
-        window.open(url, 'Share', opts)
-
-        shareType = if /twitter/.test(this.href) then "tweet" else "facebook"
-        track shareType
-        false
-
       startOwlBlink()
 
       # bind inputs
@@ -998,6 +998,7 @@ module.exports = ->
       $("#help-button").on "click", onHelp
       $("#cancel").on "click", onCancel
       $("#confirm").on "click", onConfirm
+      $("#share").on "click", onShare
       $(".login-link").on "click", onLogin
 
       # start the game

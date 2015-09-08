@@ -73,19 +73,13 @@ body {
   color: #ddaaaa;
 }
 
-#share {
+#social {
   display: none;
   margin-top: 20px;
 }
-#share a {
-  font-size: 30px;
-  margin: 0;
-}
-.share-twitter:after {
-  content: "\f243";
-}
-.share-facebook:after {
-  content: "\f231";
+#social .button {
+  display: inline-block;
+  margin: 0 10px 20px 10px;
 }
 
 #score {
