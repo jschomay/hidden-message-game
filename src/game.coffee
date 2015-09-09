@@ -717,6 +717,12 @@ module.exports = ->
       name: "I just decoded this quote in #{moves} moves, can you?"
     , -> track 'share'
 
+  onInvite = (e) =>
+    FB.ui
+      method: 'apprequests'
+      message: 'I\'ve been playing this word puzzle game and think it\'s fun.  You should try it out.'
+    , -> track 'invite'
+
   onLogin = (e) ->
     FB.login (response) ->
       persist.setUserId response
@@ -999,12 +1005,12 @@ module.exports = ->
       $("#cancel").on "click", onCancel
       $("#confirm").on "click", onConfirm
       $("#share").on "click", onShare
+      $("#invite").on "click", onInvite
       $(".login-link").on "click", onLogin
 
       # start the game
       persist.waitForUserStatus().then ->
         updateFrame "gameReady"
-
 
   getUserData = (progress) ->
     currentPlayerDefaults =

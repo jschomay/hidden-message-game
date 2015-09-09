@@ -334,7 +334,8 @@ persist = require("./persist");
 track = require("./analytics");
 
 module.exports = function() {
-  var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeInMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadImages, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancel, onConfirm, onFrameEnter, onGiveUp, onHelp, onHint, onKeyDown, onLogin, onMuteMusic, onMuteSFX, onShare, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, setStateClass, startGame, startOwlBlink, states, updateDecodeKey, updateFrame, updateLoadProgress;
+  var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeInMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadImages, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancel, onConfirm, onFrameEnter, onGiveUp, onHelp, onHint, onInvite, onKeyDown, onLogin, onMuteMusic, onMuteSFX, onShare, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, setStateClass, startGame, startOwlBlink, states, updateDecodeKey, updateFrame, updateLoadProgress,
+    _this = this;
   CONSTANTS = {
     startingHints: 3,
     hintSetback: 40,
@@ -1048,6 +1049,14 @@ module.exports = function() {
       return track('share');
     });
   };
+  onInvite = function(e) {
+    return FB.ui({
+      method: 'apprequests',
+      message: 'I\'ve been playing this word puzzle game and think it\'s fun.  You should try it out.'
+    }, function() {
+      return track('invite');
+    });
+  };
   onLogin = function(e) {
     return FB.login(function(response) {
       persist.setUserId(response);
@@ -1309,6 +1318,7 @@ module.exports = function() {
       $("#cancel").on("click", onCancel);
       $("#confirm").on("click", onConfirm);
       $("#share").on("click", onShare);
+      $("#invite").on("click", onInvite);
       $(".login-link").on("click", onLogin);
       return persist.waitForUserStatus().then(function() {
         return updateFrame("gameReady");
