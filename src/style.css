@@ -55,6 +55,9 @@ body {
   bottom: 0;
   left: 0;
 }
+.letter.revealed:before, .letter.hintedfilled:before {
+  color: #62D3FB;
+}
 .letter.solved:before {
   content: "";
   display: none;
