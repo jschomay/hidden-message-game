@@ -1,0 +1,14 @@
+@media only screen and (max-device-width: 480px) {
+  #game {
+    height: auto;
+    bottom: 150px;
+  }
+  #keyboard-container {
+    height: 150px;
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    left: 0px;
+    border: 1px solid #e5e5e5;
+  }
+}

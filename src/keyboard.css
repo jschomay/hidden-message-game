@@ -1,0 +1,29 @@
+#keyboard {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  height: 150px;
+}
+
+.keyboard__row {
+  margin: 5px 0;
+  position: relative;
+  text-align: center;
+}
+
+
+.keyboard__key {
+  display: inline-block;
+  width: 7.7%;
+  height: 40px;
+  font-family: Helvetica;
+  font-size: 16px;
+  line-height: 40px;
+  text-transform: uppercase;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 5px;
+}
+.keyboard__key:active {
+  background-color: #ddd;
+}

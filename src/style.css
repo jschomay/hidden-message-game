@@ -1,12 +1,28 @@
 body,
 html {
   height: 100%;
+  margin: 0;
+  padding: 0;
 }
 body {
   background-image: url(../assets/paper-texture.jpg);
   padding: 0;
   margin: 0;
+  height: 100%;
+  overflow: hidden;
   font-family: 'Averia Libre', Helvetica;
+}
+
+#game {
+  height: 100%;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+#keyboard-container {
+  height: 0%;
+  overflow: hidden;
 }
 #load-font {
   visibility: hidden;

@@ -6,6 +6,7 @@
   <link rel="stylesheet" type="text/css" href="css/ionicons.min.css" />
   <link rel="stylesheet" type="text/css" href="css/game.css" />
   <link href='http://fonts.googleapis.com/css?family=Cabin+Sketch:700|Averia+Libre' rel='stylesheet' type='text/css'>
+  <meta name ="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
   <script src="vendor.js"></script>
   <script src="game.js"></script>
   <script>
@@ -13,43 +14,50 @@
   </script>
 </head>
 <body>
-  <div id="owl"></div>
+  <div id="game">
+    <div id="owl"></div>
 
-  <div id="user-info">
-    <span id="progress"></span><br>
-    Total score: <span id="total-score">0</span>
-  </div>
+    <div id="user-info">
+      <span id="progress"></span><br>
+      Total score: <span id="total-score">0</span>
+    </div>
 
-  <div id="secret-message"></div>
-  <div id="source"></div>
+    <div id="secret-message"></div>
+    <div id="source"></div>
 
-  <div id="feedback">
-    <span id="message">LOADING...</span>
-    <div id="share">
-      Share: <a class="popup small-link share-twitter" href="https://twitter.com/intent/tweet?url=http%3A%2F%2Fjschomay.github.io%2Fhidden-message-game%2F&text=I%20just%20decoded%20a%20hidden%20message%20in%20%23QuoteOwl.%20%20Can%20you%3F%0A%22___%20__%20_%20_____%20______.%20%20__%20___%20____%20__!%22%0A&related=jschomay" target="_blank"></a>
-<a class="popup small-link share-facebook" href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Fjschomay.github.io%2Fhidden-message-game%2F" target="_blank"></a>
+    <div id="feedback">
+      <span id="message">LOADING...</span>
+      <div id="share">
+        Share: <a class="popup small-link share-twitter" href="https://twitter.com/intent/tweet?url=http%3A%2F%2Fjschomay.github.io%2Fhidden-message-game%2F&text=I%20just%20decoded%20a%20hidden%20message%20in%20%23QuoteOwl.%20%20Can%20you%3F%0A%22___%20__%20_%20_____%20______.%20%20__%20___%20____%20__!%22%0A&related=jschomay" target="_blank"></a>
+  <a class="popup small-link share-facebook" href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Fjschomay.github.io%2Fhidden-message-game%2F" target="_blank"></a>
+      </div>
+    </div>
+
+    <div id="score"></div>
+
+    <div id="play-actions">
+      <div id="give-up-button" class="button secondary">give up</div>
+      <div id="hint-button" class="button">hint (<span class="hints-remaining"></span>)</div>
+    </div>
+
+    <div id="settings">
+      <div id="mute-music-button" class="small-link"></div>
+      <div id="mute-sfx-button" class="small-link"></div>
+      <div id="help-button" class="small-link"></div>
+    </div>
+
+    <div id="dialog" class="dialog">
+      <h3></h3>
+      <div id="message-content"></div> 
+      <div id="cancel" class="button"></div>
+      <div id="confirm" class="button"></div>
     </div>
   </div>
 
-  <div id="score"></div>
-
-  <div id="play-actions">
-    <div id="give-up-button" class="button secondary">give up</div>
-    <div id="hint-button" class="button">hint (<span class="hints-remaining"></span>)</div>
-  </div>
-
-  <div id="settings">
-    <div id="mute-music-button" class="small-link"></div>
-    <div id="mute-sfx-button" class="small-link"></div>
-    <div id="help-button" class="small-link"></div>
-  </div>
-
-  <div id="dialog" class="dialog">
-    <h3></h3>
-    <div id="message-content"></div> 
-    <div id="cancel" class="button"></div>
-    <div id="confirm" class="button"></div>
-  </div>
+  <div id="keyboard-container"></div>
+  <script>
+    $("#keyboard-container").html(require("src/keyboard"));
+  </script>
 
   <div id="load-font">-</div>
   <script>
