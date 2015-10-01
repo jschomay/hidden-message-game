@@ -218,7 +218,7 @@ module.exports = ->
 
     loading:
       onEnter: (scope, userData) ->
-        setStateClass "start"
+        setStateClass "loading"
         fetchQuote(userData)
 
       onEvent: (eventData, scope, trigger, userData) ->
