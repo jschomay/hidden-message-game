@@ -334,7 +334,7 @@ persist = require("./persist");
 track = require("./analytics");
 
 module.exports = function() {
-  var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeInMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadImages, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancel, onConfirm, onFrameEnter, onGiveUp, onHelp, onHint, onInvite, onKeyDown, onLogin, onMuteMusic, onMuteSFX, onShare, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, setStateClass, startGame, startOwlBlink, states, updateDecodeKey, updateFrame, updateLoadProgress,
+  var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeInMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadImages, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancel, onConfirm, onFrameEnter, onGiveUp, onHelp, onHint, onInvite, onKeyDown, onKeyboardKeyPress, onLogin, onMuteMusic, onMuteSFX, onPlayAgain, onShare, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, setStateClass, startGame, startOwlBlink, states, updateDecodeKey, updateFrame, updateLoadProgress,
     _this = this;
   CONSTANTS = {
     startingHints: 3,
@@ -1004,6 +1004,18 @@ module.exports = function() {
     }
     return updateFrame("keyPress", e);
   };
+  onKeyboardKeyPress = function(e) {
+    e.preventDefault();
+    return updateFrame("keyPress", {
+      keyCode: e.target.innerHTML.charCodeAt(0) - 32
+    });
+  };
+  onPlayAgain = function(e) {
+    e.preventDefault();
+    return updateFrame("keyPress", {
+      keyCode: 32
+    });
+  };
   onGiveUp = function(e) {
     e.preventDefault();
     return updateFrame("giveUp", null);
@@ -1310,6 +1322,8 @@ module.exports = function() {
       fadeInMusic();
       startOwlBlink();
       $(document).on("keydown", onKeyDown);
+      $(".keyboard__key").on("click", onKeyboardKeyPress);
+      $("#feedback #message").on("click", onPlayAgain);
       $("#give-up-button").on("click", onGiveUp);
       $("#hint-button").on("click", onHint);
       $("#mute-music-button").on("click", onMuteMusic);
@@ -1358,6 +1372,11 @@ module.exports = function() {
   };
   return preload();
 };
+
+});
+
+require.register("src/keyboard", function(exports, require, module) {
+module.exports = '<div id="keyboard">\n  <div class="keyboard__row">\n    <div class="keyboard__key">q</div>\n    <div class="keyboard__key">w</div>\n    <div class="keyboard__key">e</div>\n    <div class="keyboard__key">r</div>\n    <div class="keyboard__key">t</div>\n    <div class="keyboard__key">y</div>\n    <div class="keyboard__key">u</div>\n    <div class="keyboard__key">i</div>\n    <div class="keyboard__key">o</div>\n    <div class="keyboard__key">p</div>\n  </div>\n  <div class="keyboard__row">\n    <div class="keyboard__key">a</div>\n    <div class="keyboard__key">s</div>\n    <div class="keyboard__key">d</div>\n    <div class="keyboard__key">f</div>\n    <div class="keyboard__key">g</div>\n    <div class="keyboard__key">h</div>\n    <div class="keyboard__key">j</div>\n    <div class="keyboard__key">k</div>\n    <div class="keyboard__key">l</div>\n  </div>\n  <div class="keyboard__row">\n    <div class="keyboard__key">z</div>\n    <div class="keyboard__key">x</div>\n    <div class="keyboard__key">c</div>\n    <div class="keyboard__key">v</div>\n    <div class="keyboard__key">b</div>\n    <div class="keyboard__key">n</div>\n    <div class="keyboard__key">m</div>\n  </div>\n</div>';
 
 });
 

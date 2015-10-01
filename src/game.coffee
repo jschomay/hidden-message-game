@@ -675,6 +675,15 @@ module.exports = ->
       e.preventDefault()
     updateFrame "keyPress", e
 
+  onKeyboardKeyPress = (e) ->
+    e.preventDefault()
+    updateFrame "keyPress", {keyCode: (e.target.innerHTML.charCodeAt(0) - 32)}
+
+  onPlayAgain = (e) ->
+    e.preventDefault()
+    #clicking on the "play again" text simulates a space keypress to toggle play again
+    updateFrame "keyPress", {keyCode: 32}
+
   onGiveUp = (e) ->
     e.preventDefault()
     updateFrame "giveUp", null
@@ -997,6 +1006,8 @@ module.exports = ->
 
       # bind inputs
       $(document).on "keydown", onKeyDown
+      $(".keyboard__key").on "click", onKeyboardKeyPress
+      $("#feedback #message").on "click", onPlayAgain
       $("#give-up-button").on "click", onGiveUp
       $("#hint-button").on "click", onHint
       $("#mute-music-button").on "click", onMuteMusic

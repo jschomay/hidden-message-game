@@ -1,12 +1,29 @@
 body,
 html {
   height: 100%;
+  margin: 0;
+  padding: 0;
 }
 body {
   background-image: url(../assets/paper-texture.jpg);
   padding: 0;
   margin: 0;
+  height: 100%;
+  overflow: hidden;
   font-family: 'Averia Libre', Helvetica;
+}
+
+#game {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+#keyboard-container {
+  height: 0%;
+  overflow: hidden;
 }
 #load-font {
   visibility: hidden;
@@ -38,22 +55,28 @@ body {
 }
 .letter {
   font: 40px courier;
-  line-height: 1.5em;
-  margin: 0px 2px;
+  line-height: 1.3em;
   color: black;
   position: relative;
   white-space: pre;
   display: inline-block;
+  margin-top: 20px;
 }
 .letter.hinted {
   color: #ddd;
 }
 .letter:before {
-  content: "_";
-  color: black;
+  content: "";
   position: absolute;
   bottom: 0;
   left: 0;
+  border-bottom: 2px solid black;
+  width: 80%;
+  right: 0;
+  margin: auto;
+}
+.letter.revealed:before, .letter.hintedfilled:before {
+  border-color: #62D3FB;
 }
 .letter.solved:before {
   content: "";
@@ -150,9 +173,10 @@ body {
   border: 2px solid #999;
   text-align: center;
   color: #666;
+  box-sizing: border-box;
   font-size: 20px;
-  height: 35%;
-  width: 60%;
+  height: 60%;
+  width: 80%;
   overflow: auto;
   margin: auto;
   padding: 50px 50px;
@@ -161,6 +185,7 @@ body {
   bottom: 100px;
   left: 0;
   right: 0;
+  z-index: 9;
 }
 #dialog h3 {
   margin-top: 0;

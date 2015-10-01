@@ -6,6 +6,7 @@
   <link rel="stylesheet" type="text/css" href="css/ionicons.min.css" />
   <link rel="stylesheet" type="text/css" href="css/game.css" />
   <link href='//fonts.googleapis.com/css?family=Cabin+Sketch:700|Averia+Libre' rel='stylesheet' type='text/css'>
+  <meta name ="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
   <script src="vendor.js"></script>
   <script src="game.js"></script>
   <script>
@@ -34,37 +35,41 @@
      }(document, 'script', 'facebook-jssdk'));
   </script>
 
-  <div id="owl"></div>
+<body class="start">
+  <div id="game">
+    <div id="owl"></div>
 
-  <div id="user-info">
-    <span id="progress"></span><br>
-    Total score: <span id="total-score">0</span></br>
-    <span class="login-link">(Log in to save your progress)</span>
-  </div>
-
-  <div id="secret-message"></div>
-  <div id="source"></div>
-
-  <div id="feedback">
-    <span id="message">LOADING...</span>
-    <div id="social">
-      <div id="share" class="button">Share</div>
-      <div id="invite" class="button">Invite a friend</div>
+    <div id="user-info">
+      <span id="progress"></span><br>
+      Total score: <span id="total-score">0</span></br>
+      <span class="login-link">(Log in to save your progress)</span>
     </div>
-    <span class="login-link">(Log in to save your progress)</span>
-  </div>
 
-  <div id="score"></div>
+    <div id="secret-message"></div>
+    <div id="source"></div>
 
-  <div id="play-actions">
-    <div id="give-up-button" class="button secondary">give up</div>
-    <div id="hint-button" class="button">hint (<span class="hints-remaining"></span>)</div>
-  </div>
+    <div id="feedback">
+      <span id="message">LOADING...</span>
+      <div id="social">
+        <div id="share" class="button">Share</div>
+        <div id="invite" class="button">Invite a friend</div>
+      </div>
+      <span class="login-link">(Log in to save your progress)</span>
+    </div>
 
-  <div id="settings">
-    <div id="mute-music-button" class="small-link"></div>
-    <div id="mute-sfx-button" class="small-link"></div>
-    <div id="help-button" class="small-link"></div>
+    <div id="score"></div>
+
+    <div id="play-actions">
+      <div id="give-up-button" class="button secondary">give up</div>
+      <div id="hint-button" class="button">hint (<span class="hints-remaining"></span>)</div>
+    </div>
+
+    <div id="settings">
+      <div id="mute-music-button" class="small-link"></div>
+      <div id="mute-sfx-button" class="small-link"></div>
+      <div id="help-button" class="small-link"></div>
+    </div>
+
   </div>
 
   <div id="dialog" class="dialog">
@@ -73,6 +78,11 @@
     <div id="cancel" class="button"></div>
     <div id="confirm" class="button"></div>
   </div>
+
+  <div id="keyboard-container"></div>
+  <script>
+    $("#keyboard-container").html(require("src/keyboard"));
+  </script>
 
   <div id="load-font">-</div>
   <script>

@@ -10,6 +10,8 @@ exports.config =
         'vendor.js': /^vendor/
     stylesheets:
       joinTo: 'css/game.css'
+      order:
+        after: ['src/mobile.css']
     templates:
       joinTo: 'js/game.js'
   sourceMaps: false
