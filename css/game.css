@@ -312,6 +312,11 @@ body.confirmedGiveUp #owl{
     height: auto;
     bottom: 130px;
   }
+
+  .confirmedGiveUp #game, .solved #game {
+    bottom: 0px;
+  }
+
   #keyboard-container {
     height: 130px;
     position: absolute;
@@ -319,6 +324,10 @@ body.confirmedGiveUp #owl{
     right: 0px;
     left: 0px;
     border: 1px solid #e5e5e5;
+  }
+
+  .confirmedGiveUp #keyboard-container, .solved #keyboard-container {
+    display: none;
   }
 
   .letter {
