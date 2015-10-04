@@ -814,7 +814,7 @@ module.exports = function() {
           secretMessage: decode(scope.secretMessage, R.map(R.always(decodeKeyStates.SOLVED), scope.decodeKey)),
           source: scope.source,
           gaveUp: true,
-          feedback: "You gave up!<br>Press 'Space bar' to play again.",
+          feedback: "You gave up!",
           score: 0,
           showPlayActions: false,
           showLogInLink: persist.getUserId() == null
@@ -853,7 +853,7 @@ module.exports = function() {
         return {
           secretMessage: decode(scope.secretMessage, scope.decodeKey),
           source: scope.source,
-          feedback: "SOLVED in " + scope.moves + " moves!<br>Press 'Space bar' to play again.",
+          feedback: "SOLVED in " + scope.moves + " moves!",
           score: scope.score,
           showPlayActions: false,
           solved: true,
@@ -1119,7 +1119,9 @@ module.exports = function() {
       $feedback.addClass("no-match");
     }
     $source.hide();
+    Zepto("#social").hide();
     if (renderData.solved || renderData.gaveUp) {
+      Zepto("#social").show();
       $source.show();
       $source.text(source || "Unknown");
     }
@@ -1129,9 +1131,9 @@ module.exports = function() {
       Zepto("#feedback .login-link").hide();
     }
     if (renderData.solved) {
-      Zepto("#social").show();
+      Zepto("#share, #invite").show();
     } else {
-      Zepto("#social").hide();
+      Zepto("#share, #invite").hide();
     }
     if (showPlayActions) {
       Zepto("#play-actions").show();
@@ -1333,6 +1335,7 @@ module.exports = function() {
       $("#confirm").on("click", onConfirm);
       $("#share").on("click", onShare);
       $("#invite").on("click", onInvite);
+      $("#next").on("click", onPlayAgain);
       $(".login-link").on("click", onLogin);
       return persist.waitForUserStatus().then(function() {
         return updateFrame("gameReady");

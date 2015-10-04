@@ -485,7 +485,7 @@ module.exports = ->
         secretMessage: decode(scope.secretMessage, R.map( R.always(decodeKeyStates.SOLVED), scope.decodeKey))
         source: scope.source
         gaveUp: true
-        feedback: "You gave up!<br>Press 'Space bar' to play again."
+        feedback: "You gave up!"
         score: 0
         showPlayActions: false
         showLogInLink: not persist.getUserId()?
@@ -521,7 +521,7 @@ module.exports = ->
         hints = if scope.hints > 1 then scope.hints else "no"
         secretMessage: decode(scope.secretMessage, scope.decodeKey)
         source: scope.source
-        feedback:  "SOLVED in #{scope.moves} moves!<br>Press 'Space bar' to play again."
+        feedback:  "SOLVED in #{scope.moves} moves!"
         score: scope.score
         showPlayActions: false
         solved: true
@@ -779,9 +779,12 @@ module.exports = ->
       $feedback.addClass "no-match"
 
     $source.hide()
+    Zepto("#social").hide()
     if renderData.solved or renderData.gaveUp
+      Zepto("#social").show()
       $source.show()
       $source.text source or "Unknown"
+
 
     # renderData.showLogInLink only set at end of round if isGuest
     if renderData.showLogInLink
@@ -791,9 +794,9 @@ module.exports = ->
 
     # social
     if renderData.solved
-      Zepto("#social").show()
+      Zepto("#share, #invite").show()
     else
-      Zepto("#social").hide()
+      Zepto("#share, #invite").hide()
 
     # hint and give up buttons
     if showPlayActions
@@ -1017,6 +1020,7 @@ module.exports = ->
       $("#confirm").on "click", onConfirm
       $("#share").on "click", onShare
       $("#invite").on "click", onInvite
+      $("#next").on "click", onPlayAgain
       $(".login-link").on "click", onLogin
 
       # start the game

@@ -371,6 +371,10 @@ body.confirmedGiveUp #owl{
     margin-top: 0;
   }
 
+  #social .button {
+    margin: 0 0px 20px 0px;
+  }
+
   .start #feedback {
     margin-top: 50%;
   }
