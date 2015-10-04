@@ -47,10 +47,11 @@
 
   #secret-message {
     width: 90%;
-    margin-top: 20%;
+    margin-top: 25%;
   }
 
   #source {
+    width: 90%;
     font-size: 16px;
     margin-top: 10px;
   }
@@ -67,7 +68,8 @@
   }
 
   #social .button {
-    margin: 0 0px 20px 0px;
+    margin: 0 0px 10px 0px;
+    padding: 8px 7px;
   }
 
   .start #feedback {
@@ -84,7 +86,12 @@
 
   #play-actions {
     left: 10px;
+    right: 10px;
     bottom: 10px;
+  }
+
+  #play-actions .button {
+    display: inline-block;
   }
 
   .button {
