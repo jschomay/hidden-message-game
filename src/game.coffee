@@ -668,6 +668,9 @@ module.exports = ->
         quoteIndex: nextQuote.quoteIndex
     , 0
 
+  onStartGame = ->
+    $("#title-screen").hide();
+
   onKeyDown = (e) ->
     if e.keyCode in [8, 32, 9, 37, 38, 39, 40] #backspace, space, tab, arrow keys
       # don't want the browser to go back or scroll (if not full screen)
@@ -1011,6 +1014,7 @@ module.exports = ->
       # bind inputs
       $(document).on "keydown", onKeyDown
       $(".keyboard__key").on "click", onKeyboardKeyPress
+      $("#start-game").on "click", onStartGame
       $("#feedback #message").on "click", onPlayAgain
       $("#give-up-button").on "click", onGiveUp
       $("#hint-button").on "click", onHint

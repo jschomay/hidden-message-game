@@ -59,6 +59,58 @@ body {
   visibility: hidden;
   font-family: 'Cabin Sketch', Helvetica;
 }
+
+#title-screen{
+  position: absolute;
+  top: 0px;
+  bottom: 0px;
+  right: 0px;
+  left: 0px;
+  background-color: white;
+  background-image: url(../assets/paper-texture.jpg);
+  text-align: center;
+  z-index: 9999;
+}
+
+#title-screen h1, #title-screen h2 {
+  font-family: courier;
+  width: 100%;
+  color: black;
+  text-align: center;
+  font-size: 85px;
+  z-index: 3;
+}
+
+#title-screen h1 {
+  margin-bottom: 10px;
+}
+
+#title-screen h2 {
+  margin-top: 10px;
+  font-size: 40px;
+  color: #999;
+}
+
+#start-game {
+  display: inline-block;
+  padding: 10px 70px;
+  margin-top: 30px;
+  position: relative;
+  z-index: 9;
+}
+
+#title-owl {
+  position: absolute;
+  top: 0px;
+  bottom: 0px;
+  right: 0px;
+  left: 0px;
+  background-image: url(../assets/quote-owl-icon.jpg);
+  background-repeat: no-repeat;
+  background-size: 800px;
+  background-position: 50% 290px;
+}
+
 #secret-message {
   width: 80%;
   position: relative;
@@ -330,6 +382,36 @@ body.confirmedGiveUp #owl{
     display: none;
   }
 
+  #title-screen h1, #title-screen h2 {
+    font-family: courier;
+    margin: auto;
+    font-size: 36px;
+  }
+
+  #title-screen h1 {
+    margin-top: 10%;
+  }
+
+  #title-screen h2 {
+    font-size: 18px;
+  }
+
+  #start-game {
+    margin-top: 30%;
+  }
+
+  #title-owl {
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    right: 0px;
+    left: 0px;
+    background-image: url(../assets/quote-owl-icon.jpg);
+    background-size: contain;
+    background-size: 100%;
+    background-position: 50% 210%;
+  }
+
   .letter {
     font-size: 24px;
     margin-top: 5px;
@@ -471,6 +553,10 @@ body.confirmedGiveUp #owl{
   #play-actions .button {
     float: left;
     margin-right: 10px;
+  }
+
+  #title-screen h1 {
+    margin-top: 10%;
   }
 }
 

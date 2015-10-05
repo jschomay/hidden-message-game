@@ -334,7 +334,7 @@ persist = require("./persist");
 track = require("./analytics");
 
 module.exports = function() {
-  var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeInMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadImages, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancel, onConfirm, onFrameEnter, onGiveUp, onHelp, onHint, onInvite, onKeyDown, onKeyboardKeyPress, onLogin, onMuteMusic, onMuteSFX, onPlayAgain, onShare, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, setStateClass, startGame, startOwlBlink, states, updateDecodeKey, updateFrame, updateLoadProgress,
+  var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeInMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadImages, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancel, onConfirm, onFrameEnter, onGiveUp, onHelp, onHint, onInvite, onKeyDown, onKeyboardKeyPress, onLogin, onMuteMusic, onMuteSFX, onPlayAgain, onShare, onStartGame, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, setStateClass, startGame, startOwlBlink, states, updateDecodeKey, updateFrame, updateLoadProgress,
     _this = this;
   CONSTANTS = {
     startingHints: 3,
@@ -997,6 +997,9 @@ module.exports = function() {
       });
     }, 0);
   };
+  onStartGame = function() {
+    return $("#title-screen").hide();
+  };
   onKeyDown = function(e) {
     var _ref1;
     if ((_ref1 = e.keyCode) === 8 || _ref1 === 32 || _ref1 === 9 || _ref1 === 37 || _ref1 === 38 || _ref1 === 39 || _ref1 === 40) {
@@ -1326,6 +1329,7 @@ module.exports = function() {
       startOwlBlink();
       $(document).on("keydown", onKeyDown);
       $(".keyboard__key").on("click", onKeyboardKeyPress);
+      $("#start-game").on("click", onStartGame);
       $("#feedback #message").on("click", onPlayAgain);
       $("#give-up-button").on("click", onGiveUp);
       $("#hint-button").on("click", onHint);
