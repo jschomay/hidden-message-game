@@ -998,7 +998,8 @@ module.exports = function() {
     }, 0);
   };
   onStartGame = function() {
-    return $("#title-screen").hide();
+    $("#title-screen").hide();
+    return playMusic();
   };
   onKeyDown = function(e) {
     var _ref1;

@@ -670,6 +670,7 @@ module.exports = ->
 
   onStartGame = ->
     $("#title-screen").hide();
+    playMusic()
 
   onKeyDown = (e) ->
     if e.keyCode in [8, 32, 9, 37, 38, 39, 40] #backspace, space, tab, arrow keys
