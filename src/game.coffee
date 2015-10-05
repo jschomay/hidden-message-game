@@ -670,7 +670,8 @@ module.exports = ->
 
   onStartGame = ->
     $("#title-screen").hide();
-    playMusic()
+    fadeInMusic()
+
 
   onKeyDown = (e) ->
     if e.keyCode in [8, 32, 9, 37, 38, 39, 40] #backspace, space, tab, arrow keys
@@ -979,7 +980,7 @@ module.exports = ->
         buffer: true,
         onend: ->
           # using this instead of loop to hopefully avoid a bug in howler
-          this.play()
+          fadeInMusic();
       ]
 
   setStateClass = (stateName) ->
@@ -1008,8 +1009,6 @@ module.exports = ->
   startGame = ->
     # make sure document is loaded before starting (it should be by now)
     Zepto ($) ->
-      fadeInMusic()
-
       startOwlBlink()
 
       # bind inputs

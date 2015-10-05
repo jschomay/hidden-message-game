@@ -999,7 +999,7 @@ module.exports = function() {
   };
   onStartGame = function() {
     $("#title-screen").hide();
-    return playMusic();
+    return fadeInMusic();
   };
   onKeyDown = function(e) {
     var _ref1;
@@ -1301,7 +1301,7 @@ module.exports = function() {
           volume: VOLUMES.backgroundMusic,
           buffer: true,
           onend: function() {
-            return this.play();
+            return fadeInMusic();
           }
         }
       ]
@@ -1326,7 +1326,6 @@ module.exports = function() {
   };
   startGame = function() {
     return Zepto(function($) {
-      fadeInMusic();
       startOwlBlink();
       $(document).on("keydown", onKeyDown);
       $(".keyboard__key").on("click", onKeyboardKeyPress);
