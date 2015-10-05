@@ -1295,6 +1295,7 @@ module.exports = function() {
       backgroundMusic: [
         "assets/background-music-long", {
           volume: VOLUMES.backgroundMusic,
+          buffer: true,
           onend: function() {
             return this.play();
           }

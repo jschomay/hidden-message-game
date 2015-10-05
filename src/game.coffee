@@ -972,6 +972,7 @@ module.exports = ->
       solved: "assets/solved"
       backgroundMusic: ["assets/background-music-long",
         volume: VOLUMES.backgroundMusic,
+        buffer: true,
         onend: ->
           # using this instead of loop to hopefully avoid a bug in howler
           this.play()
