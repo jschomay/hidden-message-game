@@ -998,8 +998,7 @@ module.exports = function() {
     }, 0);
   };
   onStartGame = function() {
-    $("#title-screen").hide();
-    return fadeInMusic();
+    return $("#title-screen").hide();
   };
   onKeyDown = function(e) {
     var _ref1;
@@ -1299,7 +1298,6 @@ module.exports = function() {
       backgroundMusic: [
         "assets/background-music-long", {
           volume: VOLUMES.backgroundMusic,
-          buffer: true,
           onend: function() {
             return fadeInMusic();
           }
@@ -1325,26 +1323,22 @@ module.exports = function() {
     return setTimeout(blink, 7000);
   };
   startGame = function() {
-    return Zepto(function($) {
-      startOwlBlink();
-      $(document).on("keydown", onKeyDown);
-      $(".keyboard__key").on("click", onKeyboardKeyPress);
-      $("#start-game").on("click", onStartGame);
-      $("#feedback #message").on("click", onPlayAgain);
-      $("#give-up-button").on("click", onGiveUp);
-      $("#hint-button").on("click", onHint);
-      $("#mute-music-button").on("click", onMuteMusic);
-      $("#mute-sfx-button").on("click", onMuteSFX);
-      $("#help-button").on("click", onHelp);
-      $("#cancel").on("click", onCancel);
-      $("#confirm").on("click", onConfirm);
-      $("#share").on("click", onShare);
-      $("#invite").on("click", onInvite);
-      $("#next").on("click", onPlayAgain);
-      $(".login-link").on("click", onLogin);
-      return persist.waitForUserStatus().then(function() {
-        return updateFrame("gameReady");
-      });
+    $(document).on("keydown", onKeyDown);
+    $(".keyboard__key").on("click", onKeyboardKeyPress);
+    $("#feedback #message").on("click", onPlayAgain);
+    $("#give-up-button").on("click", onGiveUp);
+    $("#hint-button").on("click", onHint);
+    $("#mute-music-button").on("click", onMuteMusic);
+    $("#mute-sfx-button").on("click", onMuteSFX);
+    $("#confirm").on("click", onConfirm);
+    $("#share").on("click", onShare);
+    $("#invite").on("click", onInvite);
+    $("#next").on("click", onPlayAgain);
+    $(".login-link").on("click", onLogin);
+    fadeInMusic();
+    startOwlBlink();
+    return persist.waitForUserStatus().then(function() {
+      return updateFrame("gameReady");
     });
   };
   getUserData = function(progress) {
@@ -1378,7 +1372,12 @@ module.exports = function() {
   saveUserData = function(userData) {
     return persist.save(userData);
   };
-  return preload();
+  return Zepto(function($) {
+    $("#start-game").on("click", onStartGame);
+    $("#help-button").on("click", onHelp);
+    $("#cancel").on("click", onCancel);
+    return preload();
+  });
 };
 
 });
