@@ -3,6 +3,9 @@
   "description": "Description",
   "author": "Your Name",
   "version": "0.0.1",
+    "engines": {
+    "node": "4.8.4"
+  },
   "repository": {
     "type": "git",
     "url": ""
