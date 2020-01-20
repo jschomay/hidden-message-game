@@ -529,7 +529,6 @@ module.exports = ->
     @currentState = state
     @store = scope
     @userData = userData
-    window.s = @store
 
 
   # code to run on every frame regardless of which state is active
@@ -578,7 +577,6 @@ module.exports = ->
     fetch("https://icanhazdadjoke.com/", headers: myHeaders)
       .then((response) -> response.json())
       .then(({id, joke}) ->
-        console.log(joke)
         updateFrame "quoteLoaded",
           message: joke
           source: "https://icanhazdadjoke.com/j/" + id
