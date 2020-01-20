@@ -1,0 +1,457 @@
+#keyboard {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  height: 150px;
+}
+
+.keyboard__row {
+  margin: 5px 0;
+  position: relative;
+  text-align: center;
+}
+
+
+.keyboard__key {
+  display: inline-block;
+  width: 7.7%;
+  height: 35px;
+  font-family: Helvetica;
+  font-size: 16px;
+  line-height: 40px;
+  text-transform: uppercase;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 5px;
+}
+.keyboard__key:active {
+  background-color: #ddd;
+}
+
+body,
+html {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+body {
+  background-image: url(../assets/paper-texture.jpg);
+  padding: 0;
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Averia Libre', Helvetica;
+}
+
+#game {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+#keyboard-container {
+  height: 0%;
+  overflow: hidden;
+}
+#load-font {
+  visibility: hidden;
+  font-family: 'Cabin Sketch', Helvetica;
+}
+#secret-message {
+  width: 80%;
+  position: relative;
+  margin: auto;
+  top: 20%;
+  text-align: center;
+}
+#source {
+  display: none;
+  font: 20px courier;
+  color: #555;
+  width: 80%;
+  position: relative;
+  margin: auto;
+  top: 25%;
+  text-align: center;
+}
+#source:before {
+  content: "-- ";
+}
+.word {
+  margin-right: 27px;
+  display: inline-block;
+}
+.letter {
+  font: 40px courier;
+  line-height: 1.3em;
+  color: black;
+  position: relative;
+  white-space: pre;
+  display: inline-block;
+  margin-top: 20px;
+}
+.letter.hinted {
+  color: #ddd;
+}
+.letter:before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  border-bottom: 2px solid black;
+  width: 80%;
+  right: 0;
+  margin: auto;
+}
+.letter.revealed:before, .letter.hintedfilled:before {
+  border-color: #62D3FB;
+}
+.letter.solved:before {
+  content: "";
+  display: none;
+}
+#feedback {
+  position: relative;
+  top: 30%;
+  font: 20px courier;
+  text-align: center;
+  color: #bbb;
+}
+#feedback.match #message {
+  color: #aaddaa;
+}
+#feedback.no-match #message {
+  color: #ddaaaa;
+}
+
+#share {
+  display: none;
+  margin-top: 20px;
+}
+#share a {
+  font-size: 30px;
+  margin: 0;
+}
+.share-twitter:after {
+  content: "\f243";
+}
+.share-facebook:after {
+  content: "\f231";
+}
+
+#score {
+  width: 100px;
+  text-align: center;
+  font-size: 60px;
+  line-height: 60px;
+  position: absolute;
+  bottom: 30px;
+  right: 30px;
+  color: #777;
+}
+
+#play-actions {
+  position: absolute;
+  left: 30px;
+  bottom: 30px;
+  display: none;
+}
+
+.button {
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #ddd;
+  text-align: center;
+  font-weight: 700;
+  color: black;
+  font-size: 18px;
+  margin-top: 10px;
+  cursor: pointer;
+  background: #777;
+  color: #eee;
+}
+
+#settings {
+  position: absolute;
+  right: 30px;
+  top: 10px;
+}
+.small-link {
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  margin-right: 7px;
+  padding: 10px;
+  font: 22px "Ionicons";
+  color: #bbb;
+}
+#mute-music-button:before {
+  content: "\f46c";
+}
+#mute-sfx-button:before {
+  content: "\f4ce";
+}
+#help-button:before {
+  content: "\f445";
+}
+#mute-music-button.muted {
+  color: #ddd;
+}
+#mute-sfx-button.muted {
+  color: #ddd;
+}
+
+.dialog {
+  display: none;
+  background: #eee;
+  border: 2px solid #999;
+  text-align: center;
+  color: #666;
+  box-sizing: border-box;
+  font-size: 20px;
+  height: 60%;
+  width: 80%;
+  overflow: auto;
+  margin: auto;
+  padding: 50px 50px;
+  position: absolute;
+  top: 0;
+  bottom: 100px;
+  left: 0;
+  right: 0;
+  z-index: 9;
+}
+#dialog h3 {
+  margin-top: 0;
+  color: #777;
+  font-family: 'Cabin Sketch', Helvetica;
+  font-size: 44px;
+  font-weight: bold;
+}
+#dialog #next-free-hint {
+  font-weight: bold;
+}
+#dialog p {
+  text-align: justify;
+  padding-bottom: 20px;
+}
+#dialog a {
+  color: #777;
+}
+#dialog ul {
+  text-align: left;
+  padding: 0 5%;
+}
+#dialog .button {
+  min-width: 20%;
+  left: 0;
+  right: 0;
+  display: inline-block;
+  margin-top: 50px;
+  margin-left: 10px;
+}
+
+#user-info {
+  display: none;
+  position: absolute;
+  top: 20px;
+  left: 30px;
+  width: auto;
+  font-size: 14px;
+  color: #ccc;
+}
+#total-score {
+  font-weight: bold;
+}
+
+#owl {
+  position: absolute;
+  bottom: 15px;
+  left: 0px;
+  height: 100px;
+  width: 140px;
+  background-image: url(../assets/owl-normal.png);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: bottom center;
+  transform: translate3d(100px, 0, 0);
+  transition: transform .2s ease-out;
+  z-index: 9;
+}
+
+#owl.blink {
+  background-image: url(../assets/owl-blink.png);
+}
+
+body.solved #owl{
+  background-image: url(../assets/owl-happy.png);
+}
+
+body.confirmedGiveUp #owl{
+  background-image: url(../assets/owl-sad.png);
+}
+
+
+
+/* Media queries */
+
+@media (max-width: 1000px) {
+  #secret-message {
+    width: 90%;
+  }
+}
+
+@media only screen and (max-device-width: 480px) {
+  #owl {
+    display: none;
+  }
+
+  #game {
+    height: auto;
+    bottom: 130px;
+  }
+  #keyboard-container {
+    height: 130px;
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    left: 0px;
+    border: 1px solid #e5e5e5;
+  }
+
+  .letter {
+    font-size: 24px;
+    margin-top: 5px;
+    line-height: 1.1em;
+  }
+
+  .letter:before {
+    border-width: 1px;
+  }
+
+  .word {
+    margin-right: 12px;
+  }
+
+  #user-info {
+    left: 10px;
+    top: 10px;
+  }
+
+  #settings {
+    right: 10px;
+    top: 10px;
+  }
+
+  #settings .small-link {
+    padding: 5px;
+    padding-top: 0px;
+  }
+
+  #secret-message {
+    width: 90%;
+    margin-top: 20%;
+  }
+
+  #source {
+    font-size: 16px;
+    margin-top: 10px;
+  }
+
+  #feedback {
+    width: 90%;
+    margin: auto;
+    margin-top: 10px;
+    font-size: 14px;
+  }
+
+  #feedback #share {
+    margin-top: 0;
+  }
+
+  .start #feedback {
+    margin-top: 50%;
+  }
+
+  #score {
+    font-size: 30px;
+    line-height: 30px;
+    width: 70px;
+    right: 0;
+    bottom: 10px;
+  }
+
+  #play-actions {
+    left: 10px;
+    bottom: 10px;
+  }
+
+  .button {
+    font-size: 12px;
+  }
+
+  #owl {
+    height: 50px;
+    width: 50px;
+  }
+
+  #dialog {
+    width: 90%;
+    height: 90%;
+    top: 20px;
+    bottom: auto;
+    padding: 20px;
+  }
+
+  #dialog h3 {
+    font-size: 35px;
+  }
+
+  #dialog div {
+    font-size: 16px;
+  }
+
+  #dialog .button {
+    margin-top: 20px;
+  }
+}
+
+@media only screen and (max-device-width: 480px) and (min-device-width: 375px) {
+  #secret-message {
+    margin-top: 25%;
+  }
+
+  #feedback {
+    margin-top: 20px;
+    font-size: 20px;
+  }
+   #play-actions .button {
+     font-size: 15px;
+     padding: 5px;
+     margin-top: 5px;
+   }
+}
+
+/* iPhone 4 */
+@media only screen and (max-device-width: 320px) and (max-device-height: 480px) {
+  #user-info {
+    font-size: 12px;
+  }
+
+  #secret-message {
+    margin-top: 20%;
+  }
+
+  #owl {
+    display: none;
+  }
+
+  #play-actions .button {
+    float: left;
+    margin-right: 10px;
+  }
+}
+
+
