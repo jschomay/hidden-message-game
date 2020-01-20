@@ -148,6 +148,35 @@ var __makeRelativeRequire = function(require, mappings, pref) {
     return require(name);
   }
 };
+require.register("src/analytics.coffee", function(exports, require, module) {
+var bundleNames, getNextQuoteIndex, _ref;
+
+Parse.initialize("iul0cVOM5mJWAj1HHBa158cpMoyEQ2wWxSK3Go9O", "pbFnYPVaSunEmgjI8qTKqkW8nHKoB6Xor1DtOWpD");
+
+_ref = require("./bundles"), bundleNames = _ref.bundleNames, getNextQuoteIndex = _ref.getNextQuoteIndex;
+
+module.exports = function(eventName, scope, userData, dimensions) {
+  var nextQuote, round;
+  if (scope == null) {
+    scope = {};
+  }
+  if (userData == null) {
+    userData = {};
+  }
+  if (dimensions == null) {
+    dimensions = {};
+  }
+  dimensions.platform = "direct";
+  if (userData.lastSolvedBundleIndex) {
+    nextQuote = getNextQuoteIndex(userData.lastSolvedBundleIndex, userData.lastSolvedQuoteIndex);
+    round = "" + bundleNames[nextQuote.bundleIndex] + "-" + (nextQuote.quoteIndex + 1);
+    dimensions.round = round;
+  }
+  return Parse.Analytics.track(eventName, dimensions);
+};
+
+});
+
 require.register("src/bundles.coffee", function(exports, require, module) {
 var bundleCompleted, bundleNames, getNextQuoteIndex, noMoreQuotes, quoteBundles, updateProgressPerBundle;
 
