@@ -35,7 +35,6 @@ module.exports = ->
     REVEALED: 1
     SOLVED: 2
     HINTED: 3
-    HINTEDFILLED: 4
 
 
   # utils
@@ -133,14 +132,14 @@ module.exports = ->
   setIndexesToRevealed = setIndexes (currentStatus) ->
     map = {}
     map[decodeKeyStates.HIDDEN] = decodeKeyStates.REVEALED
-    map[decodeKeyStates.HINTED] = decodeKeyStates.HINTEDFILLED
+    map[decodeKeyStates.HINTED] = decodeKeyStates.REVEALED
     map[currentStatus] or currentStatus
 
   resetDecodeKey = (decodeKey) ->
     map = {}
-    map[decodeKeyStates.SOLVED] = decodeKeyStates.SOLVED
+    map[decodeKeyStates.REVEALED] = decodeKeyStates.HINTED
     map[decodeKeyStates.HINTED] = decodeKeyStates.HINTED
-    map[decodeKeyStates.HINTEDFILLED] = decodeKeyStates.HINTED
+    map[decodeKeyStates.SOLVED] = decodeKeyStates.SOLVED
 
     resetTransform = (currentStatus) ->
       map[currentStatus] or decodeKeyStates.HIDDEN
@@ -351,7 +350,7 @@ module.exports = ->
         statusOfJustLetters = R.filterIndexed removeNonLetters, scope.decodeKey
 
         isFilled = (status) ->
-          status in [decodeKeyStates.REVEALED, decodeKeyStates.SOLVED, decodeKeyStates.HINTEDFILLED]
+          status in [decodeKeyStates.REVEALED, decodeKeyStates.SOLVED]
         numberFilled = R.length R.filter isFilled, statusOfJustLetters
 
         progress = numberFilled / statusOfJustLetters.length
