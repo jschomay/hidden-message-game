@@ -1,14 +1,3 @@
-# quote bundles logic
-{
-  quoteBundles
-  bundleNames
-  getNextQuoteIndex
-  updateProgressPerBundle
-  noMoreQuotes
-  bundleCompleted
-} = require "./bundles"
-track = require "./analytics"
-
 module.exports = ->
 
   # constants
@@ -225,27 +214,23 @@ module.exports = ->
         if trigger is "quoteLoaded"
           giveHints = (indexes, decodeKey) ->
             setAsHinted = (i) ->
-              decodeKey[i] = decodeKeyStates.HINTED
+              if decodeKey[i] is decodeKeyStates.HIDDEN
+                decodeKey[i] = decodeKeyStates.HINTED
             R.forEach setAsHinted, indexes
 
           secretMessage = eventData.message
           source = eventData.source
           decodeKey = R.map hideLetters, secretMessage
           # help the user out on first levels
-          if not userData.progressPerBundle
-            # 1st round
+          if userData.solvedQuotes is 0
             giveHints [10, 28, 38, 60], decodeKey
-          else if userData.progressPerBundle[0] is 0
-            # 2nd round
+          else if userData.solvedQuotes is 1
             giveHints [3, 4], decodeKey
-          else if userData.progressPerBundle[0] is 1
-            # 3rd round
+          else if userData.solvedQuotes is 2
             giveHints [17], decodeKey
           # initialize game data with secret message
           scope.secretMessage = secretMessage
           scope.source = source
-          scope.currentBundleIndex = eventData.bundleIndex
-          scope.currentQuoteIndex = eventData.quoteIndex
           scope.comboGroups = sentanceToWords secretMessage
           scope.decodeKey = decodeKey
           scope.comboString = ""
@@ -274,10 +259,7 @@ module.exports = ->
 
         if trigger is "hint"
           if userData.hintsRemaining <= 0
-            track "outOfHints"
             return ["outOfHints", scope, userData]
-
-          track "useHint", scope, userData
 
           # get random 1/10th of remaining unsolved letters permanently filled in
           # cuts your score in half each time
@@ -354,14 +336,7 @@ module.exports = ->
 
             userData.totalScore += scope.score
             userData.hintsRemaining += numFreeHintsEarned userData.totalScore, scope.score
-
-            userData.lastSolvedBundleIndex = scope.currentBundleIndex
-            userData.lastSolvedQuoteIndex = scope.currentQuoteIndex
-
-            # save furthest progress per bundle in case user jumps to
-            # an earlier quote and wants to jump back to latest progress
-            userData.progressPerBundle = updateProgressPerBundle userData.progressPerBundle, scope.currentBundleIndex, scope.currentQuoteIndex
-
+            userData.solvedQuotes += 1
 
             saveUserData userData
 
@@ -396,20 +371,11 @@ module.exports = ->
       onEvent: (eventData, scope, trigger, userData) ->
         if trigger is "confirm"
 
-          track "giveUp", scope, userData
-
           playSound "giveUp"
 
           numUnsolved = R.length R.filter(R.compose(R.not, isSolved)) scope.decodeKey
 
-          userData.lastSolvedBundleIndex = scope.currentBundleIndex
-          userData.lastSolvedQuoteIndex = scope.currentQuoteIndex
-
           userData.totalScore -= numUnsolved * CONSTANTS.pointsPerLetter
-
-          # save furthest progress per bundle in case user jumps to
-          # an earlier quote and wants to jump back to latest progress
-          userData.progressPerBundle = updateProgressPerBundle userData.progressPerBundle, scope.currentBundleIndex, scope.currentQuoteIndex
 
           saveUserData userData
 
@@ -453,12 +419,7 @@ module.exports = ->
           scope.hints = undefined
           scope.lastCombo = undefined
 
-          if noMoreQuotes(userData.lastSolvedBundleIndex, userData.lastSolvedQuoteIndex)
-            return ["noMoreQuotes", scope, userData]
-          else if bundleCompleted(userData.lastSolvedBundleIndex, userData.lastSolvedQuoteIndex)
-            return ["bundleCompleted", scope, userData]
-          else
-            return ["loading", scope, userData]
+          return ["loading", scope, userData]
 
         else
           return ["confirmedGiveUp", scope, userData]
@@ -488,12 +449,7 @@ module.exports = ->
           scope.hints = undefined
           scope.lastCombo = undefined
 
-          if noMoreQuotes(userData.lastSolvedBundleIndex, userData.lastSolvedQuoteIndex)
-            return ["noMoreQuotes", scope, userData]
-          else if bundleCompleted(userData.lastSolvedBundleIndex, userData.lastSolvedQuoteIndex)
-            return ["bundleCompleted", scope, userData]
-          else
-            return ["loading", scope, userData]
+          return ["loading", scope, userData]
 
         else
           return ["solved", scope, userData]
@@ -545,23 +501,6 @@ module.exports = ->
         noMoreQuotes: true
 
 
-    bundleCompleted:
-      onEnter: ->
-        setStateClass "bundleCompleted"
-
-      onEvent: (eventData, scope, trigger, userData) ->
-        if trigger is "confirm"
-          return ["loading", scope, userData]
-        else
-          return ["bundleCompleted", scope, userData]
-
-      getRenderData: (scope) ->
-        secretMessage: ""
-        feedback: ""
-        showPlayActions: false
-        bundleCompleted: true
-
-
   # MAIN LOOP
   # Called on each game event through updateFrame.
   # Runs the current game state through a state machine.
@@ -591,6 +530,7 @@ module.exports = ->
     @currentState = state
     @store = scope
     @userData = userData
+    window.s = @store
 
 
   # code to run on every frame regardless of which state is active
@@ -626,17 +566,26 @@ module.exports = ->
   # binding game event streams
 
   fetchQuote = (userData) ->
-    nextQuote = getNextQuoteIndex userData.lastSolvedBundleIndex, userData.lastSolvedQuoteIndex
-    message = quoteBundles[nextQuote.bundleIndex][nextQuote.quoteIndex].quote
-    source = quoteBundles[nextQuote.bundleIndex][nextQuote.quoteIndex].source
-    # need to make this async to go through the state machine properly
-    setTimeout ->
-      updateFrame "quoteLoaded",
-        message: message
-        source: source
-        bundleIndex: nextQuote.bundleIndex
-        quoteIndex: nextQuote.quoteIndex
-    , 0
+    # Using icanhazdadjoke.com API instead of preset bundles
+    # $ curl -H "User-Agent: Hidden Message Game (https://github.com/jschomay/hidden-message-game)" -H "Accept: application/json" https://icanhazdadjoke.com/
+    # {"id":"EQKZDIeah","joke":"Atheism is a non-prophet organisation.","status":200}
+    # https://icanhazdadjoke.com/j/EQKZDIeah is the permalink to it
+
+    myHeaders = new Headers(
+      # They request providing this header, but it breaks cors...
+      # "User-Agent": "Hidden Message Game (https://github.com/jschomay/hidden-message-game)"
+      "Accept": "application/json"
+    )
+    fetch("https://icanhazdadjoke.com/", headers: myHeaders)
+      .then((response) -> response.json())
+      .then(({id, joke}) ->
+        console.log(joke)
+        updateFrame "quoteLoaded",
+          message: joke
+          source: "https://icanhazdadjoke.com/j/" + id
+          quoteIndex: 0
+      )
+
 
   onKeyDown = (e) ->
     if e.keyCode in [8, 32, 9, 37, 38, 39, 40] #backspace, space, tab, arrow keys
@@ -774,26 +723,6 @@ module.exports = ->
       Zepto("#dialog #confirm").text "Yes, give up"
       Zepto("#dialog #cancel").text "No, I'll keep trying"
 
-    # no more quotes dialog
-    if renderData.noMoreQuotes
-      Zepto("#dialog #cancel").hide()
-      Zepto("#dialog #confirm").show()
-      Zepto("#dialog").show()
-      Zepto("#dialog h3").text "You solved all of the quotes!"
-      Zepto("#dialog #message-content").html "<p>Thank you for playing.</p><p><a target='_blank' href='http://codeperfectionist.com/portfolio/games/hidden-message-game/'>Stay tuned for more quote bundles and extra features</a></p>"
-      Zepto("#dialog #confirm").text "Play again?"
-
-    # bundle completed dialog
-    bundleName = bundleNames[rawScope.currentBundleIndex or 0]
-    nextBundleName = bundleNames[(rawScope.currentBundleIndex or 0) + 1]
-    if renderData.bundleCompleted
-      Zepto("#dialog #cancel").hide()
-      Zepto("#dialog #confirm").show()
-      Zepto("#dialog").show()
-      Zepto("#dialog h3").text "Congratulations, you finished the \"#{bundleName}\" bundle!"
-      Zepto("#dialog #message-content").html "You've unlocked the \"#{nextBundleName}\" bundle."
-      Zepto("#dialog #confirm").text "Play next bundle"
-
     # get help dialog
     if rawScope.showHelp
       Zepto("#dialog #cancel").show()
@@ -817,11 +746,8 @@ module.exports = ->
       Zepto("#dialog #cancel").text "Keep playing"
 
     # user info
-    num = (rawScope.currentQuoteIndex or 0) + 1
-    bundleName = bundleNames[rawScope.currentBundleIndex or 0]
-    total = quoteBundles[rawScope.currentBundleIndex or 0].length
     Zepto("#user-info").show()
-    Zepto("#progress").html "Bundle: \"#{bundleName}\"<br>##{num} out of #{total}"
+    Zepto("#progress").html "Bundle: Dad jokes<br>Total solved: #{userData.solvedQuotes}"
     Zepto("#total-score").text userData.totalScore
 
     # owl position
@@ -948,7 +874,6 @@ module.exports = ->
         window.open(url, 'Share', opts)
 
         shareType = if /twitter/.test(this.href) then "tweet" else "facebook"
-        track shareType
         false
 
       # initialize main loop with starting state
@@ -978,9 +903,7 @@ module.exports = ->
     currentPlayerDefaults =
       hintsRemaining: CONSTANTS.startingHints
       totalScore: 0
-      lastSolvedBundleIndex: undefined
-      lastSolvedQuoteIndex: undefined
-      progressPerBundle: undefined
+      solvedQuotes: 0
 
     currentPlayer = JSON.parse localStorage.getItem "currentPlayer"
 
