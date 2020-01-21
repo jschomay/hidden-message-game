@@ -337,6 +337,7 @@ module.exports = ->
             userData.totalScore += scope.score
             userData.hintsRemaining += numFreeHintsEarned userData.totalScore, scope.score
             userData.solvedQuotes += 1
+            userData.solved.push(scope.source)
 
             saveUserData userData
 
@@ -383,6 +384,7 @@ module.exports = ->
           numUnsolved = R.length R.filter(R.compose(R.not, isSolved)) scope.decodeKey
 
           userData.totalScore -= numUnsolved * CONSTANTS.pointsPerLetter
+          userData.solved.push(scope.source)
 
           saveUserData userData
 
@@ -440,7 +442,7 @@ module.exports = ->
 
       getRenderData: (scope) ->
         secretMessage: decode(scope.secretMessage, R.map( R.always(decodeKeyStates.SOLVED), scope.decodeKey))
-        source: scope.source
+        source: "https://icanhazdadjoke.com/j/" + scope.source
         gaveUp: true
         feedback: "You gave up!<br>Press 'Space bar' to play again."
         score: 0
@@ -471,7 +473,7 @@ module.exports = ->
       getRenderData: (scope) ->
         hints = if scope.hints > 1 then scope.hints else "no"
         secretMessage: decode(scope.secretMessage, scope.decodeKey)
-        source: scope.source
+        source: "https://icanhazdadjoke.com/j/" + scope.source
         feedback:  "SOLVED in #{scope.moves} moves!<br>Press 'Space bar' to play again."
         score: scope.score
         showPlayActions: false
@@ -599,10 +601,16 @@ module.exports = ->
     fetch("https://icanhazdadjoke.com/", headers: myHeaders)
       .then((response) -> response.json())
       .then(({id, joke}) ->
-        updateFrame "quoteLoaded",
-          message: joke
-          source: "https://icanhazdadjoke.com/j/" + id
-          quoteIndex: 0
+        # Try again if user has already done this quote
+        # (this might be slow if user has played many quotes...)
+        if id in userData.solved
+          console.warn("Already seen this quote, fetching a new one..")
+          fetchQuote(userData)
+        else
+          updateFrame "quoteLoaded",
+            message: joke
+            source: id
+            quoteIndex: 0
       )
 
 
@@ -923,6 +931,7 @@ module.exports = ->
       hintsRemaining: CONSTANTS.startingHints
       totalScore: 0
       solvedQuotes: 0
+      solved: []
 
     currentPlayer = JSON.parse localStorage.getItem "currentPlayer"
 
