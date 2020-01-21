@@ -169,7 +169,7 @@ module.exports = ->
   getValidComboStream = (comboString, comboGroups) ->
     if comboString.length < 1
       # no valid combo
-      return []
+      return ""
 
     pattern = new RegExp "^" + comboString, "i"
     joinAndMatch = R.compose(R.match(pattern), comboToString)
@@ -237,6 +237,7 @@ module.exports = ->
           scope.moves = 0
           scope.hints = 0
           scope.lastCombo = null
+          scope.comboCompleted = false
           return ["play", scope, userData]
         else
           ["loading", scope, userData]
@@ -355,9 +356,16 @@ module.exports = ->
 
         progress = numberFilled / statusOfJustLetters.length
 
-        comboString = if scope.comboString.length then scope.comboString else null
+        feedback = if scope.comboCompleted
+          "Word completed!"
+        else if scope.comboString.length
+          "Current streak: #{scope.comboString}"
+        else if scope.lastCombo
+           "No words start with #{scope.lastCombo}"
+        else
+          "Type letters to begin revealing the hidden message."
         secretMessage: decode(scope.secretMessage, scope.decodeKey)
-        feedback: comboString or scope.lastCombo  or "Type letters to begin revealing the hidden message."
+        feedback: feedback
         match: if scope.lastCombo then !!scope.comboString.length > 0 else null
         score: scope.score
         showPlayActions: true
@@ -389,9 +397,16 @@ module.exports = ->
       getRenderData: (scope) ->
         cost = CONSTANTS.pointsPerLetter * R.length R.filter(R.compose(R.not, isSolved)) scope.decodeKey
         # same as "play" render data, plus additional give up flags
-        comboString = if scope.comboString.length then scope.comboString else null
+        feedback = if scope.comboCompleted
+          "Word completed!"
+        else if scope.comboString.length
+          "Current streak: #{scope.comboString}"
+        else if scope.lastCombo
+           "No words start with #{scope.lastCombo}"
+        else
+          "Type letters to begin revealing the hidden message."
         secretMessage: decode(scope.secretMessage, scope.decodeKey)
-        feedback: comboString or scope.lastCombo  or "Type letter combos to reveal the hidden message."
+        feedback: feedback
         match: if scope.lastCombo then !!scope.comboString.length > 0 else null
         score: scope.score
         showPlayActions: true
@@ -474,9 +489,16 @@ module.exports = ->
 
       getRenderData: (scope) ->
         # same as "play" render data, plus additional buyHints flag
-        comboString = if scope.comboString.length then scope.comboString else null
+        feedback = if scope.comboCompleted
+          "Word completed!"
+        else if scope.comboString.length
+          "Current streak: #{scope.comboString}"
+        else if scope.lastCombo
+           "No words start with #{scope.lastCombo}"
+        else
+          "Type letters to begin revealing the hidden message."
         secretMessage: decode(scope.secretMessage, scope.decodeKey)
-        feedback: comboString or scope.lastCombo  or "Type letter combos to reveal the hidden message."
+        feedback: feedback
         match: if scope.lastCombo then !!scope.comboString.length > 0 else null
         score: scope.score
         showPlayActions: true
@@ -727,7 +749,7 @@ module.exports = ->
       Zepto("#dialog").show()
       Zepto("#dialog h3").text "Help"
       Zepto("#dialog #message-content").html """
-        <p>Stuck?  You must reveal the secret message one letter at a time, from the start of each word.  Solving each word will give you a clue to which letters other words start with.  Try going for shorter word first.  The words stay solved only when you complete them.  You can always use a hint or give up, but it will cost you.  Good luck!</p>
+        <p>Stuck?  You must reveal the secret message one letter at a time, by filling in each word from its beginning.  Try going for shorter words first.  You can always use a hint or give up, but it will cost you.  Good luck!</p>
         <h3>Credits</h3>
         <ul>
           <li>Game designed and built by <a target='_blank' href='http://codeperfectionist.com/about'>Jeff Schomay</a></li>
