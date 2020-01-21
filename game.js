@@ -383,6 +383,8 @@ module.exports = [
 });
 
 require.register("src/game.coffee", function(exports, require, module) {
+var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+
 module.exports = function() {
   var CONSTANTS, SOUNDS, VOLUMES, buildSecretMessage, comboToString, decode, decodeKeyStates, fadeInMusic, fetchQuote, frame, getAllMatches, getLastFreeHintScore, getMusic, getNextFreeHintScore, getRandomElement, getRandomElements, getSFX, getUserData, getValidComboStream, hideLetters, isHidden, isLetter, isLetterOrSpace, isSolved, isSpace, isUnsolvedGroup, loadImages, loadSounds, numFreeHintsEarned, numSoundsLoaded, onCancel, onConfirm, onFrameEnter, onGiveUp, onHelp, onHint, onKeyDown, onKeyboardKeyPress, onMuteMusic, onMuteSFX, onPlayAgain, pauseMusic, pauseSFX, playMusic, playSFX, playSound, preload, render, resetDecodeKey, saveIndexes, saveUserData, sentanceToWords, setIndexIfNotSolved, setIndexes, setIndexesToRevealed, setIndexesToSolved, setStateClass, startGame, startOwlBlink, states, updateDecodeKey, updateFrame, updateLoadProgress;
   CONSTANTS = {
@@ -582,7 +584,7 @@ module.exports = function() {
   getValidComboStream = function(comboString, comboGroups) {
     var isValidCombo, joinAndMatch, pattern;
     if (comboString.length < 1) {
-      return [];
+      return "";
     }
     pattern = new RegExp("^" + comboString, "i");
     joinAndMatch = R.compose(R.match(pattern), comboToString);
@@ -650,6 +652,7 @@ module.exports = function() {
           scope.moves = 0;
           scope.hints = 0;
           scope.lastCombo = null;
+          scope.comboCompleted = false;
           return ["play", scope, userData];
         } else {
           return ["loading", scope, userData];
@@ -740,6 +743,7 @@ module.exports = function() {
             userData.totalScore += scope.score;
             userData.hintsRemaining += numFreeHintsEarned(userData.totalScore, scope.score);
             userData.solvedQuotes += 1;
+            userData.solved.push(scope.source);
             saveUserData(userData);
             return ["solved", scope, userData];
           }
@@ -747,7 +751,7 @@ module.exports = function() {
         return ["play", scope, userData];
       },
       getRenderData: function(scope) {
-        var comboString, isFilled, numberFilled, progress, removeNonLetters, statusOfJustLetters;
+        var feedback, isFilled, numberFilled, progress, removeNonLetters, statusOfJustLetters;
         removeNonLetters = function(val, i) {
           return isLetter(scope.secretMessage[i]);
         };
@@ -757,10 +761,10 @@ module.exports = function() {
         };
         numberFilled = R.length(R.filter(isFilled, statusOfJustLetters));
         progress = numberFilled / statusOfJustLetters.length;
-        comboString = scope.comboString.length ? scope.comboString : null;
+        feedback = scope.comboCompleted ? "Word completed!" : scope.comboString.length ? "Current streak: " + scope.comboString : scope.lastCombo ? "No words start with " + scope.lastCombo : "Type letters to begin revealing the hidden message.";
         return {
           secretMessage: decode(scope.secretMessage, scope.decodeKey),
-          feedback: comboString || scope.lastCombo || "Type letters to begin revealing the hidden message.",
+          feedback: feedback,
           match: scope.lastCombo ? !!scope.comboString.length > 0 : null,
           score: scope.score,
           showPlayActions: true,
@@ -778,6 +782,7 @@ module.exports = function() {
           playSound("giveUp");
           numUnsolved = R.length(R.filter(R.compose(R.not, isSolved))(scope.decodeKey));
           userData.totalScore -= numUnsolved * CONSTANTS.pointsPerLetter;
+          userData.solved.push(scope.source);
           saveUserData(userData);
           return ["confirmedGiveUp", scope, userData];
         } else if (trigger === "cancel") {
@@ -787,12 +792,12 @@ module.exports = function() {
         }
       },
       getRenderData: function(scope) {
-        var comboString, cost;
+        var cost, feedback;
         cost = CONSTANTS.pointsPerLetter * R.length(R.filter(R.compose(R.not, isSolved))(scope.decodeKey));
-        comboString = scope.comboString.length ? scope.comboString : null;
+        feedback = scope.comboCompleted ? "Word completed!" : scope.comboString.length ? "Current streak: " + scope.comboString : scope.lastCombo ? "No words start with " + scope.lastCombo : "Type letters to begin revealing the hidden message.";
         return {
           secretMessage: decode(scope.secretMessage, scope.decodeKey),
-          feedback: comboString || scope.lastCombo || "Type letter combos to reveal the hidden message.",
+          feedback: feedback,
           match: scope.lastCombo ? !!scope.comboString.length > 0 : null,
           score: scope.score,
           showPlayActions: true,
@@ -825,7 +830,7 @@ module.exports = function() {
       getRenderData: function(scope) {
         return {
           secretMessage: decode(scope.secretMessage, R.map(R.always(decodeKeyStates.SOLVED), scope.decodeKey)),
-          source: scope.source,
+          source: "https://icanhazdadjoke.com/j/" + scope.source,
           gaveUp: true,
           feedback: "You gave up!<br>Press 'Space bar' to play again.",
           score: 0,
@@ -858,7 +863,7 @@ module.exports = function() {
         hints = scope.hints > 1 ? scope.hints : "no";
         return {
           secretMessage: decode(scope.secretMessage, scope.decodeKey),
-          source: scope.source,
+          source: "https://icanhazdadjoke.com/j/" + scope.source,
           feedback: "SOLVED in " + scope.moves + " moves!<br>Press 'Space bar' to play again.",
           score: scope.score,
           showPlayActions: false,
@@ -877,11 +882,11 @@ module.exports = function() {
         return ["outOfHints", scope, userData];
       },
       getRenderData: function(scope) {
-        var comboString;
-        comboString = scope.comboString.length ? scope.comboString : null;
+        var feedback;
+        feedback = scope.comboCompleted ? "Word completed!" : scope.comboString.length ? "Current streak: " + scope.comboString : scope.lastCombo ? "No words start with " + scope.lastCombo : "Type letters to begin revealing the hidden message.";
         return {
           secretMessage: decode(scope.secretMessage, scope.decodeKey),
-          feedback: comboString || scope.lastCombo || "Type letter combos to reveal the hidden message.",
+          feedback: feedback,
           match: scope.lastCombo ? !!scope.comboString.length > 0 : null,
           score: scope.score,
           showPlayActions: true,
@@ -972,11 +977,16 @@ module.exports = function() {
     }).then(function(_arg) {
       var id, joke;
       id = _arg.id, joke = _arg.joke;
-      return updateFrame("quoteLoaded", {
-        message: joke,
-        source: "https://icanhazdadjoke.com/j/" + id,
-        quoteIndex: 0
-      });
+      if (__indexOf.call(userData.solved, id) >= 0) {
+        console.warn("Already seen this quote, fetching a new one..");
+        return fetchQuote(userData);
+      } else {
+        return updateFrame("quoteLoaded", {
+          message: joke,
+          source: id,
+          quoteIndex: 0
+        });
+      }
     });
   };
   onKeyDown = function(e) {
@@ -1118,7 +1128,7 @@ module.exports = function() {
       Zepto("#dialog #confirm").hide();
       Zepto("#dialog").show();
       Zepto("#dialog h3").text("Help");
-      Zepto("#dialog #message-content").html("<p>Stuck?  You must reveal the secret message one letter at a time, from the start of each word.  Solving each word will give you a clue to which letters other words start with.  Try going for shorter word first.  The words stay solved only when you complete them.  You can always use a hint or give up, but it will cost you.  Good luck!</p>\n<h3>Credits</h3>\n<ul>\n  <li>Game designed and built by <a target='_blank' href='http://codeperfectionist.com/about'>Jeff Schomay</a></li>\n  <li>Music by Jamison Rivera\n  <li>Owl character by <a target='_blank' href='http://sherony.com'>Sherony Lock</a></li>\n  <li>Sound effects by <a target='_blank' href='https://www.freesound.org/people/ddohler/sounds/9098/'>ddohler</a>,\n  <a target='_blank' href='https://www.freesound.org/people/Horn/sounds/9744/'>Horn</a>,\n  <a target='_blank' href='https://www.freesound.org/people/NHumphrey/sounds/204466/'>NHumphrey</a>, and\n  <a target='_blank' href='https://www.freesound.org/people/lonemonk/sounds/47048/'>lonemonk</a></li>\n  <li>Special thanks to: Mark, Marcus, Zia, David, Joey, Molly and Michele</li>\n</ul>");
+      Zepto("#dialog #message-content").html("<p>Stuck?  You must reveal the secret message one letter at a time, by filling in each word from its beginning.  Try going for shorter words first.  You can always use a hint or give up, but it will cost you.  Good luck!</p>\n<h3>Credits</h3>\n<ul>\n  <li>Game designed and built by <a target='_blank' href='http://codeperfectionist.com/about'>Jeff Schomay</a></li>\n  <li>Music by Jamison Rivera\n  <li>Owl character by <a target='_blank' href='http://sherony.com'>Sherony Lock</a></li>\n  <li>Sound effects by <a target='_blank' href='https://www.freesound.org/people/ddohler/sounds/9098/'>ddohler</a>,\n  <a target='_blank' href='https://www.freesound.org/people/Horn/sounds/9744/'>Horn</a>,\n  <a target='_blank' href='https://www.freesound.org/people/NHumphrey/sounds/204466/'>NHumphrey</a>, and\n  <a target='_blank' href='https://www.freesound.org/people/lonemonk/sounds/47048/'>lonemonk</a></li>\n  <li>Special thanks to: Mark, Marcus, Zia, David, Joey, Molly and Michele</li>\n</ul>");
       Zepto("#dialog #cancel").text("Keep playing");
     }
     Zepto("#user-info").show();
@@ -1277,7 +1287,8 @@ module.exports = function() {
     currentPlayerDefaults = {
       hintsRemaining: CONSTANTS.startingHints,
       totalScore: 0,
-      solvedQuotes: 0
+      solvedQuotes: 0,
+      solved: []
     };
     currentPlayer = JSON.parse(localStorage.getItem("currentPlayer"));
     if (!currentPlayer) {
