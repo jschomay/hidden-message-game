@@ -594,8 +594,7 @@ module.exports = ->
     # https://icanhazdadjoke.com/j/EQKZDIeah is the permalink to it
 
     myHeaders = new Headers(
-      # They request providing this header, but it breaks cors...
-      # "User-Agent": "Hidden Message Game (https://github.com/jschomay/hidden-message-game)"
+      "User-Agent": "Hidden Message Game (https://github.com/jschomay/hidden-message-game)"
       "Accept": "application/json"
     )
     fetch("https://icanhazdadjoke.com/", headers: myHeaders)

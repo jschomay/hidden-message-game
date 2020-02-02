@@ -968,6 +968,7 @@ module.exports = function() {
   fetchQuote = function(userData) {
     var myHeaders;
     myHeaders = new Headers({
+      "User-Agent": "Hidden Message Game (https://github.com/jschomay/hidden-message-game)",
       "Accept": "application/json"
     });
     return fetch("https://icanhazdadjoke.com/", {
